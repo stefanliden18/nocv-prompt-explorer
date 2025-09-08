@@ -1,6 +1,11 @@
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { useState } from "react";
 
 const Navigation = () => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container mx-auto px-6 py-4">
@@ -30,11 +35,58 @@ const Navigation = () => {
             </a>
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons and Mobile Menu */}
           <div className="flex items-center space-x-4">
             <Button variant="ghost" className="hidden sm:inline-flex">
               Logga in
             </Button>
+            
+            {/* Mobile Menu - Only shown on mobile and tablet */}
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Öppna meny</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+                <nav className="flex flex-col space-y-6 mt-6">
+                  <a 
+                    href="/jobs" 
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Lediga jobb
+                  </a>
+                  <a 
+                    href="/candidates" 
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    För jobbsökare
+                  </a>
+                  <a 
+                    href="/companies" 
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    För företag
+                  </a>
+                  <a 
+                    href="/contact" 
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Kontakt
+                  </a>
+                  <div className="pt-4 border-t border-border">
+                    <Button variant="ghost" className="w-full justify-start text-lg">
+                      Logga in
+                    </Button>
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>

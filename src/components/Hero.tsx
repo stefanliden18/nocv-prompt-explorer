@@ -21,7 +21,7 @@ const Hero = () => {
             Sök jobb utan CV
           </h1>
           
-          <h2 className="text-lg md:text-xl mb-8 font-body text-white/90 max-w-2xl mx-auto">
+          <h2 className="text-xl md:text-2xl mb-8 font-body text-white/90 max-w-3xl mx-auto leading-relaxed opacity-90">
             Intervjuas automatiskt i realtid när det passar dig – via text eller röst på mobil eller dator
           </h2>
           

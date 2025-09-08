@@ -9,7 +9,7 @@ const Candidates = () => {
     {
       icon: FileCheck,
       title: "Enkel ansökan",
-      description: "Ingen CV att skriva eller bifoga. Svara på enkla frågor om din erfarenhet och dina kunskaper.",
+      description: "Inget cv att skriva eller bifoga. Svara på enkla frågor om din erfarenhet och dina kunskaper.",
       color: "text-primary"
     },
     {

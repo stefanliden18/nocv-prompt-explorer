@@ -111,7 +111,7 @@ const Companies = () => {
               intervjua kandidater baserat på de kunskaper och erfarenheter du söker.
             </p>
             
-            <div className="grid md:grid-cols-3 gap-6 text-center">
+            <div className="grid md:grid-cols-4 gap-6 text-center">
               <div className="bg-white p-6 rounded-lg border border-border">
                 <div className="text-3xl font-bold text-primary mb-2">1</div>
                 <div className="text-sm font-semibold text-foreground mb-2">Vi publicerar tjänsten</div>
@@ -124,6 +124,11 @@ const Companies = () => {
               </div>
               <div className="bg-white p-6 rounded-lg border border-border">
                 <div className="text-3xl font-bold text-primary mb-2">3</div>
+                <div className="text-sm font-semibold text-foreground mb-2">Fysisk intervju</div>
+                <div className="text-sm text-muted-foreground">Vi väljer ut de kandidater som bäst matchar tjänsten och genomför intervjuer</div>
+              </div>
+              <div className="bg-white p-6 rounded-lg border border-border">
+                <div className="text-3xl font-bold text-secondary mb-2">4</div>
                 <div className="text-sm font-semibold text-foreground mb-2">Träffa kandidater</div>
                 <div className="text-sm text-muted-foreground">Få presentationer av kvalificerade kandidater direkt</div>
               </div>

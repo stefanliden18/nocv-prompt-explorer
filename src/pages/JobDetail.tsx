@@ -369,9 +369,8 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                 <CardContent>
                   <ul className="space-y-3">
                     {job.requirements.map((req: string, index: number) => (
-                      <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                        <span className="text-foreground">{req}</span>
+                      <li key={index} className="text-foreground">
+                        {req}
                       </li>
                     ))}
                   </ul>
@@ -386,9 +385,8 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                 <CardContent>
                   <ul className="space-y-3">
                     {job.responsibilities.map((resp: string, index: number) => (
-                      <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-secondary rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                        <span className="text-foreground">{resp}</span>
+                      <li key={index} className="text-foreground">
+                        {resp}
                       </li>
                     ))}
                   </ul>
@@ -403,9 +401,8 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                 <CardContent>
                   <ul className="space-y-3">
                     {job.benefits.map((benefit: string, index: number) => (
-                      <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-accent rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                        <span className="text-foreground">{benefit}</span>
+                      <li key={index} className="text-foreground">
+                        {benefit}
                       </li>
                     ))}
                   </ul>

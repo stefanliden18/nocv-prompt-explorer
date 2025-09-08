@@ -349,63 +349,52 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
           <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Description */}
+              {/* Combined Job Information */}
               <Card className="bg-white border border-border">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-heading">Om tjänsten</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-foreground leading-relaxed text-lg">
-                    {job.fullDescription}
-                  </p>
-                </CardContent>
-              </Card>
+                <CardContent className="p-8 space-y-8">
+                  {/* Description */}
+                  <div>
+                    <h2 className="text-2xl font-heading mb-4">Om tjänsten</h2>
+                    <p className="text-foreground leading-relaxed text-lg">
+                      {job.fullDescription}
+                    </p>
+                  </div>
 
-              {/* Requirements */}
-              <Card className="bg-white border border-border">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-heading">Vad vi söker</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {job.requirements.map((req: string, index: number) => (
-                      <li key={index} className="text-foreground">
-                        {req}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                  {/* Requirements */}
+                  <div>
+                    <h2 className="text-2xl font-heading mb-4">Vad vi söker</h2>
+                    <ul className="space-y-3">
+                      {job.requirements.map((req: string, index: number) => (
+                        <li key={index} className="text-foreground">
+                          {req}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-              {/* Responsibilities */}
-              <Card className="bg-white border border-border">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-heading">Arbetsuppgifter</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {job.responsibilities.map((resp: string, index: number) => (
-                      <li key={index} className="text-foreground">
-                        {resp}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+                  {/* Responsibilities */}
+                  <div>
+                    <h2 className="text-2xl font-heading mb-4">Arbetsuppgifter</h2>
+                    <ul className="space-y-3">
+                      {job.responsibilities.map((resp: string, index: number) => (
+                        <li key={index} className="text-foreground">
+                          {resp}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
 
-              {/* Benefits */}
-              <Card className="bg-white border border-border">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-heading">Vad vi erbjuder</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {job.benefits.map((benefit: string, index: number) => (
-                      <li key={index} className="text-foreground">
-                        {benefit}
-                      </li>
-                    ))}
-                  </ul>
+                  {/* Benefits */}
+                  <div>
+                    <h2 className="text-2xl font-heading mb-4">Vad vi erbjuder</h2>
+                    <ul className="space-y-3">
+                      {job.benefits.map((benefit: string, index: number) => (
+                        <li key={index} className="text-foreground">
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
             </div>

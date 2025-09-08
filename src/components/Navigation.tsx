@@ -14,14 +14,14 @@ const Navigation = () => {
 
           {/* Navigation Links - Hidden on mobile, shown on desktop */}
           <div className="hidden md:flex items-center space-x-8">
+            <a href="/jobs" className="text-foreground hover:text-primary transition-colors font-medium">
+              Lediga jobb
+            </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
               Hur det fungerar
             </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
               För företag
-            </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-              För jobbsökare
             </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
               Om oss

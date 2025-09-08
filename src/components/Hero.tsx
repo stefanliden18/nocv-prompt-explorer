@@ -17,9 +17,13 @@ const Hero = () => {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 text-center text-white">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-bold font-heading mb-6 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-bold font-heading mb-4 leading-tight">
             Sök jobb utan CV
           </h1>
+          
+          <h2 className="text-lg md:text-xl mb-8 font-body text-white/90 max-w-2xl mx-auto">
+            Intervjuas automatiskt i realtid när det passar dig – via text eller röst på mobil eller dator
+          </h2>
           
           <p className="text-xl md:text-2xl mb-12 font-body leading-relaxed max-w-3xl mx-auto opacity-90">
             Vi är intresserade av vad du kan och vad du vill, inte vad du har studerat.

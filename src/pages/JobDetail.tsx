@@ -198,7 +198,6 @@ const applicationSchema = z.object({
   name: z.string().min(1, "Ange ditt namn"),
   email: z.string().min(1, "Ange en e-postadress").email("Ange en giltig e-postadress"),
   phone: z.string().min(1, "Ange ditt telefonnummer"),
-  coverLetter: z.string().min(1, "Berätta varför du är rätt person för jobbet"),
 });
 
 const JobDetail = () => {
@@ -216,7 +215,6 @@ const JobDetail = () => {
       name: "",
       email: "",
       phone: "",
-      coverLetter: "",
     },
   });
 
@@ -247,8 +245,8 @@ const JobDetail = () => {
         body: {
           name: values.name,
           email: values.email,
-          company: `Ansökan till: ${job.title} - ${job.company}`,
-          message: `Telefon: ${values.phone}\n\nPersonligt brev:\n${values.coverLetter}`,
+          company: `Intervjubokning: ${job.title} - ${job.company}`,
+          message: `Telefon: ${values.phone}\n\nKandidaten vill boka en AI-intervju för denna tjänst.`,
         },
       });
 
@@ -262,27 +260,26 @@ const JobDetail = () => {
 
       setIsSubmitted(true);
       toast({
-        title: "Ansökan skickad!",
-        description: "Vi återkommer till dig inom kort.",
+        title: "Intervju bokad!",
+        description: "Vi återkommer till dig inom kort med detaljer om AI-intervjun.",
       });
       
     } catch (error: any) {
       console.error('Error sending application:', error);
       
       // Create fallback mailto link
-      const subject = `Ansökan till ${job.title} - ${job.company}`;
+      const subject = `Intervjubokning: ${job.title} - ${job.company}`;
       const body = `Namn: ${values.name}
 E-post: ${values.email}
 Telefon: ${values.phone}
 
-Personligt brev:
-${values.coverLetter}`;
+Kandidaten vill boka en AI-intervju för denna tjänst.`;
       
       const mailtoLink = `mailto:michael@nocv.se?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       
       toast({
         title: "Öppnar e-postklient",
-        description: "Vi öppnar din e-postklient som backup för din ansökan.",
+        description: "Vi öppnar din e-postklient som backup för din intervjubokning.",
         variant: "destructive",
       });
       
@@ -420,13 +417,13 @@ ${values.coverLetter}`;
             <div className="lg:col-span-1">
               <Card className="bg-white border border-border sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-xl font-heading">Ansök nu</CardTitle>
+                  <CardTitle className="text-xl font-heading">Boka intervju</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!showApplication ? (
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        Skicka in din ansökan för att komma i kontakt med {job.company}.
+                        Boka en AI-intervju för att visa dina praktiska färdigheter för {job.company}.
                       </p>
                       <Button 
                         className="w-full"
@@ -434,16 +431,16 @@ ${values.coverLetter}`;
                         onClick={() => setShowApplication(true)}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Ansök till tjänsten
+                        Boka intervju
                       </Button>
                     </div>
                   ) : isSubmitted ? (
                     <div className="text-center py-4">
                       <h4 className="text-lg font-semibold text-foreground mb-2">
-                        Tack för din ansökan!
+                        Tack för din bokning!
                       </h4>
                       <p className="text-muted-foreground mb-4">
-                        Vi återkommer till dig inom kort.
+                        Vi återkommer till dig inom kort med detaljer om AI-intervjun.
                       </p>
                       <Button 
                         variant="outline"
@@ -453,7 +450,7 @@ ${values.coverLetter}`;
                           form.reset();
                         }}
                       >
-                        Ny ansökan
+                        Ny bokning
                       </Button>
                     </div>
                   ) : (
@@ -500,25 +497,7 @@ ${values.coverLetter}`;
                             </FormItem>
                           )}
                         />
-                        
-                        <FormField
-                          control={form.control}
-                          name="coverLetter"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Personligt brev *</FormLabel>
-                              <FormControl>
-                                <Textarea 
-                                  placeholder="Berätta varför du är rätt person för denna tjänst..."
-                                  className="min-h-[100px] resize-none"
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
+                         
                         <div className="space-y-2">
                           <Button 
                             type="submit"
@@ -526,7 +505,7 @@ ${values.coverLetter}`;
                             variant="cta-primary"
                             disabled={isLoading}
                           >
-                            {isLoading ? "Skickar..." : "Skicka ansökan"}
+                            {isLoading ? "Bokar..." : "Boka intervju"}
                           </Button>
                           
                           <Button 

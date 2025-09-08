@@ -75,8 +75,7 @@ const Jobs = () => {
   });
 
   const handleJobDetails = (jobId: number) => {
-    // This would navigate to job details page
-    console.log(`Navigate to job details for job ${jobId}`);
+    window.location.href = `/jobs/${jobId}`;
   };
 
   return (

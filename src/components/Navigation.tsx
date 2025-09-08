@@ -35,9 +35,6 @@ const Navigation = () => {
             <Button variant="ghost" className="hidden sm:inline-flex">
               Logga in
             </Button>
-            <Button variant="secondary" size="sm">
-              Kom igång
-            </Button>
           </div>
         </div>
       </div>

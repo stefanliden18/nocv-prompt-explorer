@@ -26,7 +26,7 @@ const Hero = () => {
           </h2>
           
           <p className="text-xl md:text-2xl mb-12 font-body leading-relaxed max-w-3xl mx-auto opacity-90">
-            Vi är intresserade av vad du kan och vad du vill, inte vad du har studerat.
+            Vi är intresserade av vad du kan och vad du vill, inte vad du har studerat!
           </p>
 
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">

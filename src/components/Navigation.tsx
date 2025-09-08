@@ -20,7 +20,7 @@ const Navigation = () => {
             <a href="/candidates" className="text-foreground hover:text-primary transition-colors font-medium">
               För jobbsökare
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
+            <a href="/companies" className="text-foreground hover:text-primary transition-colors font-medium">
               För företag
             </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">

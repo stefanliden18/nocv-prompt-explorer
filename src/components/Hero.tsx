@@ -22,7 +22,7 @@ const Hero = () => {
           </h1>
           
           <h2 className="text-xl md:text-2xl mb-8 font-body text-white/90 max-w-3xl mx-auto leading-relaxed opacity-90">
-            Intervjuas automatiskt i realtid när det passar dig – via text eller röst på mobil eller dator
+            Bli intervjuad automatiskt när det passar dig – via text eller röst på mobil eller dator
           </h2>
           
           <p className="text-xl md:text-2xl mb-12 font-body leading-relaxed max-w-3xl mx-auto opacity-90">

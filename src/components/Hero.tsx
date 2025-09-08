@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-industrial-workers.jpg";
+import heroImage from "@/assets/hero-automotive-workers.jpg";
 
 const Hero = () => {
   return (
@@ -8,10 +8,10 @@ const Hero = () => {
       <div className="absolute inset-0">
         <img
           src={heroImage}
-          alt="Industrial workers - mechanics, technicians, and welders"
+          alt="Automotive workers - mechanics, technicians, and welders in car workshop"
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-hero opacity-80" />
+        <div className="absolute inset-0 bg-gradient-hero opacity-50" />
       </div>
 
       {/* Content */}

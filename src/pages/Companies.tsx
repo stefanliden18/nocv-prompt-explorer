@@ -114,7 +114,7 @@ const Companies = () => {
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div className="bg-white p-6 rounded-lg border border-border">
                 <div className="text-3xl font-bold text-primary mb-2">1</div>
-                <div className="text-sm font-semibold text-foreground mb-2">Publicera tjänst</div>
+                <div className="text-sm font-semibold text-foreground mb-2">Vi publicerar tjänsten</div>
                 <div className="text-sm text-muted-foreground">Beskriv vilka kunskaper och erfarenheter ni söker</div>
               </div>
               <div className="bg-white p-6 rounded-lg border border-border">

@@ -148,6 +148,11 @@ const Candidates = () => {
             >
               Se lediga jobb
             </Button>
+            
+            <p className="text-muted-foreground mt-6 max-w-2xl mx-auto">
+              Efter din ansökan blir du automatiskt intervjuad via text eller röst — 
+              utan CV, när det passar dig, via mobil eller dator.
+            </p>
           </div>
         </div>
       </section>

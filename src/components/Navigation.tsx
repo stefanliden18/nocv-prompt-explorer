@@ -23,8 +23,8 @@ const Navigation = () => {
             <a href="/companies" className="text-foreground hover:text-primary transition-colors font-medium">
               För företag
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-              Om oss
+            <a href="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
+              Kontakt
             </a>
           </div>
 

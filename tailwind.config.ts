@@ -47,6 +47,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // NOCV Custom Colors
+        nocv: {
+          "dark-blue": "hsl(var(--nocv-dark-blue))",
+          "orange": "hsl(var(--nocv-orange))",
+          "orange-hover": "hsl(var(--nocv-orange-hover))",
+          "light-blue": "hsl(var(--nocv-light-blue))",
+          "text-muted": "hsl(var(--nocv-text-muted))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -62,6 +70,18 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      backgroundImage: {
+        "gradient-hero": "var(--gradient-hero)",
+        "gradient-orange": "var(--gradient-orange)",
+      },
+      boxShadow: {
+        "cta": "var(--shadow-cta)",
+        "card": "var(--shadow-card)",
+      },
+      fontFamily: {
+        heading: "var(--font-heading)",
+        body: "var(--font-body)",
       },
       keyframes: {
         "accordion-down": {

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileCheck, Clock, Target } from "lucide-react";
+import { FileCheck, Clock, Target, MessageSquare } from "lucide-react";
 import Navigation from "@/components/Navigation";
 
 const Candidates = () => {
@@ -22,6 +22,12 @@ const Candidates = () => {
       title: "Rätt jobb",
       description: "Vår AI matchar dig med jobb där dina färdigheter verkligen behövs och uppskattas.",
       color: "text-primary"
+    },
+    {
+      icon: MessageSquare,
+      title: "Automatiska intervjuer",
+      description: "Chatt eller röst, när det passar dig. Flexibelt och enkelt – precis som du vill ha det.",
+      color: "text-secondary"
     }
   ];
 
@@ -60,7 +66,7 @@ const Candidates = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
               return (

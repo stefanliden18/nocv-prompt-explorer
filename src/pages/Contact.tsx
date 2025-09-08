@@ -39,6 +39,14 @@ const Contact = () => {
     setIsLoading(true);
     
     try {
+      // Check if Supabase is properly configured
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseAnonKey) {
+        throw new Error('Supabase är inte korrekt konfigurerat. Kontakta oss direkt på michael@nocv.se');
+      }
+
       const { data, error } = await supabase.functions.invoke('send-contact-email', {
         body: {
           name: values.name,
@@ -64,11 +72,26 @@ const Contact = () => {
       
     } catch (error: any) {
       console.error('Error sending email:', error);
+      
+      // Create fallback mailto link
+      const subject = "Kontakt från NOCV hemsida";
+      const body = `Namn: ${values.name}
+E-post: ${values.email}
+${values.company ? `Företag: ${values.company}\n` : ""}
+Meddelande:
+${values.message}`;
+      
+      const mailtoLink = `mailto:michael@nocv.se?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      
       toast({
-        title: "Något gick fel",
-        description: error.message || "Kunde inte skicka meddelandet. Försök igen eller kontakta oss direkt på michael@nocv.se",
+        title: "Öppnar e-postklient",
+        description: "Vi öppnar din e-postklient som backup. Du kan också kontakta oss direkt på michael@nocv.se",
         variant: "destructive",
       });
+      
+      // Open mailto as fallback
+      window.open(mailtoLink, '_blank');
+      
     } finally {
       setIsLoading(false);
     }

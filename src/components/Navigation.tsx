@@ -7,9 +7,11 @@ const Navigation = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <h2 className="text-2xl font-bold font-heading text-primary">
-              NOCV
-            </h2>
+            <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <h2 className="text-2xl font-bold font-heading text-primary">
+                NOCV
+              </h2>
+            </a>
           </div>
 
           {/* Navigation Links - Hidden on mobile, shown on desktop */}

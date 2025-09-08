@@ -10,6 +10,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/use-toast";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ange ditt namn"),
@@ -20,6 +22,8 @@ const formSchema = z.object({
 
 const Contact = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -31,22 +35,43 @@ const Contact = () => {
     },
   });
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // Create mailto link with form data
-    const subject = "Kontakt från NOCV hemsida";
-    const body = `Namn: ${values.name}
-E-post: ${values.email}
-${values.company ? `Företag: ${values.company}\n` : ""}
-Meddelande:
-${values.message}`;
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsLoading(true);
     
-    const mailtoLink = `mailto:michael@nocv.se?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    // Open mailto link
-    window.location.href = mailtoLink;
-    
-    // Show success message
-    setIsSubmitted(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: {
+          name: values.name,
+          email: values.email,
+          company: values.company,
+          message: values.message,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      setIsSubmitted(true);
+      toast({
+        title: "Meddelande skickat!",
+        description: "Vi återkommer till dig inom kort.",
+      });
+      
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast({
+        title: "Något gick fel",
+        description: error.message || "Kunde inte skicka meddelandet. Försök igen eller kontakta oss direkt på michael@nocv.se",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -160,8 +185,9 @@ ${values.message}`;
                           variant="cta-primary" 
                           size="lg"
                           className="w-full hover-scale"
+                          disabled={isLoading}
                         >
-                          Skicka
+                          {isLoading ? "Skickar..." : "Skicka"}
                         </Button>
                         
                         <p className="text-sm text-muted-foreground text-center">

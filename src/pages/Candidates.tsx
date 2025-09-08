@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileCheck, Clock, Target, MessageSquare } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Candidates = () => {
   const benefits = [
@@ -162,6 +163,8 @@ const Candidates = () => {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

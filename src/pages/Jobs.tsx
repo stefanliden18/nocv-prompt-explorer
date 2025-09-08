@@ -5,6 +5,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Building2 } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 // Mock job data
 const mockJobs = [
@@ -197,6 +198,8 @@ const Jobs = () => {
           )}
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

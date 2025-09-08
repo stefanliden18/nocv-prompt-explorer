@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Users, Target, Clock } from "lucide-react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 
 const Companies = () => {
   const benefits = [
@@ -158,6 +159,8 @@ const Companies = () => {
           </div>
         </div>
       </section>
+      
+      <Footer />
     </div>
   );
 };

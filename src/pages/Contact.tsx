@@ -182,37 +182,6 @@ ${values.message}`;
           </div>
         </div>
       </section>
-
-      {/* Additional Contact Info */}
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-6">
-              Andra sätt att nå oss
-            </h3>
-            
-            <div className="grid md:grid-cols-2 gap-8 mt-8">
-              <div className="bg-white p-6 rounded-lg border border-border">
-                <h4 className="text-lg font-semibold text-foreground mb-2">
-                  För jobbsökare
-                </h4>
-                <p className="text-muted-foreground">
-                  Har du frågor om att söka jobb utan CV? Vi hjälper dig gärna att komma igång.
-                </p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-lg border border-border">
-                <h4 className="text-lg font-semibold text-foreground mb-2">
-                  För företag
-                </h4>
-                <p className="text-muted-foreground">
-                  Vill du veta mer om hur NOCV kan förbättra er rekryteringsprocess? Kontakta oss för en demo.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
       
       <Footer />
     </div>

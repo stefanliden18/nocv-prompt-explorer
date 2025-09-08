@@ -39,7 +39,7 @@ const Hero = () => {
               variant="cta-secondary" 
               size="xl"
               className="w-full sm:w-auto min-w-[200px]"
-              onClick={() => window.location.href = '/jobs'}
+              onClick={() => window.location.href = '/candidates'}
             >
               Sök jobb
             </Button>

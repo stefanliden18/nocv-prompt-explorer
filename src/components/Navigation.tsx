@@ -17,8 +17,8 @@ const Navigation = () => {
             <a href="/jobs" className="text-foreground hover:text-primary transition-colors font-medium">
               Lediga jobb
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
-              Hur det fungerar
+            <a href="/candidates" className="text-foreground hover:text-primary transition-colors font-medium">
+              För jobbsökare
             </a>
             <a href="#" className="text-foreground hover:text-primary transition-colors font-medium">
               För företag

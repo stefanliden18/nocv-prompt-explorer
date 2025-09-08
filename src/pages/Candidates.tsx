@@ -104,7 +104,7 @@ const Candidates = () => {
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-4">
-              Tusentals har redan hittat jobb
+              Ett stort antal har redan hittat jobb
             </h3>
             <p className="text-lg text-muted-foreground mb-8">
               Från bilmekaniker till svetsare - våra kandidater får jobb baserat på vad de kan, 

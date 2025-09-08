@@ -213,15 +213,6 @@ ${values.message}`;
                           {isLoading ? "Skickar..." : "Skicka"}
                         </Button>
                         
-                        <p className="text-sm text-muted-foreground text-center">
-                          Om formuläret inte fungerar, skicka gärna direkt till{" "}
-                          <a 
-                            href="mailto:michael@nocv.se" 
-                            className="text-primary hover:text-primary/80 underline"
-                          >
-                            michael@nocv.se
-                          </a>
-                        </p>
                       </div>
                     </form>
                   </Form>

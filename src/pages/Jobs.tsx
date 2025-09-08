@@ -147,7 +147,7 @@ const Jobs = () => {
             {filteredJobs.map((job) => (
               <Card 
                 key={job.id} 
-                className="bg-white border border-border hover:shadow-card transition-all duration-300 hover:transform hover:scale-[1.02]"
+                className="bg-white border border-border hover:shadow-card transition-all duration-300 hover:transform hover:scale-[1.02] flex flex-col h-full"
               >
                 <CardHeader className="pb-4">
                   <div className="flex justify-between items-start mb-2">
@@ -165,7 +165,7 @@ const Jobs = () => {
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 flex-grow">
                   <p className="text-muted-foreground text-sm mb-3 font-medium">
                     {job.company}
                   </p>

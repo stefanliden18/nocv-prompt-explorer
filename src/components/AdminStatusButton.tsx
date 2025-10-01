@@ -41,11 +41,13 @@ export function AdminStatusButton() {
               <>
                 <Badge 
                   variant="default" 
-                  className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5 px-3 py-1.5"
+                  className="cursor-pointer hover:opacity-80 transition-opacity flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold"
                   onClick={handleClick}
                 >
-                  <Shield className="h-3.5 w-3.5" />
-                  <span>{role === 'admin' ? 'Admin' : 'Rekryterare'}</span>
+                  <Shield className="h-4 w-4" />
+                  <span className="uppercase tracking-wide">
+                    {role === 'admin' ? 'Admin' : 'Rekryterare'}
+                  </span>
                 </Badge>
                 <Button
                   size="icon"

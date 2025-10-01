@@ -6,6 +6,7 @@ import { Plus, Loader2, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { CompanyForm } from '@/components/CompanyForm';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Table,
   TableBody,
@@ -28,10 +29,13 @@ interface Company {
 }
 
 export default function AdminCompanies() {
+  const { role } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  
+  const canManageCompanies = role === 'admin' || role === 'recruiter';
 
   const fetchCompanies = async () => {
     setIsLoading(true);
@@ -84,10 +88,12 @@ export default function AdminCompanies() {
             <h1 className="text-3xl font-bold">Företag</h1>
             <p className="text-muted-foreground">Hantera företag</p>
           </div>
-          <Button onClick={() => setIsFormOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nytt företag
-          </Button>
+          {canManageCompanies && (
+            <Button onClick={() => setIsFormOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nytt företag
+            </Button>
+          )}
         </div>
 
         <Card>
@@ -182,11 +188,13 @@ export default function AdminCompanies() {
         </Card>
       </div>
 
-      <CompanyForm
-        open={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        onSuccess={handleSuccess}
-      />
+      {canManageCompanies && (
+        <CompanyForm
+          open={isFormOpen}
+          onOpenChange={setIsFormOpen}
+          onSuccess={handleSuccess}
+        />
+      )}
     </AdminLayout>
   );
 }

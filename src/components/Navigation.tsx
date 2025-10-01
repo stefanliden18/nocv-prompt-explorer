@@ -2,9 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
@@ -33,13 +37,32 @@ const Navigation = () => {
             <a href="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
               Kontakt
             </a>
+            {isAdmin && (
+              <a href="/admin" className="text-foreground hover:text-primary transition-colors font-medium">
+                Admin
+              </a>
+            )}
           </div>
 
           {/* CTA Buttons and Mobile Menu */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" className="hidden sm:inline-flex">
-              Logga in
-            </Button>
+            {user ? (
+              <Button 
+                variant="ghost" 
+                className="hidden sm:inline-flex"
+                onClick={() => signOut()}
+              >
+                Logga ut
+              </Button>
+            ) : (
+              <Button 
+                variant="ghost" 
+                className="hidden sm:inline-flex"
+                onClick={() => navigate('/auth')}
+              >
+                Logga in
+              </Button>
+            )}
             
             {/* Mobile Menu - Only shown on mobile and tablet */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -79,10 +102,39 @@ const Navigation = () => {
                   >
                     Kontakt
                   </a>
+                  {isAdmin && (
+                    <a 
+                      href="/admin" 
+                      className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Admin
+                    </a>
+                  )}
                   <div className="pt-4 border-t border-border">
-                    <Button variant="ghost" className="w-full justify-start text-lg">
-                      Logga in
-                    </Button>
+                    {user ? (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-lg"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          signOut();
+                        }}
+                      >
+                        Logga ut
+                      </Button>
+                    ) : (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start text-lg"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          navigate('/auth');
+                        }}
+                      >
+                        Logga in
+                      </Button>
+                    )}
                   </div>
                 </nav>
               </SheetContent>

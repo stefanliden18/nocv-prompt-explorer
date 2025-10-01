@@ -13,6 +13,10 @@ import Companies from "./pages/Companies";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
+import AdminJobs from "./pages/admin/Jobs";
+import AdminApplications from "./pages/admin/Applications";
+import AdminCompanies from "./pages/admin/Companies";
+import AdminUsers from "./pages/admin/Users";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,13 +36,45 @@ const App = () => (
             <Route path="/companies" element={<Companies />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/admin"
+            <Route 
+              path="/admin" 
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminDashboard />
                 </ProtectedRoute>
-              }
+              } 
+            />
+            <Route 
+              path="/admin/jobs" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminJobs />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/applications" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminApplications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/companies" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminCompanies />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/users" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminUsers />
+                </ProtectedRoute>
+              } 
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

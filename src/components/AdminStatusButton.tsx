@@ -11,13 +11,15 @@ import {
 } from "@/components/ui/tooltip";
 
 export function AdminStatusButton() {
-  const { user, isAdmin, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const hasAdminAccess = role === 'admin' || role === 'recruiter';
+
   const handleClick = async () => {
-    if (user && isAdmin) {
+    if (user && hasAdminAccess) {
       navigate("/admin");
-    } else if (user && !isAdmin) {
+    } else if (user && !hasAdminAccess) {
       await signOut();
       navigate("/auth");
     } else {
@@ -35,7 +37,7 @@ export function AdminStatusButton() {
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center gap-2">
-            {user && isAdmin ? (
+            {user && hasAdminAccess ? (
               <>
                 <Badge 
                   variant="default" 
@@ -43,7 +45,7 @@ export function AdminStatusButton() {
                   onClick={handleClick}
                 >
                   <Shield className="h-3.5 w-3.5" />
-                  <span>Admin</span>
+                  <span>{role === 'admin' ? 'Admin' : 'Rekryterare'}</span>
                 </Badge>
                 <Button
                   size="icon"
@@ -68,13 +70,13 @@ export function AdminStatusButton() {
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          {user && isAdmin ? (
+          {user && hasAdminAccess ? (
             <div className="text-sm">
-              <p className="font-semibold">Admin inloggad</p>
+              <p className="font-semibold">{role === 'admin' ? 'Admin' : 'Rekryterare'} inloggad</p>
               <p className="text-muted-foreground">{user.email}</p>
             </div>
           ) : user ? (
-            <p className="text-sm">Inte admin</p>
+            <p className="text-sm">Ingen behörighet till admin</p>
           ) : (
             <p className="text-sm">Klicka för att logga in</p>
           )}

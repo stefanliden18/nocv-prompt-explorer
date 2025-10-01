@@ -1,11 +1,77 @@
+import React, { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Edit, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { format } from 'date-fns';
+import { sv } from 'date-fns/locale';
+
+interface Job {
+  id: string;
+  title: string;
+  city: string;
+  status: 'draft' | 'published' | 'archived';
+  publish_at: string | null;
+  created_at: string;
+  companies: {
+    name: string;
+  };
+}
 
 export default function AdminJobs() {
   const navigate = useNavigate();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          id,
+          title,
+          city,
+          status,
+          publish_at,
+          created_at,
+          companies (
+            name
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setJobs(data || []);
+    } catch (error: any) {
+      console.error('Error fetching jobs:', error);
+      toast.error('Kunde inte hämta jobb');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusBadge = (job: Job) => {
+    if (job.status === 'archived') {
+      return <Badge variant="secondary">Arkiverad</Badge>;
+    }
+    
+    if (job.status === 'published') {
+      if (job.publish_at && new Date(job.publish_at) > new Date()) {
+        return <Badge variant="outline">Planerad</Badge>;
+      }
+      return <Badge variant="default">Publicerad</Badge>;
+    }
+    
+    return <Badge variant="secondary">Utkast</Badge>;
+  };
 
   return (
     <AdminLayout>
@@ -29,9 +95,56 @@ export default function AdminJobs() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Inga jobb ännu. Klicka på "Nytt jobb" för att skapa din första jobbannons.
-            </p>
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Laddar jobb...</p>
+            ) : jobs.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Inga jobb ännu. Klicka på "Nytt jobb" för att skapa din första jobbannons.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {jobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold">{job.title}</h3>
+                        {getStatusBadge(job)}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {job.companies.name} • {job.city}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Skapad: {format(new Date(job.created_at), "PPP", { locale: sv })}
+                        {job.publish_at && new Date(job.publish_at) > new Date() && (
+                          <> • Planerad: {format(new Date(job.publish_at), "PPP", { locale: sv })}</>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/jobs/${job.id}`)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Visa
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/admin/jobs/${job.id}/edit`)}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Redigera
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

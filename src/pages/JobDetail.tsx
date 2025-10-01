@@ -13,8 +13,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'isomorphic-dompurify';
 
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
@@ -22,6 +23,8 @@ const applicationSchema = z.object({
   phone: z.string().trim().min(1, "Ange ditt telefonnummer").max(20, "Telefonnumret kan vara max 20 tecken"),
   message: z.string().trim().max(1000, "Meddelandet kan vara max 1000 tecken").optional(),
   cv_url: z.string().trim().url("Ange en giltig URL").max(500, "URL:en kan vara max 500 tecken").optional().or(z.literal("")),
+  // Honeypot field for bot protection
+  website: z.string().max(0, "Detta fält ska vara tomt").optional(),
 });
 
 const JobDetail = () => {
@@ -42,6 +45,7 @@ const JobDetail = () => {
       phone: "",
       message: "",
       cv_url: "",
+      website: "", // Honeypot field
     },
   });
 
@@ -96,18 +100,32 @@ const JobDetail = () => {
   };
 
   const onSubmit = async (values: z.infer<typeof applicationSchema>) => {
+    // Bot protection - check honeypot
+    if (values.website && values.website.trim() !== "") {
+      console.warn('Bot detected - honeypot field filled');
+      toast({
+        title: "Ett fel uppstod",
+        description: "Kunde inte skicka ansökan. Försök igen.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
+      // Sanitize user input before sending
+      const sanitizedData = {
+        name: DOMPurify.sanitize(values.name, { ALLOWED_TAGS: [] }),
+        email: DOMPurify.sanitize(values.email, { ALLOWED_TAGS: [] }),
+        phone: DOMPurify.sanitize(values.phone, { ALLOWED_TAGS: [] }),
+        message: values.message ? DOMPurify.sanitize(values.message, { ALLOWED_TAGS: [] }) : null,
+        cv_url: values.cv_url ? DOMPurify.sanitize(values.cv_url, { ALLOWED_TAGS: [] }) : null,
+        job_id: job.id,
+      };
+
       const { data, error } = await supabase.functions.invoke('send-application-email', {
-        body: {
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          message: values.message || null,
-          cv_url: values.cv_url || null,
-          job_id: job.id,
-        },
+        body: sanitizedData,
       });
 
       if (error) {
@@ -116,7 +134,23 @@ const JobDetail = () => {
       }
 
       if (data?.error) {
-        throw new Error(data.error);
+        // Handle specific errors
+        if (data.error.includes('rate limit')) {
+          toast({
+            title: "För många ansökningar",
+            description: "Du har skickat för många ansökningar. Vänligen försök igen om en timme.",
+            variant: "destructive",
+          });
+        } else if (data.error.includes('validering')) {
+          toast({
+            title: "Valideringsfel",
+            description: data.error,
+            variant: "destructive",
+          });
+        } else {
+          throw new Error(data.error);
+        }
+        return;
       }
 
       setIsSubmitted(true);
@@ -130,7 +164,7 @@ const JobDetail = () => {
       
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte skicka ansökan. Försök igen senare.",
+        description: error.message || "Kunde inte skicka ansökan. Försök igen senare.",
         variant: "destructive",
       });
       
@@ -386,6 +420,24 @@ const JobDetail = () => {
                                 />
                               </FormControl>
                               <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* Honeypot field - hidden from real users */}
+                        <FormField
+                          control={form.control}
+                          name="website"
+                          render={({ field }) => (
+                            <FormItem className="hidden">
+                              <FormLabel>Website</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  tabIndex={-1}
+                                  autoComplete="off"
+                                  {...field} 
+                                />
+                              </FormControl>
                             </FormItem>
                           )}
                         />

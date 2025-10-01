@@ -5,10 +5,61 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Rate limiting configuration
+const RATE_LIMIT_WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const MAX_SUBMISSIONS_PER_WINDOW = 5;
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Helper function to sanitize text
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  // Remove any HTML tags and script content
+  return text
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .trim();
+}
+
+// Rate limiting check
+function checkRateLimit(identifier: string): { allowed: boolean; error?: string } {
+  const now = Date.now();
+  const record = rateLimitMap.get(identifier);
+
+  if (!record || now > record.resetTime) {
+    // Create new record or reset expired one
+    rateLimitMap.set(identifier, {
+      count: 1,
+      resetTime: now + RATE_LIMIT_WINDOW,
+    });
+    return { allowed: true };
+  }
+
+  if (record.count >= MAX_SUBMISSIONS_PER_WINDOW) {
+    const minutesLeft = Math.ceil((record.resetTime - now) / 60000);
+    return {
+      allowed: false,
+      error: `Rate limit överskriden. Du kan skicka fler ansökningar om ${minutesLeft} minuter.`,
+    };
+  }
+
+  record.count++;
+  return { allowed: true };
+}
+
+// Clean up old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, record] of rateLimitMap.entries()) {
+    if (now > record.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, RATE_LIMIT_WINDOW);
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -26,10 +77,17 @@ serve(async (req) => {
       job_id 
     } = await req.json();
 
+    // Sanitize all user input
+    const sanitizedName = sanitizeText(name);
+    const sanitizedEmail = sanitizeText(email);
+    const sanitizedPhone = sanitizeText(phone);
+    const sanitizedMessage = message ? sanitizeText(message) : null;
+    const sanitizedCvUrl = cv_url ? sanitizeText(cv_url) : null;
+
     // Validate required fields
-    if (!name || !email || !phone || !job_id) {
+    if (!sanitizedName || !sanitizedEmail || !sanitizedPhone || !job_id) {
       return new Response(
-        JSON.stringify({ error: 'Namn, e-post, telefon och jobb-ID är obligatoriska' }),
+        JSON.stringify({ error: 'Namn, e-post, telefon och jobb-ID är obligatoriska fält. Vänligen fyll i alla obligatoriska fält.' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -39,14 +97,55 @@ serve(async (req) => {
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(sanitizedEmail)) {
       return new Response(
-        JSON.stringify({ error: 'Ange en giltig e-postadress' }),
+        JSON.stringify({ error: 'Ogiltig e-postadress. Vänligen ange en giltig e-postadress.' }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
+    }
+
+    // Phone validation (basic)
+    const phoneRegex = /^[+\d\s()-]{7,20}$/;
+    if (!phoneRegex.test(sanitizedPhone)) {
+      return new Response(
+        JSON.stringify({ error: 'Ogiltigt telefonnummer. Vänligen ange ett giltigt telefonnummer.' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Rate limiting by email
+    const emailRateLimit = checkRateLimit(`email:${sanitizedEmail}`);
+    if (!emailRateLimit.allowed) {
+      console.warn(`Rate limit exceeded for email: ${sanitizedEmail}`);
+      return new Response(
+        JSON.stringify({ error: emailRateLimit.error }),
+        { 
+          status: 429, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Rate limiting by IP (if available)
+    const clientIp = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown';
+    if (clientIp !== 'unknown') {
+      const ipRateLimit = checkRateLimit(`ip:${clientIp}`);
+      if (!ipRateLimit.allowed) {
+        console.warn(`Rate limit exceeded for IP: ${clientIp}`);
+        return new Response(
+          JSON.stringify({ error: ipRateLimit.error }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
     }
 
     // Create Supabase client
@@ -89,15 +188,15 @@ serve(async (req) => {
       console.error('Creator not found:', creatorError);
     }
 
-    // Save application to database
+    // Save application to database with sanitized data
     const { data: application, error: applicationError } = await supabase
       .from('applications')
       .insert({
-        candidate_name: name,
-        email: email,
-        phone: phone,
-        message: message || null,
-        cv_url: cv_url || null,
+        candidate_name: sanitizedName,
+        email: sanitizedEmail,
+        phone: sanitizedPhone,
+        message: sanitizedMessage,
+        cv_url: sanitizedCvUrl,
         job_id: job_id,
         status: 'new'
       })
@@ -223,32 +322,32 @@ serve(async (req) => {
     </div>
     
     <div class="content">
-      <h2>Tack för din ansökan, ${name}!</h2>
+      <h2>Tack för din ansökan, ${sanitizedName}!</h2>
       
       <p>Vi har tagit emot din ansökan och vill bekräfta att allt har gått igenom korrekt.</p>
       
       <div class="summary-box">
         <h3>Sammanfattning av din ansökan</h3>
         <div class="summary-item">
-          <strong>Tjänst:</strong> ${job.title}
+          <strong>Tjänst:</strong> ${sanitizeText(job.title)}
         </div>
         <div class="summary-item">
-          <strong>Företag:</strong> ${job.companies?.name || 'Okänt företag'}
+          <strong>Företag:</strong> ${sanitizeText(job.companies?.name || 'Okänt företag')}
         </div>
         <div class="summary-item">
-          <strong>Ditt namn:</strong> ${name}
+          <strong>Ditt namn:</strong> ${sanitizedName}
         </div>
         <div class="summary-item">
-          <strong>E-post:</strong> ${email}
+          <strong>E-post:</strong> ${sanitizedEmail}
         </div>
         <div class="summary-item">
-          <strong>Telefon:</strong> ${phone}
+          <strong>Telefon:</strong> ${sanitizedPhone}
         </div>
-        ${message ? `<div class="summary-item">
-          <strong>Meddelande:</strong> ${message}
+        ${sanitizedMessage ? `<div class="summary-item">
+          <strong>Meddelande:</strong> ${sanitizedMessage}
         </div>` : ''}
-        ${cv_url ? `<div class="summary-item">
-          <strong>CV:</strong> <a href="${cv_url}" style="color: #667eea;">Bifogat</a>
+        ${sanitizedCvUrl ? `<div class="summary-item">
+          <strong>CV:</strong> <a href="${sanitizedCvUrl}" style="color: #667eea;">Bifogat</a>
         </div>` : ''}
       </div>
       
@@ -426,8 +525,8 @@ serve(async (req) => {
       <p>En ny kandidat har ansökt till en av era tjänster.</p>
       
       <div class="job-info">
-        <h3>${job.title}</h3>
-        <p><strong>Företag:</strong> ${job.companies?.name || 'Okänt företag'}</p>
+        <h3>${sanitizeText(job.title)}</h3>
+        <p><strong>Företag:</strong> ${sanitizeText(job.companies?.name || 'Okänt företag')}</p>
         <p><strong>Ansökan mottagen:</strong> ${new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
       </div>
       
@@ -436,34 +535,34 @@ serve(async (req) => {
         
         <div class="info-row">
           <span class="info-label">Namn:</span>
-          <span class="info-value">${name}</span>
+          <span class="info-value">${sanitizedName}</span>
         </div>
         
         <div class="info-row">
           <span class="info-label">E-post:</span>
           <span class="info-value">
-            <a href="mailto:${email}">${email}</a>
+            <a href="mailto:${sanitizedEmail}">${sanitizedEmail}</a>
           </span>
         </div>
         
         <div class="info-row">
           <span class="info-label">Telefon:</span>
           <span class="info-value">
-            <a href="tel:${phone}">${phone}</a>
+            <a href="tel:${sanitizedPhone}">${sanitizedPhone}</a>
           </span>
         </div>
         
-        ${cv_url ? `<div class="info-row">
+        ${sanitizedCvUrl ? `<div class="info-row">
           <span class="info-label">CV:</span>
           <span class="info-value">
-            <a href="${cv_url}" target="_blank">Öppna CV</a>
+            <a href="${sanitizedCvUrl}" target="_blank">Öppna CV</a>
           </span>
         </div>` : ''}
       </div>
       
-      ${message ? `<div class="message-box">
+      ${sanitizedMessage ? `<div class="message-box">
         <p><strong>Meddelande från kandidaten:</strong></p>
-        <p>"${message}"</p>
+        <p>"${sanitizedMessage}"</p>
       </div>` : ''}
       
       <div style="text-align: center;">
@@ -495,12 +594,12 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from: 'NOCV <noreply@nocv.se>',
-        to: [email],
-        subject: `✓ Bekräftelse: Din ansökan till ${job.title}`,
-        html: candidateEmailHtml,
-      }),
+        body: JSON.stringify({
+          from: 'NOCV <noreply@nocv.se>',
+          to: [sanitizedEmail],
+          subject: `✓ Bekräftelse: Din ansökan till ${sanitizeText(job.title)}`,
+          html: candidateEmailHtml,
+        }),
     });
 
     if (!candidateEmailResponse.ok) {
@@ -545,9 +644,9 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'NOCV <noreply@nocv.se>',
         to: ['hello@nocv.se'],
-        subject: `🔔 Ny ansökan: ${job.title}`,
+        subject: `🔔 Ny ansökan: ${sanitizeText(job.title)}`,
         html: recruiterEmailHtml,
-        reply_to: email,
+        reply_to: sanitizedEmail,
       }),
     });
 

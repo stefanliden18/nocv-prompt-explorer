@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { Helmet } from 'react-helmet-async';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -199,8 +200,75 @@ const JobDetail = () => {
     temporary: 'Vikariat'
   };
 
+  // Generate SEO metadata
+  const pageTitle = `${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
+  const pageDescription = job.description_md 
+    ? job.description_md.replace(/[#*_\[\]]/g, '').trim().substring(0, 155) + '...'
+    : `Ansök till ${job.title} hos ${job.companies?.name || 'företaget'} i ${job.city || 'Sverige'}. Sök jobb utan CV på NOCV.`;
+
+  // Generate structured data for JobPosting
+  const jobPostingSchema = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    "title": job.title,
+    "description": job.description_md || job.title,
+    "datePosted": job.publish_at || job.created_at,
+    "validThrough": job.publish_at ? new Date(new Date(job.publish_at).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString() : undefined, // 90 days from publish
+    "employmentType": job.employment_type?.toUpperCase() || "FULL_TIME",
+    "hiringOrganization": {
+      "@type": "Organization",
+      "name": job.companies?.name || "Okänt företag",
+      "sameAs": job.companies?.website || undefined,
+      "logo": job.companies?.logo_url || undefined
+    },
+    "jobLocation": {
+      "@type": "Place",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": job.city || "Sverige",
+        "addressCountry": "SE"
+      }
+    },
+    "baseSalary": job.category ? {
+      "@type": "MonetaryAmount",
+      "currency": "SEK",
+      "value": {
+        "@type": "QuantitativeValue",
+        "unitText": "MONTH"
+      }
+    } : undefined,
+    "industry": job.category,
+    "qualifications": job.requirements_md,
+    "responsibilities": job.description_md,
+    "url": `https://nocv.se/jobb/${job.slug}`
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:url" content={`https://nocv.se/jobb/${job.slug}`} />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={`https://nocv.se/jobb/${job.slug}`} />
+        
+        {/* Structured Data */}
+        <script type="application/ld+json">
+          {JSON.stringify(jobPostingSchema)}
+        </script>
+      </Helmet>
+
       <Navigation />
       
       {/* Header */}

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from 'react-helmet-async';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,8 +160,37 @@ const Jobs = () => {
     if (type === 'search') setSearchQuery(value);
   };
 
+  // Generate dynamic SEO metadata based on filters
+  const generatePageTitle = () => {
+    let title = 'Lediga jobb';
+    if (categoryFilter !== 'all') title = `${categoryFilter}-jobb`;
+    if (cityFilter !== 'all') title += ` i ${cityFilter}`;
+    if (searchQuery) title += ` - ${searchQuery}`;
+    return `${title} | NOCV - Sök jobb utan CV`;
+  };
+
+  const generatePageDescription = () => {
+    let desc = 'Hitta ditt nästa jobb baserat på vad du kan, inte vad du studerat.';
+    if (categoryFilter !== 'all' || cityFilter !== 'all') {
+      desc = `Sök bland ${totalCount} lediga jobb`;
+      if (categoryFilter !== 'all') desc += ` inom ${categoryFilter}`;
+      if (cityFilter !== 'all') desc += ` i ${cityFilter}`;
+      desc += ' på NOCV. Ansök utan CV.';
+    }
+    return desc;
+  };
+
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>{generatePageTitle()}</title>
+        <meta name="description" content={generatePageDescription()} />
+        <meta property="og:title" content={generatePageTitle()} />
+        <meta property="og:description" content={generatePageDescription()} />
+        <meta property="og:url" content="https://nocv.se/jobs" />
+        <link rel="canonical" href="https://nocv.se/jobs" />
+      </Helmet>
+
       <Navigation />
       
       {/* Header */}

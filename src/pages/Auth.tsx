@@ -1,21 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { useNavigate } from 'react-router-dom';
 
-const Auth = () => {
+export default function Auth() {
+  const { signIn, signUp, sendMagicLink, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [magicEmail, setMagicEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
-  const { signIn, signUp, signInWithMagicLink, user } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,103 +22,75 @@ const Auth = () => {
     }
   }, [user, navigate]);
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const { error } = await signUp(email, password);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Fel vid registrering',
-        description: error.message,
-      });
-    } else {
-      toast({
-        title: 'Registrering lyckades!',
-        description: 'Du kan nu logga in.',
-      });
-      setEmail('');
-      setPassword('');
-    }
-
-    setLoading(false);
-  };
-
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    const { error } = await signIn(email, password);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Fel vid inloggning',
-        description: error.message,
-      });
+    try {
+      await signIn(email, password);
+    } catch (error) {
+      console.error('Sign in error:', error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setLoading(false);
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await signUp(email, password);
+    } catch (error) {
+      console.error('Sign up error:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    const { error } = await signInWithMagicLink(email);
-
-    if (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Fel',
-        description: error.message,
-      });
-    } else {
-      setMagicLinkSent(true);
-      toast({
-        title: 'Magic link skickad!',
-        description: 'Kolla din e-post för inloggningslänk.',
-      });
+    try {
+      await sendMagicLink(magicEmail);
+    } catch (error) {
+      console.error('Magic link error:', error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background/95 to-primary/5 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Välkommen</CardTitle>
-          <CardDescription>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Välkommen</CardTitle>
+          <CardDescription className="text-center">
             Logga in eller skapa ett nytt konto
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Logga in</TabsTrigger>
+              <TabsTrigger value="login">Logga in</TabsTrigger>
               <TabsTrigger value="signup">Registrera</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="signin">
+            
+            <TabsContent value="login" className="space-y-4">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">E-post</Label>
+                  <Label htmlFor="login-email">E-post</Label>
                   <Input
-                    id="signin-email"
+                    id="login-email"
                     type="email"
-                    placeholder="din@email.se"
+                    placeholder="din@epost.se"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Lösenord</Label>
+                  <Label htmlFor="login-password">Lösenord</Label>
                   <Input
-                    id="signin-password"
+                    id="login-password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -128,54 +98,47 @@ const Auth = () => {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Logga in
+                  {loading ? 'Loggar in...' : 'Logga in'}
                 </Button>
               </form>
 
-              <div className="relative my-6">
+              <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <Separator />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    eller
+                    Eller
                   </span>
                 </div>
               </div>
 
               <form onSubmit={handleMagicLink} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="magic-email">E-post för Magic Link</Label>
+                  <Label htmlFor="magic-email">Magic Link</Label>
                   <Input
                     id="magic-email"
                     type="email"
-                    placeholder="din@email.se"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="din@epost.se"
+                    value={magicEmail}
+                    onChange={(e) => setMagicEmail(e.target.value)}
                     required
                   />
                 </div>
-                <Button
-                  type="submit"
-                  variant="outline"
-                  className="w-full"
-                  disabled={loading || magicLinkSent}
-                >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {magicLinkSent ? 'Magic link skickad!' : 'Skicka Magic Link'}
+                <Button type="submit" variant="outline" className="w-full" disabled={loading}>
+                  {loading ? 'Skickar...' : 'Skicka Magic Link'}
                 </Button>
               </form>
             </TabsContent>
 
-            <TabsContent value="signup">
+            <TabsContent value="signup" className="space-y-4">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">E-post</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="din@email.se"
+                    placeholder="din@epost.se"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
@@ -191,10 +154,12 @@ const Auth = () => {
                     required
                     minLength={6}
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Minst 6 tecken
+                  </p>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Skapa konto
+                  {loading ? 'Skapar konto...' : 'Skapa konto'}
                 </Button>
               </form>
             </TabsContent>
@@ -203,6 +168,4 @@ const Auth = () => {
       </Card>
     </div>
   );
-};
-
-export default Auth;
+}

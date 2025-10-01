@@ -29,51 +29,80 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('🔐 AuthContext: Initierar auth...');
     
-    // First, set up listener for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('🔐 Auth event:', event, 'Session:', !!session);
+    let mounted = true;
+    
+    const initAuth = async () => {
+      try {
+        // First, set up listener for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            if (!mounted) return;
+            
+            console.log('🔐 Auth event:', event, 'Session:', !!session);
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            if (session?.user) {
+              console.log('👤 User found:', session.user.email);
+              checkAdminStatus(session.user.id);
+            } else {
+              console.log('❌ No user in session');
+              setIsAdmin(false);
+              setRole('user');
+            }
+          }
+        );
+
+        // Then get current session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (!mounted) {
+          subscription.unsubscribe();
+          return;
+        }
+        
+        if (error) {
+          console.error('❌ Error getting session:', error);
+          throw error;
+        }
+        
+        console.log('📦 Initial session:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('👤 User found:', session.user.email);
-          // Use setTimeout to defer the Supabase call
-          setTimeout(() => {
-            checkAdminStatus(session.user.id);
-          }, 0);
+          console.log('👤 Initial user:', session.user.email);
+          await checkAdminStatus(session.user.id);
         } else {
-          console.log('❌ No user in session');
+          console.log('❌ No initial session');
           setIsAdmin(false);
           setRole('user');
         }
-      }
-    );
 
-    // Then get current session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('❌ Error getting session:', error);
+        return subscription;
+      } catch (error) {
+        console.error('❌ Auth initialization error:', error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+          setIsAdmin(false);
+          setRole('user');
+        }
+        return null;
+      } finally {
+        if (mounted) {
+          console.log('✅ Auth initialization complete');
+          setLoading(false);
+        }
       }
-      
-      console.log('📦 Initial session:', !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        console.log('👤 Initial user:', session.user.email);
-        checkAdminStatus(session.user.id);
-      } else {
-        console.log('❌ No initial session');
-        setIsAdmin(false);
-        setRole('user');
-      }
-      setLoading(false);
-    });
+    };
+
+    const subscriptionPromise = initAuth();
 
     return () => {
-      console.log('🔐 AuthContext: Unsubscribing...');
-      subscription.unsubscribe();
+      mounted = false;
+      console.log('🔐 AuthContext: Cleaning up...');
+      subscriptionPromise.then(sub => sub?.unsubscribe());
     };
   }, []);
 

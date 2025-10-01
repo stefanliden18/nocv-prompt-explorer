@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import { toZonedTime } from 'date-fns-tz';
 
 interface Job {
   id: string;
@@ -64,7 +65,9 @@ export default function AdminJobs() {
     }
     
     if (job.status === 'published') {
-      if (job.publish_at && new Date(job.publish_at) > new Date()) {
+      const now = toZonedTime(new Date(), 'Europe/Stockholm');
+      const publishDate = job.publish_at ? toZonedTime(new Date(job.publish_at), 'Europe/Stockholm') : null;
+      if (publishDate && publishDate > now) {
         return <Badge variant="outline">Planerad</Badge>;
       }
       return <Badge variant="default">Publicerad</Badge>;
@@ -123,9 +126,9 @@ export default function AdminJobs() {
                         {job.companies.name} • {job.city}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Skapad: {format(new Date(job.created_at), "PPP", { locale: sv })}
-                        {job.publish_at && new Date(job.publish_at) > new Date() && (
-                          <> • Planerad: {format(new Date(job.publish_at), "PPP", { locale: sv })}</>
+                        Skapad: {format(toZonedTime(new Date(job.created_at), 'Europe/Stockholm'), "PPP 'kl.' HH:mm", { locale: sv })}
+                        {job.publish_at && toZonedTime(new Date(job.publish_at), 'Europe/Stockholm') > toZonedTime(new Date(), 'Europe/Stockholm') && (
+                          <> • Planerad: {format(toZonedTime(new Date(job.publish_at), 'Europe/Stockholm'), "PPP 'kl.' HH:mm", { locale: sv })}</>
                         )}
                       </div>
                     </div>

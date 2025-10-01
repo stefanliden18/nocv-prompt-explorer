@@ -5,28 +5,40 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { UserInviteDialog } from '@/components/UserInviteDialog';
+import { UserRoleDialog } from '@/components/UserRoleDialog';
+import { UserStatusToggle } from '@/components/UserStatusToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
-import { UserPlus, Search, Loader2 } from 'lucide-react';
+import { UserPlus, Search, Loader2, MoreHorizontal } from 'lucide-react';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
-interface User {
+interface UserData {
   id: string;
   email: string;
   role: string;
   created_at: string;
   last_sign_in_at: string | null;
+  banned_until: string | null;
 }
 
 export default function AdminUsers() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
+  const [activeAdminCount, setActiveAdminCount] = useState(0);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -38,19 +50,28 @@ export default function AdminUsers() {
 
       if (error) throw error;
 
-      // Get auth data for last sign in
-      const usersWithAuth = await Promise.all(
+      // Get auth data for last sign in and banned status
+      const usersWithAuth: UserData[] = await Promise.all(
         (profiles || []).map(async (profile) => {
           const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
+          const authUser = authData.user as any;
           return {
-            ...profile,
-            last_sign_in_at: authData.user?.last_sign_in_at || null,
+            id: profile.id,
+            email: profile.email,
+            role: profile.role,
+            created_at: profile.created_at,
+            last_sign_in_at: authUser?.last_sign_in_at || null,
+            banned_until: authUser?.banned_until || null,
           };
         })
       );
 
       setUsers(usersWithAuth);
       setFilteredUsers(usersWithAuth);
+
+      // Count active admins
+      const { data: count } = await supabase.rpc('count_active_admins');
+      setActiveAdminCount(count || 0);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -93,11 +114,38 @@ export default function AdminUsers() {
     }
   };
 
-  const getStatusBadge = (lastSignIn: string | null) => {
-    if (!lastSignIn) {
+  const getStatusBadge = (user: UserData) => {
+    // Check if user is banned
+    if (user.banned_until) {
+      const bannedUntil = new Date(user.banned_until);
+      if (bannedUntil > new Date()) {
+        return <Badge variant="destructive">Avstängd</Badge>;
+      }
+    }
+    
+    if (!user.last_sign_in_at) {
       return <Badge variant="outline">Ej aktiverad</Badge>;
     }
     return <Badge className="bg-green-500/10 text-green-700 dark:text-green-400">Aktiv</Badge>;
+  };
+
+  const isUserActive = (user: UserData): boolean => {
+    if (user.banned_until) {
+      const bannedUntil = new Date(user.banned_until);
+      if (bannedUntil > new Date()) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const isLastAdmin = (user: UserData): boolean => {
+    return user.role === 'admin' && activeAdminCount <= 1 && isUserActive(user);
+  };
+
+  const handleRoleChange = (user: UserData) => {
+    setSelectedUser(user);
+    setRoleDialogOpen(true);
   };
 
   return (
@@ -158,12 +206,14 @@ export default function AdminUsers() {
                       <TableHead>Roll</TableHead>
                       <TableHead>Skapad</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Aktiv</TableHead>
+                      <TableHead className="text-right">Åtgärder</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredUsers.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground">
                           Inga användare hittades
                         </TableCell>
                       </TableRow>
@@ -175,7 +225,30 @@ export default function AdminUsers() {
                           <TableCell>
                             {format(new Date(user.created_at), 'PPP', { locale: sv })}
                           </TableCell>
-                          <TableCell>{getStatusBadge(user.last_sign_in_at)}</TableCell>
+                          <TableCell>{getStatusBadge(user)}</TableCell>
+                          <TableCell>
+                            <UserStatusToggle
+                              userId={user.id}
+                              userEmail={user.email}
+                              currentStatus={isUserActive(user)}
+                              isLastAdmin={isLastAdmin(user)}
+                              onSuccess={fetchUsers}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleRoleChange(user)}>
+                                  Byt roll
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
@@ -192,6 +265,18 @@ export default function AdminUsers() {
         onOpenChange={setInviteDialogOpen}
         onSuccess={fetchUsers}
       />
+
+      {selectedUser && (
+        <UserRoleDialog
+          open={roleDialogOpen}
+          onOpenChange={setRoleDialogOpen}
+          userId={selectedUser.id}
+          currentRole={selectedUser.role}
+          userEmail={selectedUser.email}
+          isLastAdmin={isLastAdmin(selectedUser)}
+          onSuccess={fetchUsers}
+        />
+      )}
     </AdminLayout>
   );
 }

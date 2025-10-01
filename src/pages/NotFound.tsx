@@ -1,5 +1,8 @@
 import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
 
 const NotFound = () => {
   const location = useLocation();
@@ -9,14 +12,19 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-gray-600">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 underline hover:text-blue-700">
-          Return to Home
-        </a>
+    <div className="min-h-screen bg-background">
+      <Navigation />
+      <div className="flex min-h-screen items-center justify-center px-4 pt-20">
+        <div className="text-center">
+          <h1 className="mb-4 text-6xl font-bold text-primary">404</h1>
+          <p className="mb-2 text-2xl font-semibold text-foreground">Sidan hittades inte</p>
+          <p className="mb-8 text-muted-foreground">Tyvärr kunde vi inte hitta sidan du letar efter.</p>
+          <Button asChild>
+            <a href="/">Tillbaka till startsidan</a>
+          </Button>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };

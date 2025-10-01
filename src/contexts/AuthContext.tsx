@@ -92,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       toast.success('Konto skapat! Du är nu inloggad.');
-      navigate('/');
+      navigate('/admin');
     } catch (error: any) {
       toast.error(error.message || 'Kunde inte skapa konto');
       throw error;
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       
       toast.success('Inloggad!');
-      navigate('/');
+      navigate('/admin');
     } catch (error: any) {
       toast.error(error.message || 'Kunde inte logga in');
       throw error;

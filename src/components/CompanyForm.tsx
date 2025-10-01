@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -37,67 +38,137 @@ const companySchema = z.object({
 
 type CompanyFormData = z.infer<typeof companySchema>;
 
+interface Company {
+  id: string;
+  name: string;
+  description: string | null;
+  website: string | null;
+  logo_url: string | null;
+  contact_person: string;
+  contact_email: string;
+  contact_phone: string;
+}
+
 interface CompanyFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  company?: Company | null;
 }
 
-export function CompanyForm({ open, onOpenChange, onSuccess }: CompanyFormProps) {
+export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = !!company;
 
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      name: '',
-      description: '',
-      website: '',
-      logo_url: '',
-      contact_person: '',
-      contact_email: '',
-      contact_phone: '',
+      name: company?.name || '',
+      description: company?.description || '',
+      website: company?.website || '',
+      logo_url: company?.logo_url || '',
+      contact_person: company?.contact_person || '',
+      contact_email: company?.contact_email || '',
+      contact_phone: company?.contact_phone || '',
     },
   });
+
+  // Update form when company changes
+  React.useEffect(() => {
+    if (company) {
+      form.reset({
+        name: company.name,
+        description: company.description || '',
+        website: company.website || '',
+        logo_url: company.logo_url || '',
+        contact_person: company.contact_person,
+        contact_email: company.contact_email,
+        contact_phone: company.contact_phone,
+      });
+    } else {
+      form.reset({
+        name: '',
+        description: '',
+        website: '',
+        logo_url: '',
+        contact_person: '',
+        contact_email: '',
+        contact_phone: '',
+      });
+    }
+  }, [company, form]);
 
   const onSubmit = async (data: CompanyFormData) => {
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('companies')
-        .insert({
-          name: data.name,
-          description: data.description || null,
-          website: data.website || null,
-          logo_url: data.logo_url || null,
-          contact_person: data.contact_person,
-          contact_email: data.contact_email,
-          contact_phone: data.contact_phone,
-        });
+      if (isEditMode && company) {
+        // Update existing company
+        const { error } = await supabase
+          .from('companies')
+          .update({
+            name: data.name,
+            description: data.description || null,
+            website: data.website || null,
+            logo_url: data.logo_url || null,
+            contact_person: data.contact_person,
+            contact_email: data.contact_email,
+            contact_phone: data.contact_phone,
+          })
+          .eq('id', company.id);
 
-      if (error) {
-        console.error('Supabase error:', error);
+        if (error) {
+          console.error('Supabase error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Misslyckades att uppdatera företag',
+            description: error.message || 'Ett oväntat fel uppstod. Försök igen.',
+          });
+          return;
+        }
+
         toast({
-          variant: 'destructive',
-          title: 'Misslyckades att skapa företag',
-          description: error.message || 'Ett oväntat fel uppstod. Försök igen.',
+          title: 'Företag uppdaterat',
+          description: `${data.name} har uppdaterats.`,
         });
-        return;
-      }
+      } else {
+        // Create new company
+        const { error } = await supabase
+          .from('companies')
+          .insert({
+            name: data.name,
+            description: data.description || null,
+            website: data.website || null,
+            logo_url: data.logo_url || null,
+            contact_person: data.contact_person,
+            contact_email: data.contact_email,
+            contact_phone: data.contact_phone,
+          });
 
-      toast({
-        title: 'Företag skapat',
-        description: `${data.name} har lagts till i systemet.`,
-      });
+        if (error) {
+          console.error('Supabase error:', error);
+          toast({
+            variant: 'destructive',
+            title: 'Misslyckades att skapa företag',
+            description: error.message || 'Ett oväntat fel uppstod. Försök igen.',
+          });
+          return;
+        }
+
+        toast({
+          title: 'Företag skapat',
+          description: `${data.name} har lagts till i systemet.`,
+        });
+      }
 
       form.reset();
       onOpenChange(false);
       onSuccess();
     } catch (error) {
-      console.error('Error creating company:', error);
+      console.error('Error saving company:', error);
       toast({
         variant: 'destructive',
-        title: 'Misslyckades att skapa företag',
+        title: isEditMode ? 'Misslyckades att uppdatera företag' : 'Misslyckades att skapa företag',
         description: 'Ett oväntat fel uppstod. Försök igen.',
       });
     } finally {
@@ -109,9 +180,12 @@ export function CompanyForm({ open, onOpenChange, onSuccess }: CompanyFormProps)
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>Nytt företag</DialogTitle>
+          <DialogTitle>{isEditMode ? 'Redigera företag' : 'Nytt företag'}</DialogTitle>
           <DialogDescription>
-            Lägg till ett nytt företag i systemet. Fält markerade med * är obligatoriska.
+            {isEditMode 
+              ? 'Uppdatera företagets information. Fält markerade med * är obligatoriska.'
+              : 'Lägg till ett nytt företag i systemet. Fält markerade med * är obligatoriska.'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -263,7 +337,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess }: CompanyFormProps)
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Skapa företag
+                {isEditMode ? 'Uppdatera företag' : 'Skapa företag'}
               </Button>
             </DialogFooter>
           </form>

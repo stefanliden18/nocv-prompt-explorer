@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, Loader2, ExternalLink, Pencil, Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { CompanyForm } from '@/components/CompanyForm';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -15,6 +16,16 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Company {
   id: string;
@@ -30,10 +41,16 @@ interface Company {
 
 export default function AdminCompanies() {
   const { role } = useAuth();
+  const navigate = useNavigate();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState<Company | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const canManageCompanies = role === 'admin' || role === 'recruiter';
 
@@ -78,6 +95,85 @@ export default function AdminCompanies() {
 
   const handleSuccess = () => {
     fetchCompanies();
+    setEditingCompany(null);
+  };
+
+  const handleEdit = (company: Company) => {
+    setEditingCompany(company);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteClick = async (company: Company) => {
+    // Check if company has linked jobs
+    const { data: jobs, error: jobsError } = await supabase
+      .from('jobs')
+      .select('id')
+      .eq('company_id', company.id)
+      .limit(1);
+
+    if (jobsError) {
+      console.error('Error checking jobs:', jobsError);
+      toast({
+        variant: 'destructive',
+        title: 'Fel vid kontroll',
+        description: 'Kunde inte kontrollera kopplade jobb.',
+      });
+      return;
+    }
+
+    if (jobs && jobs.length > 0) {
+      setDeleteError('Kan inte radera: kopplade jobb finns');
+    } else {
+      setDeleteError(null);
+    }
+
+    setCompanyToDelete(company);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!companyToDelete || deleteError) return;
+
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .delete()
+        .eq('id', companyToDelete.id);
+
+      if (error) {
+        console.error('Error deleting company:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Misslyckades att radera',
+          description: error.message || 'Ett oväntat fel uppstod.',
+        });
+        return;
+      }
+
+      toast({
+        title: 'Företag raderat',
+        description: `${companyToDelete.name} har raderats.`,
+      });
+
+      setDeleteDialogOpen(false);
+      setCompanyToDelete(null);
+      fetchCompanies();
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Misslyckades att radera',
+        description: 'Ett oväntat fel uppstod.',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setEditingCompany(null);
   };
 
   return (
@@ -189,11 +285,63 @@ export default function AdminCompanies() {
       </div>
 
       {canManageCompanies && (
-        <CompanyForm
-          open={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          onSuccess={handleSuccess}
-        />
+        <>
+          <CompanyForm
+            open={isFormOpen}
+            onOpenChange={handleFormClose}
+            onSuccess={handleSuccess}
+            company={editingCompany}
+          />
+
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {deleteError ? 'Kan inte radera företag' : 'Radera företag'}
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  {deleteError ? (
+                    <div className="space-y-4">
+                      <p className="text-destructive font-medium">{deleteError}</p>
+                      <p>
+                        Företaget <strong>{companyToDelete?.name}</strong> har jobb kopplade till sig.
+                        Du måste först byta företag på dessa jobb innan du kan radera företaget.
+                      </p>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setDeleteDialogOpen(false);
+                          navigate('/admin/jobs');
+                        }}
+                      >
+                        Gå till jobblistan
+                      </Button>
+                    </div>
+                  ) : (
+                    <p>
+                      Är du säker på att du vill radera <strong>{companyToDelete?.name}</strong>?
+                      Detta går inte att ångra.
+                    </p>
+                  )}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                {!deleteError && (
+                  <AlertDialogAction
+                    onClick={handleDeleteConfirm}
+                    disabled={isDeleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {isDeleting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Radera
+                  </AlertDialogAction>
+                )}
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </AdminLayout>
   );

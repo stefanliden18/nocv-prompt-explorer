@@ -22,6 +22,7 @@ import AdminUsers from "./pages/admin/Users";
 import ActivityLogs from "./pages/admin/ActivityLogs";
 import JobForm from "./pages/admin/JobForm";
 import JobEdit from "./pages/admin/JobEdit";
+import JobPreview from "./pages/admin/JobPreview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -78,6 +79,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <JobEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/jobs/:id/preview" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <JobPreview />
                 </ProtectedRoute>
               } 
             />

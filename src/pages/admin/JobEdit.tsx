@@ -186,6 +186,48 @@ export default function JobEdit() {
   const handlePublish = () => updateJob('published');
   const handleArchive = () => updateJob('archived');
 
+  const handlePreview = () => {
+    if (id) {
+      window.open(`/admin/jobs/${id}/preview`, '_blank');
+    }
+  };
+
+  const handleSchedule = () => {
+    const date = window.prompt('Ange datum och tid för publicering (YYYY-MM-DD HH:MM):');
+    if (date) {
+      try {
+        const selectedDate = new Date(date);
+        setPublishAt(selectedDate);
+        toast.success('Publiceringsdatum satt');
+      } catch (error) {
+        toast.error('Ogiltigt datum');
+      }
+    }
+  };
+
+  const handleUnpublish = () => {
+    if (window.confirm('Är du säker på att du vill avpublicera detta jobb?')) {
+      updateJob('draft');
+    }
+  };
+
+  const getActionBarButtons = () => {
+    const isDraft = status === 'draft';
+    const isPublished = status === 'published';
+    const isArchived = status === 'archived';
+
+    return {
+      save: !isArchived,
+      preview: true,
+      publish: !isPublished && !isArchived,
+      schedule: !isPublished && !isArchived,
+      unpublish: isPublished,
+      archive: !isArchived,
+    };
+  };
+
+  const buttons = getActionBarButtons();
+
   if (jobLoading) {
     return (
       <AdminLayout>
@@ -199,37 +241,77 @@ export default function JobEdit() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/admin/jobs')}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-bold">Redigera jobb</h1>
+        {/* Fixed Action Bar */}
+        <div className="sticky top-0 z-10 bg-background border-b pb-4 -mt-6 -mx-6 px-6 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/admin/jobs')}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold">
+                  {id ? 'Redigera jobb' : 'Skapa nytt jobb'}
+                </h1>
                 {getStatusBadge()}
               </div>
-              <p className="text-muted-foreground">Uppdatera jobbinformation</p>
             </div>
           </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSave} disabled={loading}>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={loading || !buttons.save}
+              variant="outline"
+            >
               <Save className="h-4 w-4 mr-2" />
               Spara
             </Button>
-            {status !== 'published' && (
-              <Button onClick={handlePublish} disabled={loading}>
-                <Send className="h-4 w-4 mr-2" />
-                Publicera
+            
+            <Button
+              onClick={handlePreview}
+              disabled={!buttons.preview || !id}
+              variant="outline"
+            >
+              <Eye className="h-4 w-4 mr-2" />
+              Förhandsgranska
+            </Button>
+            
+            <Button
+              onClick={handlePublish}
+              disabled={loading || !buttons.publish}
+              variant="default"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Publicera
+            </Button>
+            
+            <Button
+              onClick={handleSchedule}
+              disabled={loading || !buttons.schedule}
+              variant="outline"
+            >
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              Planera publicering
+            </Button>
+            
+            {buttons.unpublish && (
+              <Button
+                onClick={handleUnpublish}
+                disabled={loading}
+                variant="secondary"
+              >
+                Avpublicera
               </Button>
             )}
-            {status !== 'archived' && (
-              <Button variant="destructive" onClick={handleArchive} disabled={loading}>
-                <Archive className="h-4 w-4 mr-2" />
-                Arkivera
-              </Button>
-            )}
+            
+            <Button
+              onClick={handleArchive}
+              disabled={loading || !buttons.archive}
+              variant="destructive"
+            >
+              <Archive className="h-4 w-4 mr-2" />
+              Arkivera
+            </Button>
           </div>
         </div>
 

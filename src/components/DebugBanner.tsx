@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertCircle, CheckCircle2, User, Mail, Shield } from "lucide-react";
 
 export function DebugBanner() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isAdmin, role, loading } = useAuth();
   const navigate = useNavigate();
 
   if (loading) {
@@ -43,8 +43,8 @@ export function DebugBanner() {
 
             <div className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              <span className={isAdmin ? "font-bold text-yellow-300" : ""}>
-                {isAdmin ? "🔑 ADMIN" : "Användare"}
+              <span className={role === 'admin' ? "font-bold text-yellow-300" : ""}>
+                {role === 'admin' ? '🔑 ADMIN' : role === 'recruiter' ? '👔 RECRUITER' : '👤 USER'}
               </span>
             </div>
           </>

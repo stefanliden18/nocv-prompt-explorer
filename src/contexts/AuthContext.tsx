@@ -8,6 +8,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAdmin: boolean;
+  role: string;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [role, setRole] = useState<string>('user');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkAdminStatus(session.user.id);
       } else {
         setIsAdmin(false);
+        setRole('user');
       }
       setLoading(false);
     });
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await checkAdminStatus(session.user.id);
         } else {
           setIsAdmin(false);
+          setRole('user');
         }
       }
     );
@@ -58,22 +62,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAdminStatus = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('user_roles')
+        .from('profiles')
         .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
+        .eq('id', userId)
+        .single();
       
       if (error) {
-        console.error('Error checking admin status:', error);
+        console.error('Error checking profile role:', error);
         setIsAdmin(false);
+        setRole('user');
         return;
       }
       
-      setIsAdmin(!!data);
+      const userRole = data?.role || 'user';
+      setRole(userRole);
+      setIsAdmin(userRole === 'admin');
     } catch (error) {
       console.error('Error in checkAdminStatus:', error);
       setIsAdmin(false);
+      setRole('user');
     }
   };
 
@@ -150,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, loading, signUp, signIn, signOut, sendMagicLink }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, role, loading, signUp, signIn, signOut, sendMagicLink }}>
       {children}
     </AuthContext.Provider>
   );

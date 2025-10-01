@@ -4,15 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function AdminHeader() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, role } = useAuth();
 
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
   };
 
   const getRoleBadge = () => {
-    if (isAdmin) return <Badge variant="default">Admin</Badge>;
-    return <Badge variant="secondary">Rekryterare</Badge>;
+    if (role === 'admin') return <Badge variant="default">Admin</Badge>;
+    if (role === 'recruiter') return <Badge variant="secondary">Rekryterare</Badge>;
+    return <Badge variant="outline">Användare</Badge>;
   };
 
   return (

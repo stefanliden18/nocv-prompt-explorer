@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { AdminStatusButton } from "./AdminStatusButton";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -46,23 +47,9 @@ const Navigation = () => {
 
           {/* CTA Buttons and Mobile Menu */}
           <div className="flex items-center space-x-4">
-            {user ? (
-              <Button 
-                variant="ghost" 
-                className="hidden sm:inline-flex"
-                onClick={() => signOut()}
-              >
-                Logga ut
-              </Button>
-            ) : (
-              <Button 
-                variant="ghost" 
-                className="hidden sm:inline-flex"
-                onClick={() => navigate('/auth')}
-              >
-                Logga in
-              </Button>
-            )}
+            <div className="hidden sm:flex">
+              <AdminStatusButton />
+            </div>
             
             {/* Mobile Menu - Only shown on mobile and tablet */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -112,29 +99,7 @@ const Navigation = () => {
                     </a>
                   )}
                   <div className="pt-4 border-t border-border">
-                    {user ? (
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start text-lg"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          signOut();
-                        }}
-                      >
-                        Logga ut
-                      </Button>
-                    ) : (
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start text-lg"
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          navigate('/auth');
-                        }}
-                      >
-                        Logga in
-                      </Button>
-                    )}
+                    <AdminStatusButton />
                   </div>
                 </nav>
               </SheetContent>

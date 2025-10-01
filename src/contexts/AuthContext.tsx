@@ -27,40 +27,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // First, get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        checkAdminStatus(session.user.id);
-      } else {
-        setIsAdmin(false);
-        setRole('user');
-      }
-      setLoading(false);
-    });
-
-    // Then set up listener for auth changes
+    console.log('🔐 AuthContext: Initierar auth...');
+    
+    // First, set up listener for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        console.log('🔐 Auth event:', event, 'Session:', !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          await checkAdminStatus(session.user.id);
+          console.log('👤 User found:', session.user.email);
+          // Use setTimeout to defer the Supabase call
+          setTimeout(() => {
+            checkAdminStatus(session.user.id);
+          }, 0);
         } else {
+          console.log('❌ No user in session');
           setIsAdmin(false);
           setRole('user');
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Then get current session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Error getting session:', error);
+      }
+      
+      console.log('📦 Initial session:', !!session);
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        console.log('👤 Initial user:', session.user.email);
+        checkAdminStatus(session.user.id);
+      } else {
+        console.log('❌ No initial session');
+        setIsAdmin(false);
+        setRole('user');
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      console.log('🔐 AuthContext: Unsubscribing...');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkAdminStatus = async (userId: string) => {
     try {
+      console.log('🔍 Checking role for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('role')
@@ -68,17 +87,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
       
       if (error) {
-        console.error('Error checking profile role:', error);
+        console.error('❌ Error checking profile role:', error);
         setIsAdmin(false);
         setRole('user');
         return;
       }
       
       const userRole = data?.role || 'user';
+      console.log('✅ User role:', userRole);
       setRole(userRole);
       setIsAdmin(userRole === 'admin');
     } catch (error) {
-      console.error('Error in checkAdminStatus:', error);
+      console.error('❌ Error in checkAdminStatus:', error);
       setIsAdmin(false);
       setRole('user');
     }
@@ -145,12 +165,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('🚪 Logging out...');
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
+      console.log('✅ Logged out successfully');
+      setSession(null);
+      setUser(null);
+      setIsAdmin(false);
+      setRole('user');
+      
       toast.success('Utloggad!');
-      navigate('/auth');
+      navigate('/');
     } catch (error: any) {
+      console.error('❌ Logout error:', error);
       toast.error(error.message || 'Kunde inte logga ut');
       throw error;
     }

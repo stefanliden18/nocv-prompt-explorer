@@ -9,14 +9,14 @@ export function DebugBanner() {
 
   if (loading) {
     return (
-      <div className="bg-yellow-500 text-yellow-950 px-4 py-2 text-sm font-mono border-b-2 border-yellow-600">
+      <div className="fixed top-0 left-0 right-0 z-[9999] bg-yellow-500 text-yellow-950 px-4 py-2 text-sm font-mono border-b-2 border-yellow-600">
         ⏳ Laddar auth...
       </div>
     );
   }
 
   return (
-    <div className="bg-purple-600 text-white px-4 py-2 text-sm font-mono border-b-2 border-purple-800 flex items-center justify-between gap-4 flex-wrap">
+    <div className="fixed top-0 left-0 right-0 z-[9999] bg-purple-600 text-white px-4 py-2 text-sm font-mono border-b-2 border-purple-800 flex items-center justify-between gap-4 flex-wrap shadow-lg">
       <div className="flex items-center gap-4 flex-wrap">
         <div className="flex items-center gap-2">
           {user ? (

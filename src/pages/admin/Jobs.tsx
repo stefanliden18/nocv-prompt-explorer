@@ -3,7 +3,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Eye } from 'lucide-react';
+import { Plus, Edit, Eye, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -81,10 +81,16 @@ export default function AdminJobs() {
             <h1 className="text-3xl font-bold">Jobb</h1>
             <p className="text-muted-foreground">Hantera jobbannonser</p>
           </div>
-          <Button onClick={() => navigate('/admin/jobs/new')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nytt jobb
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/admin/jobs/import')}>
+              <Upload className="h-4 w-4 mr-2" />
+              Importera CSV
+            </Button>
+            <Button onClick={() => navigate('/admin/jobs/new')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nytt jobb
+            </Button>
+          </div>
         </div>
 
         <Card>

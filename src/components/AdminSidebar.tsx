@@ -5,6 +5,7 @@ import {
   FileText, 
   Building2, 
   Users, 
+  Upload,
   LogOut 
 } from "lucide-react";
 import {
@@ -23,6 +24,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Jobb", url: "/admin/jobs", icon: Briefcase },
+  { title: "Importera jobb", url: "/admin/jobs/import", icon: Upload },
   { title: "Ansökningar", url: "/admin/applications", icon: FileText },
   { title: "Företag", url: "/admin/companies", icon: Building2 },
   { title: "Användare", url: "/admin/users", icon: Users },

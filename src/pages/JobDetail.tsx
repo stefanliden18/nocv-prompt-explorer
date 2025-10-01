@@ -259,7 +259,7 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
               {job.requirements_md && (
                 <Card className="bg-white border border-border">
                   <CardContent className="p-8">
-                    <h2 className="text-2xl font-heading mb-4">Krav och kvalifikationer</h2>
+                    <h2 className="text-2xl font-heading mb-4">Vad vi söker</h2>
                     <div className="prose prose-sm max-w-none text-foreground">
                       <ReactMarkdown>{job.requirements_md}</ReactMarkdown>
                     </div>

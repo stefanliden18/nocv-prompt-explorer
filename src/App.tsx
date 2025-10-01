@@ -19,6 +19,7 @@ import AdminApplications from "./pages/admin/Applications";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminUsers from "./pages/admin/Users";
+import ActivityLogs from "./pages/admin/ActivityLogs";
 import JobForm from "./pages/admin/JobForm";
 import JobEdit from "./pages/admin/JobEdit";
 import NotFound from "./pages/NotFound";
@@ -109,6 +110,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminUsers />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/activity" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ActivityLogs />
                 </ProtectedRoute>
               } 
             />

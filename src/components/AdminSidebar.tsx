@@ -6,6 +6,7 @@ import {
   Building2, 
   Users, 
   Upload,
+  Activity,
   LogOut 
 } from "lucide-react";
 import {
@@ -28,6 +29,7 @@ const menuItems = [
   { title: "Ansökningar", url: "/admin/applications", icon: FileText },
   { title: "Företag", url: "/admin/companies", icon: Building2 },
   { title: "Användare", url: "/admin/users", icon: Users },
+  { title: "Händelselogg", url: "/admin/activity", icon: Activity },
 ];
 
 export function AdminSidebar() {

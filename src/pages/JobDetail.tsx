@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
 import DOMPurify from 'isomorphic-dompurify';
+import { analytics } from "@/lib/analytics";
 
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
@@ -53,6 +54,13 @@ const JobDetail = () => {
   useEffect(() => {
     fetchJob();
   }, [slug, id]);
+
+  // Track job view when job is loaded
+  useEffect(() => {
+    if (job) {
+      analytics.trackJobView(job.id, job.title);
+    }
+  }, [job]);
 
   const fetchJob = async () => {
     setLoading(true);
@@ -155,6 +163,10 @@ const JobDetail = () => {
       }
 
       setIsSubmitted(true);
+      
+      // Track successful application submission
+      analytics.trackApplicationSubmit(job.id, job.title, true);
+      
       toast({
         title: "Ansökan skickad!",
         description: "Vi har skickat en bekräftelse till din e-post och kommer att kontakta dig inom kort.",
@@ -162,6 +174,9 @@ const JobDetail = () => {
       
     } catch (error: any) {
       console.error('Error sending application:', error);
+      
+      // Track failed application submission
+      analytics.trackApplicationSubmit(job.id, job.title, false);
       
       toast({
         title: "Ett fel uppstod",
@@ -388,7 +403,10 @@ const JobDetail = () => {
                       <Button 
                         className="w-full"
                         variant="cta-primary"
-                        onClick={() => setShowApplication(true)}
+                        onClick={() => {
+                          setShowApplication(true);
+                          analytics.trackJobApplyClick(job.id, job.title);
+                        }}
                       >
                         <Send className="w-4 h-4 mr-2" />
                         Ansök nu

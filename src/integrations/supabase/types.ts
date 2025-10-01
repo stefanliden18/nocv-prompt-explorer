@@ -203,11 +203,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_application: {
+        Args: { _application_id: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      is_job_creator: {
+        Args: { _job_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_job_published: {
+        Args: { job: Database["public"]["Tables"]["jobs"]["Row"] }
         Returns: boolean
       }
       is_recruiter_or_admin: {

@@ -1,81 +1,123 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Building2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { MapPin, Building2, Search } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
-// Mock job data
-const mockJobs = [
-  {
-    id: 1,
-    title: "Bilmekaniker",
-    location: "Stockholm",
-    industry: "Fordon",
-    company: "AutoService AB",
-    description: "Erfaren bilmekaniker sökes till vårt team."
-  },
-  {
-    id: 2,
-    title: "Svetsare",
-    location: "Göteborg", 
-    industry: "Tillverkning",
-    company: "MetallTeknik Sverige",
-    description: "Kvalificerad svetsare för industriella projekt."
-  },
-  {
-    id: 3,
-    title: "Tekniker",
-    location: "Malmö",
-    industry: "Elektronik",
-    company: "TechSolutions Nordic",
-    description: "Elektroniktekniker med erfarenhet av reparationer."
-  },
-  {
-    id: 4,
-    title: "Maskinoperatör",
-    location: "Stockholm",
-    industry: "Tillverkning",
-    company: "Industrial Works",
-    description: "Operatör för CNC-maskiner och produktionsutrustning."
-  },
-  {
-    id: 5,
-    title: "Lacktekniker",
-    location: "Uppsala",
-    industry: "Fordon",
-    company: "CarPaint Specialists",
-    description: "Lacktekniker för bilar och industriella ändamål."
-  },
-  {
-    id: 6,
-    title: "Elektriker",
-    location: "Göteborg",
-    industry: "Elektro",
-    company: "ElektroNord AB",
-    description: "Behörig elektriker för installations- och servicearbeten."
-  }
-];
+const ITEMS_PER_PAGE = 12;
 
 const Jobs = () => {
-  const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const navigate = useNavigate();
+  const [jobs, setJobs] = useState<any[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [cities, setCities] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
 
-  // Get unique locations and industries for filters
-  const locations = Array.from(new Set(mockJobs.map(job => job.location)));
-  const industries = Array.from(new Set(mockJobs.map(job => job.industry)));
+  // Fetch published jobs from backend
+  useEffect(() => {
+    fetchJobs();
+  }, []);
 
-  // Filter jobs based on selected filters
-  const filteredJobs = mockJobs.filter(job => {
-    const locationMatch = locationFilter === "all" || job.location === locationFilter;
-    const roleMatch = roleFilter === "all" || job.industry === roleFilter;
-    return locationMatch && roleMatch;
-  });
+  const fetchJobs = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select(`
+          id,
+          slug,
+          title,
+          city,
+          category,
+          description_md,
+          company_id,
+          companies (
+            name
+          )
+        `)
+        .eq('status', 'published')
+        .lte('publish_at', new Date().toISOString())
+        .order('created_at', { ascending: false });
 
-  const handleJobDetails = (jobId: number) => {
-    window.location.href = `/jobs/${jobId}`;
+      if (error) throw error;
+
+      setJobs(data || []);
+      
+      // Extract unique cities and categories
+      const uniqueCities = [...new Set(data?.map(job => job.city).filter(Boolean))] as string[];
+      const uniqueCategories = [...new Set(data?.map(job => job.category).filter(Boolean))] as string[];
+      
+      setCities(uniqueCities.sort());
+      setCategories(uniqueCategories.sort());
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter jobs based on all criteria
+  useEffect(() => {
+    let filtered = jobs;
+
+    // City filter
+    if (cityFilter !== "all") {
+      filtered = filtered.filter(job => job.city === cityFilter);
+    }
+
+    // Category filter
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(job => job.category === categoryFilter);
+    }
+
+    // Text search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(job => 
+        job.title?.toLowerCase().includes(query) ||
+        job.description_md?.toLowerCase().includes(query) ||
+        job.companies?.name?.toLowerCase().includes(query) ||
+        job.city?.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredJobs(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
+  }, [jobs, cityFilter, categoryFilter, searchQuery]);
+
+  // Get intro text (first 120 chars of description)
+  const getIntroText = (description: string) => {
+    if (!description) return "";
+    const text = description.replace(/[#*_\[\]]/g, '').trim();
+    return text.length > 120 ? text.substring(0, 120) + '...' : text;
+  };
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentJobs = filteredJobs.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleJobDetails = (slug: string) => {
+    navigate(`/jobb/${slug}`);
   };
 
   return (
@@ -95,35 +137,46 @@ const Jobs = () => {
           </div>
 
           {/* Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8 max-w-2xl mx-auto">
-            <div className="flex-1">
-              <Select value={locationFilter} onValueChange={setLocationFilter}>
+          <div className="flex flex-col gap-4 max-w-4xl mx-auto mb-8">
+            {/* Search bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Sök efter jobb, företag eller stad..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12"
+              />
+            </div>
+
+            {/* Filter dropdowns */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Select value={cityFilter} onValueChange={setCityFilter}>
                 <SelectTrigger className="w-full">
                   <MapPin className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Välj ort" />
+                  <SelectValue placeholder="Välj stad" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-border shadow-lg z-50">
-                  <SelectItem value="all">Alla orter</SelectItem>
-                  {locations.map(location => (
-                    <SelectItem key={location} value={location}>
-                      {location}
+                  <SelectItem value="all">Alla städer</SelectItem>
+                  {cities.map(city => (
+                    <SelectItem key={city} value={city}>
+                      {city}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div className="flex-1">
-              <Select value={roleFilter} onValueChange={setRoleFilter}>
+              
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full">
                   <Building2 className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Välj bransch" />
+                  <SelectValue placeholder="Välj kategori" />
                 </SelectTrigger>
                 <SelectContent className="bg-white border border-border shadow-lg z-50">
-                  <SelectItem value="all">Alla branscher</SelectItem>
-                  {industries.map(industry => (
-                    <SelectItem key={industry} value={industry}>
-                      {industry}
+                  <SelectItem value="all">Alla kategorier</SelectItem>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -132,68 +185,154 @@ const Jobs = () => {
           </div>
 
           {/* Results counter */}
-          <div className="text-center mb-8">
-            <p className="text-muted-foreground">
-              Visar {filteredJobs.length} av {mockJobs.length} jobb
-            </p>
-          </div>
+          {!loading && (
+            <div className="text-center mb-8">
+              <p className="text-muted-foreground">
+                Visar {startIndex + 1}-{Math.min(endIndex, filteredJobs.length)} av {filteredJobs.length} jobb
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Job listings */}
       <section className="pb-20">
         <div className="container mx-auto px-6">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {filteredJobs.map((job) => (
-              <Card 
-                key={job.id} 
-                className="bg-white border border-border hover:shadow-card transition-all duration-300 hover:transform hover:scale-[1.02] flex flex-col h-full"
-              >
-                <CardHeader className="pb-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <CardTitle className="text-xl font-semibold text-foreground font-heading">
-                      {job.title}
-                    </CardTitle>
-                    <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20">
-                      {job.industry}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex items-center text-muted-foreground text-sm">
-                    <MapPin className="w-4 h-4 mr-1" />
-                    {job.location}
-                  </div>
-                </CardHeader>
-
-                <CardContent className="pt-0 flex-grow">
-                  <p className="text-muted-foreground text-sm mb-3 font-medium">
-                    {job.company}
-                  </p>
-                  <p className="text-foreground leading-relaxed">
-                    {job.description}
-                  </p>
-                </CardContent>
-
-                <CardFooter className="pt-4">
-                  <Button 
-                    variant="secondary" 
-                    className="w-full"
-                    onClick={() => handleJobDetails(job.id)}
-                  >
-                    Läs mer
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-
-          {/* No results message */}
-          {filteredJobs.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-lg">
-                Inga jobb hittades med de valda filtren. Prova att ändra dina sökkriterier.
-              </p>
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+              {[...Array(12)].map((_, i) => (
+                <Card key={i} className="bg-white border border-border">
+                  <CardHeader>
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </CardContent>
+                  <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
+          ) : (
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+                {currentJobs.map((job) => (
+                  <Card 
+                    key={job.id} 
+                    className="bg-white border border-border hover:shadow-card transition-all duration-300 hover:transform hover:scale-[1.02] flex flex-col h-full cursor-pointer"
+                    onClick={() => handleJobDetails(job.slug)}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <CardTitle className="text-xl font-semibold text-foreground font-heading line-clamp-2">
+                          {job.title}
+                        </CardTitle>
+                        {job.category && (
+                          <Badge variant="secondary" className="bg-secondary/10 text-secondary border-secondary/20 shrink-0">
+                            {job.category}
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <MapPin className="w-4 h-4 mr-1 shrink-0" />
+                        {job.city || 'Ej angiven'}
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-0 flex-grow">
+                      <p className="text-muted-foreground text-sm mb-3 font-medium">
+                        {job.companies?.name || 'Okänt företag'}
+                      </p>
+                      <p className="text-foreground leading-relaxed line-clamp-3">
+                        {getIntroText(job.description_md || '')}
+                      </p>
+                    </CardContent>
+
+                    <CardFooter className="pt-4">
+                      <Button 
+                        variant="secondary" 
+                        className="w-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleJobDetails(job.slug);
+                        }}
+                      >
+                        Läs mer
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+
+              {/* No results message */}
+              {filteredJobs.length === 0 && !loading && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground text-lg">
+                    Inga jobb hittades med de valda filtren. Prova att ändra dina sökkriterier.
+                  </p>
+                </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-12">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                      
+                      {[...Array(totalPages)].map((_, i) => {
+                        const page = i + 1;
+                        // Show first page, last page, current page, and pages around current
+                        if (
+                          page === 1 ||
+                          page === totalPages ||
+                          (page >= currentPage - 1 && page <= currentPage + 1)
+                        ) {
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                onClick={() => handlePageChange(page)}
+                                isActive={currentPage === page}
+                                className="cursor-pointer"
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        } else if (
+                          page === currentPage - 2 ||
+                          page === currentPage + 2
+                        ) {
+                          return (
+                            <PaginationItem key={page}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          );
+                        }
+                        return null;
+                      })}
+
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={() => currentPage < totalPages && handlePageChange(currentPage + 1)}
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

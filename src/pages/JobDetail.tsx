@@ -4,195 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { MapPin, Building2, Clock, Users, ArrowLeft, Send } from "lucide-react";
+import { MapPin, Building2, Clock, ArrowLeft, Send } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-
-// Mock job data (same as Jobs.tsx - ideally this would come from a shared data source)
-const mockJobs = [
-  {
-    id: 1,
-    title: "Bilmekaniker",
-    location: "Stockholm",
-    industry: "Fordon",
-    company: "AutoService AB",
-    description: "Erfaren bilmekaniker sökes till vårt team.",
-    fullDescription: "Vi söker en erfaren bilmekaniker som vill vara en del av vårt växande team. Du kommer att arbeta med service, reparationer och underhåll av personbilar och lätta lastbilar. Vi erbjuder en trygg arbetsmiljö, kompetensutveckling och konkurrenskraftiga villkor.",
-    requirements: [
-      "Gymnasieutbildning inom fordon eller motsvarande erfarenhet",
-      "Minst 3 års erfarenhet av bilreparationer", 
-      "Körkort B",
-      "Goda kunskaper i svenska"
-    ],
-    responsibilities: [
-      "Service och underhåll av fordon",
-      "Felsökning och reparationer",
-      "Kvalitetskontroll av utfört arbete",
-      "Kundkontakt vid behov"
-    ],
-    benefits: [
-      "Konkurrenskraftiga villkor",
-      "Kompetensutveckling",
-      "Trygg arbetsmiljö",
-      "Kollektivavtal"
-    ],
-    employmentType: "Heltid",
-    startDate: "Enligt överenskommelse"
-  },
-  {
-    id: 2,
-    title: "Svetsare",
-    location: "Göteborg", 
-    industry: "Tillverkning",
-    company: "MetallTeknik Sverige",
-    description: "Kvalificerad svetsare för industriella projekt.",
-    fullDescription: "Vi söker en kompetent svetsare för våra industriella projekt inom stålkonstruktioner. Du kommer att arbeta med både MIG/MAG och TIG-svetsning på olika material och tjocklekar.",
-    requirements: [
-      "Svetsutbildning eller motsvarande erfarenhet",
-      "Minst 2 års erfarenhet av MIG/MAG svetsning",
-      "TIG-svetsning är meriterande",
-      "Svenskt svetsarcertifikat"
-    ],
-    responsibilities: [
-      "Svetsning enligt ritningar",
-      "Kvalitetskontroll",
-      "Materialhantering",
-      "Säkerhet på arbetsplatsen"
-    ],
-    benefits: [
-      "Schemalagt arbetstid",
-      "Utbildningsmöjligheter", 
-      "Moderna verktyg",
-      "Utvecklingsmöjligheter"
-    ],
-    employmentType: "Heltid",
-    startDate: "Snarast"
-  },
-  {
-    id: 3,
-    title: "Tekniker",
-    location: "Malmö",
-    industry: "Elektronik",
-    company: "TechSolutions Nordic",
-    description: "Elektroniktekniker med erfarenhet av reparationer.",
-    fullDescription: "Vi söker en elektroniktekniker för service och reparation av elektronisk utrustning. Du kommer att arbeta både i verkstad och ute hos kunder med felsökning och reparationer.",
-    requirements: [
-      "Teknisk utbildning inom elektronik",
-      "Erfarenhet av felsökning",
-      "Körkort B",
-      "Engelska i tal och skrift"
-    ],
-    responsibilities: [
-      "Reparation av elektronik",
-      "Kundservice",
-      "Dokumentation",
-      "Teknisk support"
-    ],
-    benefits: [
-      "Flexibla arbetstider",
-      "Tjänstebil",
-      "Teknisk utveckling",
-      "Bonussystem"
-    ],
-    employmentType: "Heltid",
-    startDate: "Enligt överenskommelse"
-  },
-  {
-    id: 4,
-    title: "Maskinoperatör",
-    location: "Stockholm",
-    industry: "Tillverkning",
-    company: "Industrial Works",
-    description: "Operatör för CNC-maskiner och produktionsutrustning.",
-    fullDescription: "Vi söker en maskinoperatör för våra CNC-maskiner och produktionsutrustning. Du kommer att arbeta i skift och ansvara för att produktionen löper smidigt.",
-    requirements: [
-      "Teknisk utbildning eller motsvarande",
-      "Erfarenhet av CNC-maskiner",
-      "Skiftarbete",
-      "Noggrannhet och precision"
-    ],
-    responsibilities: [
-      "Köra CNC-maskiner",
-      "Kvalitetskontroll",
-      "Underhållsarbete",
-      "Produktionsrapportering"
-    ],
-    benefits: [
-      "Skifttillägg",
-      "Utbildning",
-      "Trygg anställning",
-      "Utvecklingsmöjligheter"
-    ],
-    employmentType: "Heltid",
-    startDate: "Enligt överenskommelse"
-  },
-  {
-    id: 5,
-    title: "Lacktekniker",
-    location: "Uppsala",
-    industry: "Fordon",
-    company: "CarPaint Specialists",
-    description: "Lacktekniker för bilar och industriella ändamål.",
-    fullDescription: "Vi söker en erfaren lacktekniker för bilreparationer och industriell lackning. Du kommer att arbeta med både partial- och helrenovering av fordon.",
-    requirements: [
-      "Utbildning inom lackteknik",
-      "Minst 3 års erfarenhet",
-      "Kunskap om färgblandning",
-      "Kvalitetstänk"
-    ],
-    responsibilities: [
-      "Lackning av fordon",
-      "Färgblandning",
-      "Maskeringsarbete",
-      "Kvalitetskontroll"
-    ],
-    benefits: [
-      "Moderna lokaler",
-      "Kompetensutveckling",
-      "Konkurrenskraftiga villkor",
-      "Utvecklingsmöjligheter"
-    ],
-    employmentType: "Heltid",
-    startDate: "Snarast"
-  },
-  {
-    id: 6,
-    title: "Elektriker",
-    location: "Göteborg",
-    industry: "Elektro",
-    company: "ElektroNord AB",
-    description: "Behörig elektriker för installations- och servicearbeten.",
-    fullDescription: "Vi söker en behörig elektriker för installations- och servicearbeten inom både industri och bostäder. Du kommer att arbeta självständigt och i team med varierande projekt.",
-    requirements: [
-      "Elektrikerutbildning",
-      "Behörighet",
-      "Körkort B",
-      "Servicesinne"
-    ],
-    responsibilities: [
-      "Elinstallationer",
-      "Service och underhåll",
-      "Felsökning",
-      "Kundkontakt"
-    ],
-    benefits: [
-      "Tjänstebil",
-      "Flexibilitet",
-      "Kompetensutveckling",
-      "Utvecklingsmöjligheter"
-    ],
-    employmentType: "Heltid", 
-    startDate: "Enligt överenskommelse"
-  }
-];
+import ReactMarkdown from 'react-markdown';
 
 const applicationSchema = z.object({
   name: z.string().min(1, "Ange ditt namn"),
@@ -201,9 +23,10 @@ const applicationSchema = z.object({
 });
 
 const JobDetail = () => {
-  const { id } = useParams();
+  const { slug, id } = useParams();
   const navigate = useNavigate();
   const [job, setJob] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [showApplication, setShowApplication] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -219,15 +42,54 @@ const JobDetail = () => {
   });
 
   useEffect(() => {
-    const jobId = parseInt(id || "0");
-    const foundJob = mockJobs.find(j => j.id === jobId);
-    
-    if (foundJob) {
-      setJob(foundJob);
-    } else {
-      navigate("/jobs");
+    fetchJob();
+  }, [slug, id]);
+
+  const fetchJob = async () => {
+    setLoading(true);
+    try {
+      // Support both slug and id for backward compatibility
+      if (!slug && !id) {
+        navigate('/jobs');
+        return;
+      }
+
+      let query = supabase
+        .from('jobs')
+        .select(`
+          *,
+          companies (
+            id,
+            name,
+            logo_url,
+            website
+          )
+        `)
+        .eq('status', 'published');
+
+      if (slug) {
+        query = query.eq('slug', slug);
+      } else if (id) {
+        query = query.eq('id', id);
+      }
+
+      const { data, error } = await query.single();
+
+      if (error) throw error;
+      
+      if (!data) {
+        navigate('/jobs');
+        return;
+      }
+
+      setJob(data);
+    } catch (error) {
+      console.error('Error fetching job:', error);
+      navigate('/jobs');
+    } finally {
+      setLoading(false);
     }
-  }, [id, navigate]);
+  };
 
   const onSubmit = async (values: z.infer<typeof applicationSchema>) => {
     setIsLoading(true);
@@ -245,7 +107,7 @@ const JobDetail = () => {
         body: {
           name: values.name,
           email: values.email,
-          company: `Intervjubokning: ${job.title} - ${job.company}`,
+          company: `Intervjubokning: ${job.title} - ${job.companies?.name || 'Okänt företag'}`,
           message: `Telefon: ${values.phone}\n\nKandidaten vill boka en AI-intervju för denna tjänst.`,
         },
       });
@@ -268,7 +130,7 @@ const JobDetail = () => {
       console.error('Error sending application:', error);
       
       // Create fallback mailto link
-      const subject = `Intervjubokning: ${job.title} - ${job.company}`;
+      const subject = `Intervjubokning: ${job.title} - ${job.companies?.name || 'Okänt företag'}`;
       const body = `Namn: ${values.name}
 E-post: ${values.email}
 Telefon: ${values.phone}
@@ -291,9 +153,31 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <section className="pt-24 pb-12">
+          <div className="container mx-auto px-6">
+            <Skeleton className="h-12 w-48 mb-6" />
+            <Skeleton className="h-12 w-3/4 mb-4" />
+            <Skeleton className="h-6 w-1/2" />
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   if (!job) {
     return null;
   }
+
+  const employmentTypes: Record<string, string> = {
+    full_time: 'Heltid',
+    part_time: 'Deltid',
+    contract: 'Konsult',
+    temporary: 'Vikariat'
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -313,12 +197,16 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
           
           <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
-                {job.industry}
-              </Badge>
-              <Badge variant="outline" className="border-white/30 text-white">
-                {job.employmentType}
-              </Badge>
+              {job.category && (
+                <Badge variant="secondary" className="bg-white/20 text-white border-white/30">
+                  {job.category}
+                </Badge>
+              )}
+              {job.employment_type && (
+                <Badge variant="outline" className="border-white/30 text-white">
+                  {employmentTypes[job.employment_type] || job.employment_type}
+                </Badge>
+              )}
             </div>
             
             <h1 className="text-4xl md:text-5xl font-bold font-heading mb-4 leading-tight">
@@ -326,18 +214,24 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
             </h1>
             
             <div className="flex flex-wrap items-center gap-6 text-lg opacity-90">
-              <div className="flex items-center">
-                <Building2 className="w-5 h-5 mr-2" />
-                {job.company}
-              </div>
-              <div className="flex items-center">
-                <MapPin className="w-5 h-5 mr-2" />
-                {job.location}
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                Tillträde: {job.startDate}
-              </div>
+              {job.companies?.name && (
+                <div className="flex items-center">
+                  <Building2 className="w-5 h-5 mr-2" />
+                  {job.companies.name}
+                </div>
+              )}
+              {job.city && (
+                <div className="flex items-center">
+                  <MapPin className="w-5 h-5 mr-2" />
+                  {job.city}
+                </div>
+              )}
+              {job.publish_at && (
+                <div className="flex items-center">
+                  <Clock className="w-5 h-5 mr-2" />
+                  Publicerad: {new Date(job.publish_at).toLocaleDateString('sv-SE')}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -349,54 +243,46 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
           <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             {/* Main Content */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Combined Job Information */}
-              <Card className="bg-white border border-border">
-                <CardContent className="p-8 space-y-8">
-                  {/* Description */}
-                  <div>
+              {/* Job Description */}
+              {job.description_md && (
+                <Card className="bg-white border border-border">
+                  <CardContent className="p-8">
                     <h2 className="text-2xl font-heading mb-4">Om tjänsten</h2>
-                    <p className="text-foreground leading-relaxed text-lg">
-                      {job.fullDescription}
-                    </p>
-                  </div>
+                    <div className="prose prose-sm max-w-none text-foreground">
+                      <ReactMarkdown>{job.description_md}</ReactMarkdown>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                  {/* Requirements */}
-                  <div>
-                    <h2 className="text-2xl font-heading mb-4">Vad vi söker</h2>
-                    <ul className="space-y-3">
-                      {job.requirements.map((req: string, index: number) => (
-                        <li key={index} className="text-foreground">
-                          {req}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              {/* Requirements */}
+              {job.requirements_md && (
+                <Card className="bg-white border border-border">
+                  <CardContent className="p-8">
+                    <h2 className="text-2xl font-heading mb-4">Krav och kvalifikationer</h2>
+                    <div className="prose prose-sm max-w-none text-foreground">
+                      <ReactMarkdown>{job.requirements_md}</ReactMarkdown>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
-                  {/* Responsibilities */}
-                  <div>
-                    <h2 className="text-2xl font-heading mb-4">Arbetsuppgifter</h2>
-                    <ul className="space-y-3">
-                      {job.responsibilities.map((resp: string, index: number) => (
-                        <li key={index} className="text-foreground">
-                          {resp}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Benefits */}
-                  <div>
-                    <h2 className="text-2xl font-heading mb-4">Vad vi erbjuder</h2>
-                    <ul className="space-y-3">
-                      {job.benefits.map((benefit: string, index: number) => (
-                        <li key={index} className="text-foreground">
-                          {benefit}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Additional Info */}
+              {(job.language || job.driver_license) && (
+                <Card className="bg-white border border-border">
+                  <CardContent className="p-8">
+                    <h2 className="text-2xl font-heading mb-4">Övrig information</h2>
+                    <div className="space-y-2 text-foreground">
+                      {job.language && (
+                        <p><strong>Språk:</strong> {job.language}</p>
+                      )}
+                      {job.driver_license && (
+                        <p><strong>Körkort:</strong> Krävs</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Sidebar */}
@@ -409,7 +295,7 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                   {!showApplication ? (
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        Boka en AI-intervju för att visa dina praktiska färdigheter för {job.company}.
+                        Boka en AI-intervju för att visa dina praktiska färdigheter för {job.companies?.name || 'företaget'}.
                       </p>
                       <Button 
                         className="w-full"

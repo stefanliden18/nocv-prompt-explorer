@@ -33,8 +33,9 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/jobs" element={<Jobs />} />
+          <Route path="/jobb/:slug" element={<JobDetail />} />
+          <Route path="/jobs/:id" element={<JobDetail />} />
             <Route path="/candidates" element={<Candidates />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/contact" element={<Contact />} />

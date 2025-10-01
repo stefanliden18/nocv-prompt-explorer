@@ -90,7 +90,11 @@ export type Database = {
       }
       companies: {
         Row: {
+          contact_email: string
+          contact_person: string
+          contact_phone: string
           created_at: string
+          description: string | null
           id: string
           logo_url: string | null
           name: string
@@ -98,7 +102,11 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          contact_email: string
+          contact_person: string
+          contact_phone: string
           created_at?: string
+          description?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -106,7 +114,11 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          contact_email?: string
+          contact_person?: string
+          contact_phone?: string
           created_at?: string
+          description?: string | null
           id?: string
           logo_url?: string | null
           name?: string

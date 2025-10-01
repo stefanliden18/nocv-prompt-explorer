@@ -207,7 +207,12 @@ export default function JobImport() {
           if (!company) {
             const { data: newCompany, error: companyError } = await supabase
               .from('companies')
-              .insert({ name: companyName })
+              .insert({ 
+                name: companyName,
+                contact_person: 'Ej angivet',
+                contact_email: 'info@example.com',
+                contact_phone: '000-000 00 00'
+              })
               .select('id, name')
               .single();
 

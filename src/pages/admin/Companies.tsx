@@ -20,6 +20,10 @@ interface Company {
   name: string;
   website: string | null;
   logo_url: string | null;
+  description: string | null;
+  contact_person: string;
+  contact_email: string;
+  contact_phone: string;
   created_at: string;
 }
 
@@ -114,6 +118,9 @@ export default function AdminCompanies() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Namn</TableHead>
+                    <TableHead>Kontaktperson</TableHead>
+                    <TableHead>E-post</TableHead>
+                    <TableHead>Telefon</TableHead>
                     <TableHead>Webbplats</TableHead>
                     <TableHead>Skapad</TableHead>
                   </TableRow>
@@ -122,7 +129,31 @@ export default function AdminCompanies() {
                   {companies.map((company) => (
                     <TableRow key={company.id}>
                       <TableCell className="font-medium">
-                        {company.name}
+                        <div>
+                          {company.name}
+                          {company.description && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {company.description}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{company.contact_person}</TableCell>
+                      <TableCell>
+                        <a
+                          href={`mailto:${company.contact_email}`}
+                          className="text-primary hover:underline"
+                        >
+                          {company.contact_email}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <a
+                          href={`tel:${company.contact_phone}`}
+                          className="text-primary hover:underline"
+                        >
+                          {company.contact_phone}
+                        </a>
                       </TableCell>
                       <TableCell>
                         {company.website ? (
@@ -132,14 +163,14 @@ export default function AdminCompanies() {
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 text-primary hover:underline"
                           >
-                            {company.website}
+                            Länk
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         ) : (
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">
+                      <TableCell className="text-muted-foreground text-sm">
                         {new Date(company.created_at).toLocaleDateString('sv-SE')}
                       </TableCell>
                     </TableRow>

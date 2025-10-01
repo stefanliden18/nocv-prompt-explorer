@@ -18,6 +18,7 @@ import AdminJobs from "./pages/admin/Jobs";
 import AdminApplications from "./pages/admin/Applications";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminUsers from "./pages/admin/Users";
+import JobForm from "./pages/admin/JobForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminJobs />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/jobs/new" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <JobForm />
                 </ProtectedRoute>
               } 
             />

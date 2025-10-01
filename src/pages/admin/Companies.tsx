@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Loader2, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Loader2, ExternalLink, Pencil, Trash2, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { CompanyForm } from '@/components/CompanyForm';
@@ -219,17 +219,32 @@ export default function AdminCompanies() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Logotyp</TableHead>
                     <TableHead>Namn</TableHead>
                     <TableHead>Kontaktperson</TableHead>
                     <TableHead>E-post</TableHead>
                     <TableHead>Telefon</TableHead>
                     <TableHead>Webbplats</TableHead>
                     <TableHead>Skapad</TableHead>
+                    {canManageCompanies && <TableHead className="text-right">Åtgärder</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {companies.map((company) => (
                     <TableRow key={company.id}>
+                      <TableCell>
+                        {company.logo_url ? (
+                          <img 
+                            src={company.logo_url} 
+                            alt={company.name}
+                            className="h-10 w-10 object-contain rounded"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                            <Building2 className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div>
                           {company.name}
@@ -275,6 +290,26 @@ export default function AdminCompanies() {
                       <TableCell className="text-muted-foreground text-sm">
                         {new Date(company.created_at).toLocaleDateString('sv-SE')}
                       </TableCell>
+                      {canManageCompanies && (
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleEdit(company)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteClick(company)}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>

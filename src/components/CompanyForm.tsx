@@ -6,6 +6,7 @@ import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { ImageUpload } from '@/components/ImageUpload';
 import {
   Dialog,
   DialogContent,
@@ -30,7 +31,6 @@ const companySchema = z.object({
   name: z.string().min(1, 'Företagsnamn är obligatoriskt').max(255),
   description: z.string().max(500, 'Beskrivningen får max vara 500 tecken').optional().or(z.literal('')),
   website: z.string().url('Ogiltig URL').optional().or(z.literal('')),
-  logo_url: z.string().url('Ogiltig URL').optional().or(z.literal('')),
   contact_person: z.string().min(1, 'Kontaktperson är obligatoriskt').max(255),
   contact_email: z.string().min(1, 'E-post är obligatoriskt').email('Ogiltig e-postadress'),
   contact_phone: z.string().min(1, 'Mobiltelefon är obligatoriskt').regex(/^[\d\s\-+()]+$/, 'Ogiltigt telefonnummer'),
@@ -58,6 +58,8 @@ interface CompanyFormProps {
 
 export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(company?.logo_url || null);
   const isEditMode = !!company;
 
   const form = useForm<CompanyFormData>({
@@ -66,7 +68,6 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
       name: company?.name || '',
       description: company?.description || '',
       website: company?.website || '',
-      logo_url: company?.logo_url || '',
       contact_person: company?.contact_person || '',
       contact_email: company?.contact_email || '',
       contact_phone: company?.contact_phone || '',
@@ -80,21 +81,23 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
         name: company.name,
         description: company.description || '',
         website: company.website || '',
-        logo_url: company.logo_url || '',
         contact_person: company.contact_person,
         contact_email: company.contact_email,
         contact_phone: company.contact_phone,
       });
+      setCurrentLogoUrl(company.logo_url || null);
+      setLogoFile(null);
     } else {
       form.reset({
         name: '',
         description: '',
         website: '',
-        logo_url: '',
         contact_person: '',
         contact_email: '',
         contact_phone: '',
       });
+      setCurrentLogoUrl(null);
+      setLogoFile(null);
     }
   }, [company, form]);
 
@@ -102,6 +105,38 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
     setIsSubmitting(true);
 
     try {
+      let logoUrl = currentLogoUrl;
+
+      // Upload new logo if file is selected
+      if (logoFile) {
+        const fileExt = logoFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = fileName;
+
+        // Delete old logo if exists
+        if (currentLogoUrl && isEditMode) {
+          const oldPath = currentLogoUrl.split('/').pop();
+          if (oldPath) {
+            await supabase.storage.from('company-logos').remove([oldPath]);
+          }
+        }
+
+        const { error: uploadError } = await supabase.storage
+          .from('company-logos')
+          .upload(filePath, logoFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('company-logos')
+          .getPublicUrl(filePath);
+
+        logoUrl = publicUrl;
+      }
+
       if (isEditMode && company) {
         // Update existing company
         const { error } = await supabase
@@ -110,7 +145,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
             name: data.name,
             description: data.description || null,
             website: data.website || null,
-            logo_url: data.logo_url || null,
+            logo_url: logoUrl,
             contact_person: data.contact_person,
             contact_email: data.contact_email,
             contact_phone: data.contact_phone,
@@ -139,7 +174,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
             name: data.name,
             description: data.description || null,
             website: data.website || null,
-            logo_url: data.logo_url || null,
+            logo_url: logoUrl,
             contact_person: data.contact_person,
             contact_email: data.contact_email,
             contact_phone: data.contact_phone,
@@ -162,6 +197,8 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
       }
 
       form.reset();
+      setLogoFile(null);
+      setCurrentLogoUrl(null);
       onOpenChange(false);
       onSuccess();
     } catch (error) {
@@ -174,6 +211,17 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleLogoRemove = async () => {
+    if (currentLogoUrl && isEditMode) {
+      const oldPath = currentLogoUrl.split('/').pop();
+      if (oldPath) {
+        await supabase.storage.from('company-logos').remove([oldPath]);
+      }
+    }
+    setCurrentLogoUrl(null);
+    setLogoFile(null);
   };
 
   return (
@@ -246,23 +294,15 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="logo_url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Logotyp (URL)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="https://exempel.se/logo.png" 
-                      {...field}
-                      disabled={isSubmitting}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <FormLabel>Logotyp</FormLabel>
+              <ImageUpload
+                value={currentLogoUrl}
+                onChange={setLogoFile}
+                onRemove={handleLogoRemove}
+                maxSizeMB={5}
+              />
+            </div>
 
             <div className="border-t pt-4 mt-4">
               <h3 className="font-semibold mb-4">Kontaktuppgifter</h3>

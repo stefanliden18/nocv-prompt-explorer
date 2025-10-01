@@ -17,9 +17,11 @@ import { useToast } from "@/components/ui/use-toast";
 import ReactMarkdown from 'react-markdown';
 
 const applicationSchema = z.object({
-  name: z.string().min(1, "Ange ditt namn"),
-  email: z.string().min(1, "Ange en e-postadress").email("Ange en giltig e-postadress"),
-  phone: z.string().min(1, "Ange ditt telefonnummer"),
+  name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
+  email: z.string().trim().min(1, "Ange en e-postadress").email("Ange en giltig e-postadress").max(255, "E-postadressen kan vara max 255 tecken"),
+  phone: z.string().trim().min(1, "Ange ditt telefonnummer").max(20, "Telefonnumret kan vara max 20 tecken"),
+  message: z.string().trim().max(1000, "Meddelandet kan vara max 1000 tecken").optional(),
+  cv_url: z.string().trim().url("Ange en giltig URL").max(500, "URL:en kan vara max 500 tecken").optional().or(z.literal("")),
 });
 
 const JobDetail = () => {
@@ -38,6 +40,8 @@ const JobDetail = () => {
       name: "",
       email: "",
       phone: "",
+      message: "",
+      cv_url: "",
     },
   });
 
@@ -95,24 +99,19 @@ const JobDetail = () => {
     setIsLoading(true);
     
     try {
-      // Check if Supabase is properly configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase är inte korrekt konfigurerat');
-      }
-
-      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+      const { data, error } = await supabase.functions.invoke('send-application-email', {
         body: {
           name: values.name,
           email: values.email,
-          company: `Intervjubokning: ${job.title} - ${job.companies?.name || 'Okänt företag'}`,
-          message: `Telefon: ${values.phone}\n\nKandidaten vill boka en AI-intervju för denna tjänst.`,
+          phone: values.phone,
+          message: values.message || null,
+          cv_url: values.cv_url || null,
+          job_id: job.id,
         },
       });
 
       if (error) {
+        console.error('Supabase function error:', error);
         throw error;
       }
 
@@ -122,31 +121,18 @@ const JobDetail = () => {
 
       setIsSubmitted(true);
       toast({
-        title: "Intervju bokad!",
-        description: "Vi återkommer till dig inom kort med detaljer om AI-intervjun.",
+        title: "Ansökan skickad!",
+        description: "Vi har skickat en bekräftelse till din e-post och kommer att kontakta dig inom kort.",
       });
       
     } catch (error: any) {
       console.error('Error sending application:', error);
       
-      // Create fallback mailto link
-      const subject = `Intervjubokning: ${job.title} - ${job.companies?.name || 'Okänt företag'}`;
-      const body = `Namn: ${values.name}
-E-post: ${values.email}
-Telefon: ${values.phone}
-
-Kandidaten vill boka en AI-intervju för denna tjänst.`;
-      
-      const mailtoLink = `mailto:michael@nocv.se?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      
       toast({
-        title: "Öppnar e-postklient",
-        description: "Vi öppnar din e-postklient som backup för din intervjubokning.",
+        title: "Ett fel uppstod",
+        description: "Kunde inte skicka ansökan. Försök igen senare.",
         variant: "destructive",
       });
-      
-      // Open mailto as fallback
-      window.open(mailtoLink, '_blank');
       
     } finally {
       setIsLoading(false);
@@ -289,13 +275,13 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
             <div className="lg:col-span-1">
               <Card className="bg-white border border-border sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-xl font-heading">Boka intervju</CardTitle>
+                  <CardTitle className="text-xl font-heading">Ansök till jobbet</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!showApplication ? (
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        Boka en AI-intervju för att visa dina praktiska färdigheter för {job.companies?.name || 'företaget'}.
+                        Ansök till {job.companies?.name || 'företaget'} genom att fylla i dina uppgifter. Vi kommer att kontakta dig för att boka en AI-intervju.
                       </p>
                       <Button 
                         className="w-full"
@@ -303,16 +289,16 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                         onClick={() => setShowApplication(true)}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Boka intervju
+                        Ansök nu
                       </Button>
                     </div>
                   ) : isSubmitted ? (
                     <div className="text-center py-4">
                       <h4 className="text-lg font-semibold text-foreground mb-2">
-                        Tack för din bokning!
+                        Tack för din ansökan!
                       </h4>
                       <p className="text-muted-foreground mb-4">
-                        Vi återkommer till dig inom kort med detaljer om AI-intervjun.
+                        Vi har skickat en bekräftelse till din e-post och kommer att kontakta dig inom kort för att boka en AI-intervju.
                       </p>
                       <Button 
                         variant="outline"
@@ -322,7 +308,7 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                           form.reset();
                         }}
                       >
-                        Ny bokning
+                        Stäng
                       </Button>
                     </div>
                   ) : (
@@ -369,6 +355,40 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                             </FormItem>
                           )}
                         />
+                        
+                        <FormField
+                          control={form.control}
+                          name="message"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Meddelande (valfritt)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Berätta gärna lite om dig själv..." 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="cv_url"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>CV-länk (valfritt)</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="https://..." 
+                                  {...field} 
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
                          
                         <div className="space-y-2">
                           <Button 
@@ -377,7 +397,7 @@ Kandidaten vill boka en AI-intervju för denna tjänst.`;
                             variant="cta-primary"
                             disabled={isLoading}
                           >
-                            {isLoading ? "Bokar..." : "Boka intervju"}
+                            {isLoading ? "Skickar..." : "Skicka ansökan"}
                           </Button>
                           
                           <Button 

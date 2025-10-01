@@ -26,15 +26,59 @@ const Jobs = () => {
   const [cities, setCities] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
 
-  // Fetch published jobs from backend
+  const [totalCount, setTotalCount] = useState(0);
+
+  // Fetch jobs with filters
   useEffect(() => {
     fetchJobs();
+  }, [currentPage, cityFilter, categoryFilter, searchQuery]);
+
+  // Fetch initial data for filters
+  useEffect(() => {
+    fetchFilterOptions();
   }, []);
 
+  const fetchFilterOptions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('city, category')
+        .eq('status', 'published')
+        .lte('publish_at', new Date().toISOString());
+
+      if (error) throw error;
+
+      const uniqueCities = [...new Set(data?.map(job => job.city).filter(Boolean))] as string[];
+      const uniqueCategories = [...new Set(data?.map(job => job.category).filter(Boolean))] as string[];
+      
+      setCities(uniqueCities.sort());
+      setCategories(uniqueCategories.sort());
+    } catch (error) {
+      console.error('Error fetching filter options:', error);
+    }
+  };
+
+  /**
+   * Job Query API
+   * 
+   * Parameters:
+   * - search: Text search across title, description, and city
+   * - city: Filter by specific city
+   * - category: Filter by job category
+   * - page: Current page number (1-indexed)
+   * - limit: Number of items per page (default: 12)
+   * 
+   * Returns:
+   * - data: Array of published jobs
+   * - count: Total number of matching jobs for pagination
+   * 
+   * Only published jobs are returned (status='published' AND publish_at <= now())
+   */
   const fetchJobs = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Build query with filters
+      let query = supabase
         .from('jobs')
         .select(`
           id,
@@ -47,56 +91,46 @@ const Jobs = () => {
           companies (
             name
           )
-        `)
+        `, { count: 'exact' })
         .eq('status', 'published')
-        .lte('publish_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
+        .lte('publish_at', new Date().toISOString());
+
+      // Apply city filter
+      if (cityFilter !== "all") {
+        query = query.eq('city', cityFilter);
+      }
+
+      // Apply category filter
+      if (categoryFilter !== "all") {
+        query = query.eq('category', categoryFilter);
+      }
+
+      // Apply search filter
+      if (searchQuery.trim()) {
+        query = query.or(`title.ilike.%${searchQuery}%,description_md.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+      }
+
+      // Apply pagination
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+      
+      query = query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      const { data, error, count } = await query;
 
       if (error) throw error;
 
       setJobs(data || []);
-      
-      // Extract unique cities and categories
-      const uniqueCities = [...new Set(data?.map(job => job.city).filter(Boolean))] as string[];
-      const uniqueCategories = [...new Set(data?.map(job => job.category).filter(Boolean))] as string[];
-      
-      setCities(uniqueCities.sort());
-      setCategories(uniqueCategories.sort());
+      setFilteredJobs(data || []);
+      setTotalCount(count || 0);
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  // Filter jobs based on all criteria
-  useEffect(() => {
-    let filtered = jobs;
-
-    // City filter
-    if (cityFilter !== "all") {
-      filtered = filtered.filter(job => job.city === cityFilter);
-    }
-
-    // Category filter
-    if (categoryFilter !== "all") {
-      filtered = filtered.filter(job => job.category === categoryFilter);
-    }
-
-    // Text search
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(job => 
-        job.title?.toLowerCase().includes(query) ||
-        job.description_md?.toLowerCase().includes(query) ||
-        job.companies?.name?.toLowerCase().includes(query) ||
-        job.city?.toLowerCase().includes(query)
-      );
-    }
-
-    setFilteredJobs(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
-  }, [jobs, cityFilter, categoryFilter, searchQuery]);
 
   // Get intro text (first 120 chars of description)
   const getIntroText = (description: string) => {
@@ -106,10 +140,8 @@ const Jobs = () => {
   };
 
   // Pagination calculations
-  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentJobs = filteredJobs.slice(startIndex, endIndex);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -118,6 +150,13 @@ const Jobs = () => {
 
   const handleJobDetails = (slug: string) => {
     navigate(`/jobb/${slug}`);
+  };
+
+  const handleFilterChange = (type: 'city' | 'category' | 'search', value: string) => {
+    setCurrentPage(1); // Reset to first page on filter change
+    if (type === 'city') setCityFilter(value);
+    if (type === 'category') setCategoryFilter(value);
+    if (type === 'search') setSearchQuery(value);
   };
 
   return (
@@ -145,14 +184,14 @@ const Jobs = () => {
                 type="text"
                 placeholder="Sök efter jobb, företag eller stad..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
                 className="pl-10 h-12"
               />
             </div>
 
             {/* Filter dropdowns */}
             <div className="grid sm:grid-cols-2 gap-4">
-              <Select value={cityFilter} onValueChange={setCityFilter}>
+              <Select value={cityFilter} onValueChange={(value) => handleFilterChange('city', value)}>
                 <SelectTrigger className="w-full">
                   <MapPin className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Välj stad" />
@@ -167,7 +206,7 @@ const Jobs = () => {
                 </SelectContent>
               </Select>
               
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <Select value={categoryFilter} onValueChange={(value) => handleFilterChange('category', value)}>
                 <SelectTrigger className="w-full">
                   <Building2 className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Välj kategori" />
@@ -188,7 +227,7 @@ const Jobs = () => {
           {!loading && (
             <div className="text-center mb-8">
               <p className="text-muted-foreground">
-                Visar {startIndex + 1}-{Math.min(endIndex, filteredJobs.length)} av {filteredJobs.length} jobb
+                Visar {filteredJobs.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + filteredJobs.length, totalCount)} av {totalCount} jobb
               </p>
             </div>
           )}
@@ -220,7 +259,7 @@ const Jobs = () => {
           ) : (
             <>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                {currentJobs.map((job) => (
+                {filteredJobs.map((job) => (
                   <Card 
                     key={job.id} 
                     className="bg-white border border-border hover:shadow-card transition-all duration-300 hover:transform hover:scale-[1.02] flex flex-col h-full cursor-pointer"

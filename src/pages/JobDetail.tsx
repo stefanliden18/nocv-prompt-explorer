@@ -23,8 +23,6 @@ const applicationSchema = z.object({
   name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
   email: z.string().trim().min(1, "Ange en e-postadress").email("Ange en giltig e-postadress").max(255, "E-postadressen kan vara max 255 tecken"),
   phone: z.string().trim().min(1, "Ange ditt telefonnummer").max(20, "Telefonnumret kan vara max 20 tecken"),
-  message: z.string().trim().max(1000, "Meddelandet kan vara max 1000 tecken").optional(),
-  cv_url: z.string().trim().url("Ange en giltig URL").max(500, "URL:en kan vara max 500 tecken").optional().or(z.literal("")),
   // Honeypot field for bot protection
   website: z.string().max(0, "Detta fält ska vara tomt").optional(),
 });
@@ -45,8 +43,6 @@ const JobDetail = () => {
       name: "",
       email: "",
       phone: "",
-      message: "",
-      cv_url: "",
       website: "", // Honeypot field
     },
   });
@@ -114,7 +110,7 @@ const JobDetail = () => {
       console.warn('Bot detected - honeypot field filled');
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte skicka ansökan. Försök igen.",
+        description: "Kunde inte boka intervju. Försök igen.",
         variant: "destructive",
       });
       return;
@@ -128,8 +124,6 @@ const JobDetail = () => {
         name: DOMPurify.sanitize(values.name, { ALLOWED_TAGS: [] }),
         email: DOMPurify.sanitize(values.email, { ALLOWED_TAGS: [] }),
         phone: DOMPurify.sanitize(values.phone, { ALLOWED_TAGS: [] }),
-        message: values.message ? DOMPurify.sanitize(values.message, { ALLOWED_TAGS: [] }) : null,
-        cv_url: values.cv_url ? DOMPurify.sanitize(values.cv_url, { ALLOWED_TAGS: [] }) : null,
         job_id: job.id,
       };
 
@@ -146,8 +140,8 @@ const JobDetail = () => {
         // Handle specific errors
         if (data.error.includes('rate limit')) {
           toast({
-            title: "För många ansökningar",
-            description: "Du har skickat för många ansökningar. Vänligen försök igen om en timme.",
+            title: "För många bokningar",
+            description: "Du har gjort för många bokningar. Vänligen försök igen om en timme.",
             variant: "destructive",
           });
         } else if (data.error.includes('validering')) {
@@ -168,8 +162,8 @@ const JobDetail = () => {
       analytics.trackApplicationSubmit(job.id, job.title, true);
       
       toast({
-        title: "Ansökan skickad!",
-        description: "Vi har skickat en bekräftelse till din e-post och kommer att kontakta dig inom kort.",
+        title: "Intervju bokad!",
+        description: "Vi har skickat en bekräftelse till din e-post med detaljer om din intervju.",
       });
       
     } catch (error: any) {
@@ -180,7 +174,7 @@ const JobDetail = () => {
       
       toast({
         title: "Ett fel uppstod",
-        description: error.message || "Kunde inte skicka ansökan. Försök igen senare.",
+        description: error.message || "Kunde inte boka intervju. Försök igen senare.",
         variant: "destructive",
       });
       
@@ -392,13 +386,13 @@ const JobDetail = () => {
             <div className="lg:col-span-1">
               <Card className="bg-white border border-border sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-xl font-heading">Ansök till jobbet</CardTitle>
+                  <CardTitle className="text-xl font-heading">Boka intervju</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!showApplication ? (
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        Ansök till {job.companies?.name || 'företaget'} genom att fylla i dina uppgifter. Vi kommer att kontakta dig för att boka en AI-intervju.
+                        Boka en AI-intervju med {job.companies?.name || 'företaget'} genom att fylla i dina uppgifter nedan.
                       </p>
                       <Button 
                         className="w-full"
@@ -409,16 +403,16 @@ const JobDetail = () => {
                         }}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Ansök nu
+                        Boka intervju
                       </Button>
                     </div>
                   ) : isSubmitted ? (
                     <div className="text-center py-4">
                       <h4 className="text-lg font-semibold text-foreground mb-2">
-                        Tack för din ansökan!
+                        Intervju bokad!
                       </h4>
                       <p className="text-muted-foreground mb-4">
-                        Vi har skickat en bekräftelse till din e-post och kommer att kontakta dig inom kort för att boka en AI-intervju.
+                        Vi har skickat en bekräftelse till din e-post. Du kommer snart få information om när din AI-intervju äger rum.
                       </p>
                       <Button 
                         variant="outline"
@@ -476,40 +470,6 @@ const JobDetail = () => {
                           )}
                         />
                         
-                        <FormField
-                          control={form.control}
-                          name="message"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Meddelande (valfritt)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="Berätta gärna lite om dig själv..." 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name="cv_url"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>CV-länk (valfritt)</FormLabel>
-                              <FormControl>
-                                <Input 
-                                  placeholder="https://..." 
-                                  {...field} 
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
                         {/* Honeypot field - hidden from real users */}
                         <FormField
                           control={form.control}
@@ -535,7 +495,7 @@ const JobDetail = () => {
                             variant="cta-primary"
                             disabled={isLoading}
                           >
-                            {isLoading ? "Skickar..." : "Skicka ansökan"}
+                            {isLoading ? "Bokar..." : "Boka intervju"}
                           </Button>
                           
                           <Button 

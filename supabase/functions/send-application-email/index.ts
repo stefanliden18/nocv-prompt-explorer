@@ -72,8 +72,6 @@ serve(async (req) => {
       name, 
       email, 
       phone, 
-      message, 
-      cv_url, 
       job_id 
     } = await req.json();
 
@@ -81,8 +79,6 @@ serve(async (req) => {
     const sanitizedName = sanitizeText(name);
     const sanitizedEmail = sanitizeText(email);
     const sanitizedPhone = sanitizeText(phone);
-    const sanitizedMessage = message ? sanitizeText(message) : null;
-    const sanitizedCvUrl = cv_url ? sanitizeText(cv_url) : null;
 
     // Validate required fields
     if (!sanitizedName || !sanitizedEmail || !sanitizedPhone || !job_id) {
@@ -195,8 +191,8 @@ serve(async (req) => {
         candidate_name: sanitizedName,
         email: sanitizedEmail,
         phone: sanitizedPhone,
-        message: sanitizedMessage,
-        cv_url: sanitizedCvUrl,
+        message: null,
+        cv_url: null,
         job_id: job_id,
         status: 'new'
       })
@@ -318,16 +314,16 @@ serve(async (req) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1>✓ Ansökan mottagen!</h1>
+      <h1>✓ Intervju bokad!</h1>
     </div>
     
     <div class="content">
-      <h2>Tack för din ansökan, ${sanitizedName}!</h2>
+      <h2>Din intervju är bokad, ${sanitizedName}!</h2>
       
-      <p>Vi har tagit emot din ansökan och vill bekräfta att allt har gått igenom korrekt.</p>
+      <p>Vi har tagit emot din bokningsförfrågan och din AI-intervju är nu bokad.</p>
       
       <div class="summary-box">
-        <h3>Sammanfattning av din ansökan</h3>
+        <h3>Bokningsbekräftelse</h3>
         <div class="summary-item">
           <strong>Tjänst:</strong> ${sanitizeText(job.title)}
         </div>
@@ -343,18 +339,11 @@ serve(async (req) => {
         <div class="summary-item">
           <strong>Telefon:</strong> ${sanitizedPhone}
         </div>
-        ${sanitizedMessage ? `<div class="summary-item">
-          <strong>Meddelande:</strong> ${sanitizedMessage}
-        </div>` : ''}
-        ${sanitizedCvUrl ? `<div class="summary-item">
-          <strong>CV:</strong> <a href="${sanitizedCvUrl}" style="color: #667eea;">Bifogat</a>
-        </div>` : ''}
       </div>
       
       <div class="next-steps">
         <h3>Nästa steg</h3>
-        <p>Vi kommer att granska din ansökan och höra av oss inom <strong>5 arbetsdagar</strong>.</p>
-        <p>Om din profil matchar våra krav kommer vi att kontakta dig för att boka en AI-intervju där du får visa dina praktiska färdigheter.</p>
+        <p>Du kommer att få en separat e-post med länk till din AI-intervju inom kort. Intervjun tar cirka <strong>5-10 minuter</strong> och kan genomföras när det passar dig.</p>
       </div>
       
       <p>Har du några frågor under tiden? Svara gärna på detta mail så återkommer vi till dig.</p>
@@ -516,18 +505,18 @@ serve(async (req) => {
 <body>
   <div class="container">
     <div class="header">
-      <h1>🔔 Ny ansökan mottagen</h1>
+      <h1>🔔 Ny intervjubokning</h1>
     </div>
     
     <div class="content">
-      <div class="alert-badge">NY ANSÖKAN</div>
+      <div class="alert-badge">NY INTERVJUBOKNING</div>
       
-      <p>En ny kandidat har ansökt till en av era tjänster.</p>
+      <p>En ny kandidat har bokat intervju för en av era tjänster.</p>
       
       <div class="job-info">
         <h3>${sanitizeText(job.title)}</h3>
         <p><strong>Företag:</strong> ${sanitizeText(job.companies?.name || 'Okänt företag')}</p>
-        <p><strong>Ansökan mottagen:</strong> ${new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+        <p><strong>Bokning mottagen:</strong> ${new Date().toLocaleDateString('sv-SE', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
       </div>
       
       <div class="candidate-info">
@@ -551,28 +540,16 @@ serve(async (req) => {
             <a href="tel:${sanitizedPhone}">${sanitizedPhone}</a>
           </span>
         </div>
-        
-        ${sanitizedCvUrl ? `<div class="info-row">
-          <span class="info-label">CV:</span>
-          <span class="info-value">
-            <a href="${sanitizedCvUrl}" target="_blank">Öppna CV</a>
-          </span>
-        </div>` : ''}
       </div>
-      
-      ${sanitizedMessage ? `<div class="message-box">
-        <p><strong>Meddelande från kandidaten:</strong></p>
-        <p>"${sanitizedMessage}"</p>
-      </div>` : ''}
       
       <div style="text-align: center;">
         <a href="https://nocv.se/admin/applications/${application.id}" class="cta-button">
-          Granska ansökan i admin →
+          Se bokningsdetaljer i admin →
         </a>
       </div>
       
       <p style="font-size: 14px; color: #666; margin-top: 30px;">
-        Klicka på knappen ovan för att se fullständig information och hantera ansökan.
+        Klicka på knappen ovan för att se fullständig information och hantera bokningen.
       </p>
     </div>
     
@@ -597,7 +574,7 @@ serve(async (req) => {
         body: JSON.stringify({
           from: 'NOCV <noreply@nocv.se>',
           to: [sanitizedEmail],
-          subject: `✓ Bekräftelse: Din ansökan till ${sanitizeText(job.title)}`,
+          subject: `✓ Bekräftelse: Din intervju för ${sanitizeText(job.title)}`,
           html: candidateEmailHtml,
         }),
     });
@@ -620,9 +597,9 @@ serve(async (req) => {
         body: JSON.stringify({
           from: 'NOCV <noreply@nocv.se>',
           to: [creator.email],
-          subject: `🔔 Ny ansökan: ${job.title}`,
+          subject: `🔔 Ny intervjubokning: ${job.title}`,
           html: recruiterEmailHtml,
-          reply_to: email,
+          reply_to: sanitizedEmail,
         }),
       });
 
@@ -644,7 +621,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: 'NOCV <noreply@nocv.se>',
         to: ['hello@nocv.se'],
-        subject: `🔔 Ny ansökan: ${sanitizeText(job.title)}`,
+        subject: `🔔 Ny intervjubokning: ${sanitizeText(job.title)}`,
         html: recruiterEmailHtml,
         reply_to: sanitizedEmail,
       }),
@@ -660,7 +637,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: 'Ansökan skickad!',
+        message: 'Intervju bokad!',
         application_id: application.id
       }),
       { 

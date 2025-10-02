@@ -39,14 +39,6 @@ const Contact = () => {
     setIsLoading(true);
     
     try {
-      // Check if Supabase is properly configured
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      
-      if (!supabaseUrl || !supabaseAnonKey) {
-        throw new Error('Supabase är inte korrekt konfigurerat. Kontakta oss direkt på michael@nocv.se');
-      }
-
       const { data, error } = await supabase.functions.invoke('send-contact-email', {
         body: {
           name: values.name,

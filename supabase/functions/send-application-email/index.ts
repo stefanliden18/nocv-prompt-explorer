@@ -572,7 +572,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
         body: JSON.stringify({
-          from: 'NOCV <noreply@nocv.se>',
+          from: 'NOCV <onboarding@resend.dev>',
           to: [sanitizedEmail],
           subject: `✓ Bekräftelse: Din intervju för ${sanitizeText(job.title)}`,
           html: candidateEmailHtml,
@@ -595,7 +595,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: 'NOCV <noreply@nocv.se>',
+          from: 'NOCV <onboarding@resend.dev>',
           to: [creator.email],
           subject: `🔔 Ny intervjubokning: ${job.title}`,
           html: recruiterEmailHtml,
@@ -619,7 +619,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'NOCV <noreply@nocv.se>',
+        from: 'NOCV <onboarding@resend.dev>',
         to: ['hello@nocv.se'],
         subject: `🔔 Ny intervjubokning: ${sanitizeText(job.title)}`,
         html: recruiterEmailHtml,

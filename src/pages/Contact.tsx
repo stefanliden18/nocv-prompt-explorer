@@ -64,34 +64,22 @@ const Contact = () => {
         throw new Error(data.error);
       }
 
-      setIsSubmitted(true);
       toast({
         title: "Meddelande skickat!",
         description: "Vi återkommer till dig inom kort.",
       });
       
+      form.reset();
+      setIsSubmitted(true);
+      
     } catch (error: any) {
-      console.error('Error sending email:', error);
-      
-      // Create fallback mailto link
-      const subject = "Kontakt från NOCV hemsida";
-      const body = `Namn: ${values.name}
-E-post: ${values.email}
-${values.company ? `Företag: ${values.company}\n` : ""}
-Meddelande:
-${values.message}`;
-      
-      const mailtoLink = `mailto:michael@nocv.se?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      console.error('Error sending contact email:', error);
       
       toast({
-        title: "Öppnar e-postklient",
-        description: "Vi öppnar din e-postklient som backup. Du kan också kontakta oss direkt på michael@nocv.se",
+        title: "Kunde inte skicka meddelandet",
+        description: error.message || "Ett fel uppstod. Försök igen eller kontakta oss direkt på michael@nocv.se",
         variant: "destructive",
       });
-      
-      // Open mailto as fallback
-      window.open(mailtoLink, '_blank');
-      
     } finally {
       setIsLoading(false);
     }

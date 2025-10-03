@@ -136,7 +136,7 @@ export default function AdminJobs() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => navigate(`/jobs/${job.id}`)}
+                        onClick={() => navigate(`/admin/jobs/${job.id}/preview`)}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Visa

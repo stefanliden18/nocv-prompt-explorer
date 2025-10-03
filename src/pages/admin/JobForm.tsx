@@ -38,7 +38,6 @@ export default function JobForm() {
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
-  const [publishAt, setPublishAt] = useState('');
 
   // Fetch companies
   useEffect(() => {
@@ -115,7 +114,7 @@ export default function JobForm() {
           language: language.trim() || null,
           status: 'draft',
           slug: slug,
-          publish_at: publishAt || null,
+          publish_at: null, // Används inte i JobForm, sätts senare i JobEdit
           created_by: user!.id,
         });
 
@@ -278,16 +277,9 @@ export default function JobForm() {
                     onChange={(e) => setSlug(e.target.value)}
                     placeholder="slug-genereras-automatiskt"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="publishAt">Publiceringsdatum</Label>
-                  <Input
-                    id="publishAt"
-                    type="datetime-local"
-                    value={publishAt}
-                    onChange={(e) => setPublishAt(e.target.value)}
-                  />
+                  <p className="text-xs text-muted-foreground">
+                    OBS: Publiceringsdatum kan du sätta när du redigerar jobbet efter att det skapats.
+                  </p>
                 </div>
 
                 <div className="flex gap-2">

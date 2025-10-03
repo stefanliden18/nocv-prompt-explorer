@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { toZonedTime } from 'date-fns-tz';
+import { utcToStockholm, nowInStockholm } from '@/lib/timezone';
 
 interface Job {
   id: string;
@@ -65,8 +65,8 @@ export default function AdminJobs() {
     }
     
     if (job.status === 'published') {
-      const now = toZonedTime(new Date(), 'Europe/Stockholm');
-      const publishDate = job.publish_at ? toZonedTime(new Date(job.publish_at), 'Europe/Stockholm') : null;
+      const now = nowInStockholm();
+      const publishDate = job.publish_at ? utcToStockholm(job.publish_at) : null;
       if (publishDate && publishDate > now) {
         return <Badge variant="outline">Planerad</Badge>;
       }
@@ -126,9 +126,9 @@ export default function AdminJobs() {
                         {job.companies.name} • {job.city}
                       </div>
                       <div className="text-xs text-muted-foreground mt-1">
-                        Skapad: {format(toZonedTime(new Date(job.created_at), 'Europe/Stockholm'), "PPP 'kl.' HH:mm", { locale: sv })}
-                        {job.publish_at && toZonedTime(new Date(job.publish_at), 'Europe/Stockholm') > toZonedTime(new Date(), 'Europe/Stockholm') && (
-                          <> • Planerad: {format(toZonedTime(new Date(job.publish_at), 'Europe/Stockholm'), "PPP 'kl.' HH:mm", { locale: sv })}</>
+                        Skapad: {format(utcToStockholm(job.created_at), "PPP 'kl.' HH:mm", { locale: sv })}
+                        {job.publish_at && utcToStockholm(job.publish_at) > nowInStockholm() && (
+                          <> • Planerad: {format(utcToStockholm(job.publish_at), "PPP 'kl.' HH:mm", { locale: sv })}</>
                         )}
                       </div>
                     </div>

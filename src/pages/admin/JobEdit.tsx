@@ -18,8 +18,9 @@ import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive } from 'lucide-react'
 import ReactMarkdown from 'react-markdown';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { fromZonedTime } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
+import { stockholmToUTC, utcToStockholm, nowInStockholm } from '@/lib/timezone';
 
 interface Company {
   id: string;
@@ -119,7 +120,7 @@ export default function JobEdit() {
       setStatus(job.status);
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
-        const stockholmDate = toZonedTime(new Date(job.publish_at), 'Europe/Stockholm');
+        const stockholmDate = utcToStockholm(job.publish_at);
         setPublishAt(stockholmDate);
         setPublishHour(stockholmDate.getHours().toString().padStart(2, '0'));
         setPublishMinute(stockholmDate.getMinutes().toString().padStart(2, '0'));
@@ -141,7 +142,7 @@ export default function JobEdit() {
     }
     
     if (status === 'published') {
-      const now = toZonedTime(new Date(), 'Europe/Stockholm');
+      const now = nowInStockholm();
       if (publishAt && publishAt > now) {
         return <Badge variant="outline">Planerad</Badge>;
       }
@@ -172,7 +173,7 @@ export default function JobEdit() {
         language: language.trim() || null,
         slug: slug,
         // Convert Stockholm time to UTC for database storage
-        publish_at: publishAt ? fromZonedTime(publishAt, 'Europe/Stockholm').toISOString() : null,
+        publish_at: publishAt ? stockholmToUTC(publishAt) : null,
       };
 
       if (newStatus) {
@@ -203,7 +204,7 @@ export default function JobEdit() {
   
   const handlePublish = () => {
     // Set publish_at to current Stockholm time when publishing
-    const now = toZonedTime(new Date(), 'Europe/Stockholm');
+    const now = nowInStockholm();
     setPublishAt(now);
     setTimeout(() => updateJob('published'), 10);
   };
@@ -563,8 +564,13 @@ export default function JobEdit() {
                           className="flex-1"
                           onClick={() => {
                             if (tempDate) {
-                              const newDate = new Date(tempDate);
-                              newDate.setHours(parseInt(tempHour), parseInt(tempMinute), 0, 0);
+                              // Skapa datum i Stockholm-tid explicit
+                              const year = tempDate.getFullYear();
+                              const month = tempDate.getMonth();
+                              const day = tempDate.getDate();
+                              const stockholmDateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}T${tempHour}:${tempMinute}:00`;
+                              const newDate = new Date(stockholmDateString);
+                              
                               setPublishAt(newDate);
                               setPublishHour(tempHour);
                               setPublishMinute(tempMinute);
@@ -581,7 +587,7 @@ export default function JobEdit() {
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-muted-foreground">
-                  {publishAt && publishAt > toZonedTime(new Date(), 'Europe/Stockholm') && (
+                  {publishAt && publishAt > nowInStockholm() && (
                     "Jobbet kommer att publiceras automatiskt vid detta datum och tid"
                   )}
                 </p>

@@ -65,9 +65,9 @@ export default function AdminJobs() {
     }
     
     if (job.status === 'published') {
-      const now = nowInStockholm();
-      const publishDate = job.publish_at ? utcToStockholm(job.publish_at) : null;
-      if (publishDate && publishDate > now) {
+      const nowUtc = new Date().toISOString();
+      const publishDateUtc = job.publish_at;
+      if (publishDateUtc && publishDateUtc > nowUtc) {
         return <Badge variant="outline">Planerad</Badge>;
       }
       return <Badge variant="default">Publicerad</Badge>;
@@ -125,12 +125,12 @@ export default function AdminJobs() {
                       <div className="text-sm text-muted-foreground">
                         {job.companies.name} • {job.city}
                       </div>
-                      <div className="text-xs text-muted-foreground mt-1">
+                       <div className="text-xs text-muted-foreground mt-1">
                         Skapad: {format(utcToStockholm(job.created_at), "PPP 'kl.' HH:mm", { locale: sv })}
-                        {job.publish_at && utcToStockholm(job.publish_at) > nowInStockholm() && (
+                        {job.publish_at && job.publish_at > new Date().toISOString() && (
                           <> • Planerad: {format(utcToStockholm(job.publish_at), "PPP 'kl.' HH:mm", { locale: sv })}</>
                         )}
-                      </div>
+                       </div>
                     </div>
                     <div className="flex gap-2">
                       <Button

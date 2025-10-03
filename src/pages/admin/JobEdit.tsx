@@ -66,6 +66,10 @@ export default function JobEdit() {
   const [publishAt, setPublishAt] = useState<Date | undefined>(undefined);
   const [publishHour, setPublishHour] = useState<string>('09');
   const [publishMinute, setPublishMinute] = useState<string>('00');
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [tempDate, setTempDate] = useState<Date | undefined>(undefined);
+  const [tempHour, setTempHour] = useState<string>('09');
+  const [tempMinute, setTempMinute] = useState<string>('00');
 
   useEffect(() => {
     fetchCompanies();
@@ -468,7 +472,14 @@ export default function JobEdit() {
               <div className="space-y-2">
                 <Label>Publiceringsdatum (valfritt)</Label>
                 <p className="text-xs text-muted-foreground mb-2">Stockholm-tid (CET/CEST)</p>
-                <Popover>
+                <Popover open={isPopoverOpen} onOpenChange={(open) => {
+                  setIsPopoverOpen(open);
+                  if (open) {
+                    setTempDate(publishAt);
+                    setTempHour(publishHour);
+                    setTempMinute(publishMinute);
+                  }
+                }}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -490,70 +501,81 @@ export default function JobEdit() {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={publishAt}
-                      onSelect={(date) => {
-                        if (date) {
-                          const newDate = new Date(date);
-                          newDate.setHours(parseInt(publishHour), parseInt(publishMinute), 0, 0);
-                          setPublishAt(newDate);
-                        } else {
-                          setPublishAt(undefined);
-                        }
-                      }}
+                      selected={tempDate}
+                      onSelect={setTempDate}
                       initialFocus
                       className="pointer-events-auto"
                     />
-                    <div className="p-3 border-t">
-                      <Label className="text-xs mb-2 block">Tid</Label>
+                    <div className="p-3 border-t space-y-3">
+                      <div>
+                        <Label className="text-xs mb-2 block">Tid</Label>
+                        <div className="flex gap-2">
+                          <Select value={tempHour} onValueChange={setTempHour}>
+                            <SelectTrigger className="w-[70px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 24 }, (_, i) => {
+                                const hour = i.toString().padStart(2, '0');
+                                return (
+                                  <SelectItem key={hour} value={hour}>
+                                    {hour}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                          <span className="flex items-center">:</span>
+                          <Select value={tempMinute} onValueChange={setTempMinute}>
+                            <SelectTrigger className="w-[70px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 60 }, (_, i) => {
+                                const minute = i.toString().padStart(2, '0');
+                                return (
+                                  <SelectItem key={minute} value={minute}>
+                                    {minute}
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {tempDate && (
+                        <div className="text-xs text-muted-foreground">
+                          Valt: {format(tempDate, "PPP", { locale: sv })} kl. {tempHour}:{tempMinute}
+                        </div>
+                      )}
                       <div className="flex gap-2">
-                        <Select
-                          value={publishHour}
-                          onValueChange={(value) => {
-                            setPublishHour(value);
-                            if (publishAt) {
-                              const newDate = new Date(publishAt);
-                              newDate.setHours(parseInt(value), parseInt(publishMinute), 0, 0);
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => setIsPopoverOpen(false)}
+                        >
+                          Avbryt
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            if (tempDate) {
+                              const newDate = new Date(tempDate);
+                              newDate.setHours(parseInt(tempHour), parseInt(tempMinute), 0, 0);
                               setPublishAt(newDate);
+                              setPublishHour(tempHour);
+                              setPublishMinute(tempMinute);
+                            } else {
+                              setPublishAt(undefined);
                             }
+                            setIsPopoverOpen(false);
                           }}
                         >
-                          <SelectTrigger className="w-[70px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Array.from({ length: 24 }, (_, i) => {
-                              const hour = i.toString().padStart(2, '0');
-                              return (
-                                <SelectItem key={hour} value={hour}>
-                                  {hour}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
-                        <span className="flex items-center">:</span>
-                        <Select
-                          value={publishMinute}
-                          onValueChange={(value) => {
-                            setPublishMinute(value);
-                            if (publishAt) {
-                              const newDate = new Date(publishAt);
-                              newDate.setHours(parseInt(publishHour), parseInt(value), 0, 0);
-                              setPublishAt(newDate);
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="w-[70px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {['00', '15', '30', '45'].map((minute) => (
-                              <SelectItem key={minute} value={minute}>
-                                {minute}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          Spara
+                        </Button>
                       </div>
                     </div>
                   </PopoverContent>

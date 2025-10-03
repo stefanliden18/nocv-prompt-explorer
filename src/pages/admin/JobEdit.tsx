@@ -21,6 +21,7 @@ import { sv } from 'date-fns/locale';
 import { fromZonedTime } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
 import { stockholmToUTC, utcToStockholm, nowInStockholm, nowUTC } from '@/lib/timezone';
+import { useDebugMode } from '@/hooks/useDebugMode';
 
 interface Company {
   id: string;
@@ -47,6 +48,7 @@ interface Job {
 export default function JobEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isDebugEnabled } = useDebugMode();
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobLoading, setJobLoading] = useState(true);
@@ -477,9 +479,15 @@ export default function JobEdit() {
                 <Popover open={isPopoverOpen} onOpenChange={(open) => {
                   setIsPopoverOpen(open);
                   if (open) {
-                    setTempDate(publishAt);
-                    setTempHour(publishHour);
-                    setTempMinute(publishMinute);
+                    if (publishAt) {
+                      setTempDate(publishAt);
+                      setTempHour(publishAt.getHours().toString().padStart(2, '0'));
+                      setTempMinute(publishAt.getMinutes().toString().padStart(2, '0'));
+                    } else {
+                      setTempDate(undefined);
+                      setTempHour('09');
+                      setTempMinute('00');
+                    }
                   }
                 }}>
                   <PopoverTrigger asChild>
@@ -593,185 +601,195 @@ export default function JobEdit() {
             </CardContent>
           </Card>
 
-          {/* Time Debug Panel */}
-          <Card className="lg:col-span-2 border-4 border-orange-400 bg-orange-50">
-            <CardHeader className="bg-orange-100 border-b-2 border-orange-300">
-              <CardTitle className="text-orange-900 font-mono">
-                🔍 TIME DEBUG PANEL
-              </CardTitle>
-              <CardDescription className="text-orange-700">
-                Verifierar tidszonkonvertering och ISO 8601-format
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="font-mono text-xs space-y-6 pt-6">
-              {/* A) Manual Test Matrix */}
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm text-orange-900">A) Manuell Testmatris</h4>
-                <div className="bg-white p-4 rounded border space-y-3">
-                  {[
-                    {
-                      date: new Date('2025-10-03T10:42:00'),
-                      expectedUTC: '2025-10-03T08:42:00.000Z',
-                      expectedOffset: '+02:00',
-                      season: 'CEST',
-                      description: '2025-10-03 10:42 (CEST)'
-                    },
-                    {
-                      date: new Date('2025-12-03T10:42:00'),
-                      expectedUTC: '2025-12-03T09:42:00.000Z',
-                      expectedOffset: '+01:00',
-                      season: 'CET',
-                      description: '2025-12-03 10:42 (CET)'
-                    },
-                    {
-                      date: new Date('2025-10-03T10:00:00'),
-                      expectedUTC: '2025-10-03T08:00:00.000Z',
-                      expectedOffset: '+02:00',
-                      season: 'CEST',
-                      description: '2025-10-03 10:00 (hela timmar)'
-                    },
-                    {
-                      date: new Date('2025-10-03T10:59:00'),
-                      expectedUTC: '2025-10-03T08:59:00.000Z',
-                      expectedOffset: '+02:00',
-                      season: 'CEST',
-                      description: '2025-10-03 10:59 (minuter)'
-                    }
-                  ].map((test, idx) => {
-                    const actualUTC = stockholmToUTC(test.date);
-                    const isCorrect = actualUTC === test.expectedUTC;
-                    const actualOffset = format(test.date, 'xxx');
-                    const offsetCorrect = actualOffset === test.expectedOffset;
-                    
-                    return (
-                      <div key={idx} className={cn(
-                        "p-2 rounded border",
-                        isCorrect && offsetCorrect ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"
-                      )}>
-                        <div className="font-semibold mb-1">{test.description}</div>
-                        <div className="space-y-1 text-[10px]">
-                          <div>Input (lokal): {format(test.date, "PPP 'kl.' HH:mm:ss", { locale: sv })}</div>
-                          <div>Förväntad UTC: <span className="text-blue-600">{test.expectedUTC}</span></div>
-                          <div>Faktisk UTC: <span className={isCorrect ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>{actualUTC}</span></div>
-                          <div>Förväntad offset: {test.expectedOffset} ({test.season})</div>
-                          <div>Faktisk offset: <span className={offsetCorrect ? "text-green-600" : "text-red-600"}>{actualOffset}</span></div>
-                          <div className="mt-1 pt-1 border-t">
-                            {isCorrect && offsetCorrect ? (
-                              <span className="text-green-600 font-semibold">✅ KORREKT</span>
-                            ) : (
-                              <span className="text-red-600 font-semibold">❌ FEL</span>
-                            )}
+          {/* 
+            TIME DEBUG PANEL
+            Visas endast när ALLA följande villkor är uppfyllda:
+            1. Miljö !== production (import.meta.env.MODE !== 'production')
+            2. Användare är Admin eller Rekryterare
+            3. URL innehåller ?debug=1
+            
+            Exempel: http://localhost:8080/admin/jobs/abc123/edit?debug=1
+          */}
+          {isDebugEnabled && (
+            <Card className="lg:col-span-2 border-4 border-orange-400 bg-orange-50">
+              <CardHeader className="bg-orange-100 border-b-2 border-orange-300">
+                <CardTitle className="text-orange-900 font-mono">
+                  🔍 TIME DEBUG PANEL
+                </CardTitle>
+                <CardDescription className="text-orange-700">
+                  Verifierar tidszonkonvertering och ISO 8601-format
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="font-mono text-xs space-y-6 pt-6">
+                {/* A) Manual Test Matrix */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-orange-900">A) Manuell Testmatris</h4>
+                  <div className="bg-white p-4 rounded border space-y-3">
+                    {[
+                      {
+                        date: new Date('2025-10-03T10:42:00'),
+                        expectedUTC: '2025-10-03T08:42:00.000Z',
+                        expectedOffset: '+02:00',
+                        season: 'CEST',
+                        description: '2025-10-03 10:42 (CEST)'
+                      },
+                      {
+                        date: new Date('2025-12-03T10:42:00'),
+                        expectedUTC: '2025-12-03T09:42:00.000Z',
+                        expectedOffset: '+01:00',
+                        season: 'CET',
+                        description: '2025-12-03 10:42 (CET)'
+                      },
+                      {
+                        date: new Date('2025-10-03T10:00:00'),
+                        expectedUTC: '2025-10-03T08:00:00.000Z',
+                        expectedOffset: '+02:00',
+                        season: 'CEST',
+                        description: '2025-10-03 10:00 (hela timmar)'
+                      },
+                      {
+                        date: new Date('2025-10-03T10:59:00'),
+                        expectedUTC: '2025-10-03T08:59:00.000Z',
+                        expectedOffset: '+02:00',
+                        season: 'CEST',
+                        description: '2025-10-03 10:59 (minuter)'
+                      }
+                    ].map((test, idx) => {
+                      const actualUTC = stockholmToUTC(test.date);
+                      const isCorrect = actualUTC === test.expectedUTC;
+                      const actualOffset = format(test.date, 'xxx');
+                      const offsetCorrect = actualOffset === test.expectedOffset;
+                      
+                      return (
+                        <div key={idx} className={cn(
+                          "p-2 rounded border",
+                          isCorrect && offsetCorrect ? "bg-green-50 border-green-300" : "bg-red-50 border-red-300"
+                        )}>
+                          <div className="font-semibold mb-1">{test.description}</div>
+                          <div className="space-y-1 text-[10px]">
+                            <div>Input (lokal): {format(test.date, "PPP 'kl.' HH:mm:ss", { locale: sv })}</div>
+                            <div>Förväntad UTC: <span className="text-blue-600">{test.expectedUTC}</span></div>
+                            <div>Faktisk UTC: <span className={isCorrect ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>{actualUTC}</span></div>
+                            <div>Förväntad offset: {test.expectedOffset} ({test.season})</div>
+                            <div>Faktisk offset: <span className={offsetCorrect ? "text-green-600" : "text-red-600"}>{actualOffset}</span></div>
+                            <div className="mt-1 pt-1 border-t">
+                              {isCorrect && offsetCorrect ? (
+                                <span className="text-green-600 font-semibold">✅ KORREKT</span>
+                              ) : (
+                                <span className="text-red-600 font-semibold">❌ FEL</span>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* B) Live Input from UI */}
-              {publishAt && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm text-orange-900">B) Live Input från UI</h4>
-                  
-                  {/* B1) Client Input */}
-                  <div className="bg-white p-3 rounded border space-y-1">
-                    <div className="font-semibold text-blue-900 mb-2">B1) Client Input (Raw)</div>
-                    <div><span className="text-muted-foreground">tempDate:</span> {tempDate ? format(tempDate, "PPP", { locale: sv }) : 'N/A'}</div>
-                    <div><span className="text-muted-foreground">tempHour:</span> "{tempHour}"</div>
-                    <div><span className="text-muted-foreground">tempMinute:</span> "{tempMinute}"</div>
-                    <div><span className="text-muted-foreground">JS Date:</span> {publishAt.toString()}</div>
-                  </div>
-
-                  {/* B2) Payload to API */}
-                  <div className="bg-white p-3 rounded border space-y-1">
-                    <div className="font-semibold text-blue-900 mb-2">B2) Payload to API (ISO 8601 med Z)</div>
-                    <div><span className="text-muted-foreground">publishAt (local):</span> {publishAt.toString()}</div>
-                    <div className="mt-2 pt-2 border-t">
-                      <span className="text-muted-foreground">→ stockholmToUTC():</span>{' '}
-                      <span className="font-semibold text-blue-600">{stockholmToUTC(publishAt)} ✅</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Offset:</span> UTC{format(publishAt, 'xxx')}
-                      {' '}({format(publishAt, 'zzz')})
-                    </div>
-                  </div>
-
-                  {/* B3) DB Saved & Read Back */}
-                  <div className="bg-white p-3 rounded border space-y-1">
-                    <div className="font-semibold text-blue-900 mb-2">B3) DB Saved & Read Back</div>
-                    <div><span className="text-muted-foreground">DB (UTC):</span> <span className="text-blue-600">{stockholmToUTC(publishAt)}</span></div>
-                    <div><span className="text-muted-foreground">utcToStockholm():</span> {utcToStockholm(stockholmToUTC(publishAt)).toString()}</div>
-                    <div><span className="text-muted-foreground">Formatted:</span> {format(utcToStockholm(stockholmToUTC(publishAt)), "PPP 'kl.' HH:mm", { locale: sv })}</div>
-                    <div className="mt-2 pt-2 border-t">
-                      <span className="text-green-600 font-semibold">✓ Matches input: YES ✅</span>
-                    </div>
-                  </div>
-
-                  {/* B4) Conversion Verification */}
-                  <div className="bg-white p-3 rounded border space-y-1">
-                    <div className="font-semibold text-blue-900 mb-2">B4) Conversion Verification</div>
-                    <div className="text-center py-2 bg-blue-50 rounded">
-                      <div className="font-semibold text-blue-600">{format(utcToStockholm(stockholmToUTC(publishAt)), "HH:mm")} UTC (Z-format)</div>
-                      <div className="my-1">↕️ utcToStockholm()</div>
-                      <div className="font-semibold text-orange-600">{format(publishAt, "HH:mm")} (Europe/Stockholm, {format(publishAt, 'zzz')} = UTC{format(publishAt, 'xxx')})</div>
-                      <div className="mt-2 text-[10px]">
-                        <span className="text-muted-foreground">Diff:</span>{' '}
-                        {format(publishAt, 'xxx')} ✅
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                 </div>
-              )}
 
-              {/* C) Server Time & UTC Comparison */}
-              <div className="space-y-2">
-                <h4 className="font-semibold text-sm text-orange-900">C) Server Time & UTC Comparison</h4>
-                <div className="bg-white p-3 rounded border space-y-1">
-                  <div>
-                    <span className="text-muted-foreground">Server Now (UTC):</span>{' '}
-                    <span className="font-semibold text-blue-600">{nowUTC()}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Server Now (Local):</span>{' '}
-                    {format(new Date(), "PPP 'kl.' HH:mm:ss", { locale: sv })}
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Client Timezone:</span> Europe/Stockholm
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">UTC Offset för {format(new Date(), 'yyyy-MM-dd')}:</span>{' '}
-                    {format(new Date(), 'xxx')} ({format(new Date(), 'zzz')})
-                  </div>
-                  {publishAt && (
-                    <>
+                {/* B) Live Input from UI */}
+                {publishAt && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm text-orange-900">B) Live Input från UI</h4>
+                    
+                    {/* B1) Client Input */}
+                    <div className="bg-white p-3 rounded border space-y-1">
+                      <div className="font-semibold text-blue-900 mb-2">B1) Client Input (Raw)</div>
+                      <div><span className="text-muted-foreground">tempDate:</span> {tempDate ? format(tempDate, "PPP", { locale: sv }) : 'N/A'}</div>
+                      <div><span className="text-muted-foreground">tempHour:</span> "{tempHour}"</div>
+                      <div><span className="text-muted-foreground">tempMinute:</span> "{tempMinute}"</div>
+                      <div><span className="text-muted-foreground">JS Date:</span> {publishAt.toString()}</div>
+                    </div>
+
+                    {/* B2) Payload to API */}
+                    <div className="bg-white p-3 rounded border space-y-1">
+                      <div className="font-semibold text-blue-900 mb-2">B2) Payload to API (ISO 8601 med Z)</div>
+                      <div><span className="text-muted-foreground">publishAt (local):</span> {publishAt.toString()}</div>
                       <div className="mt-2 pt-2 border-t">
-                        <span className="text-muted-foreground">Publiceras om:</span>{' '}
-                        {(() => {
-                          const now = new Date();
-                          const diff = publishAt.getTime() - now.getTime();
-                          const hours = Math.floor(Math.abs(diff) / (1000 * 60 * 60));
-                          const minutes = Math.floor((Math.abs(diff) % (1000 * 60 * 60)) / (1000 * 60));
-                          if (diff < 0) {
-                            return <span className="text-green-600 font-semibold">Redan publicerad (för {hours}h {minutes}m sedan)</span>;
-                          }
-                          return <span className="text-orange-600 font-semibold">Om {hours}h {minutes}m</span>;
-                        })()}
+                        <span className="text-muted-foreground">→ stockholmToUTC():</span>{' '}
+                        <span className="font-semibold text-blue-600">{stockholmToUTC(publishAt)} ✅</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground">UTC-jämförelse:</span>{' '}
-                        {stockholmToUTC(publishAt) <= nowUTC() ? (
-                          <span className="text-green-600 font-semibold">✓ Ska vara publicerad</span>
-                        ) : (
-                          <span className="text-orange-600 font-semibold">○ Ännu inte publicerad</span>
-                        )}
+                        <span className="text-muted-foreground">Offset:</span> UTC{format(publishAt, 'xxx')}
+                        {' '}({format(publishAt, 'zzz')})
                       </div>
-                    </>
-                  )}
+                    </div>
+
+                    {/* B3) DB Saved & Read Back */}
+                    <div className="bg-white p-3 rounded border space-y-1">
+                      <div className="font-semibold text-blue-900 mb-2">B3) DB Saved & Read Back</div>
+                      <div><span className="text-muted-foreground">DB (UTC):</span> <span className="text-blue-600">{stockholmToUTC(publishAt)}</span></div>
+                      <div><span className="text-muted-foreground">utcToStockholm():</span> {utcToStockholm(stockholmToUTC(publishAt)).toString()}</div>
+                      <div><span className="text-muted-foreground">Formatted:</span> {format(utcToStockholm(stockholmToUTC(publishAt)), "PPP 'kl.' HH:mm", { locale: sv })}</div>
+                      <div className="mt-2 pt-2 border-t">
+                        <span className="text-green-600 font-semibold">✓ Matches input: YES ✅</span>
+                      </div>
+                    </div>
+
+                    {/* B4) Conversion Verification */}
+                    <div className="bg-white p-3 rounded border space-y-1">
+                      <div className="font-semibold text-blue-900 mb-2">B4) Conversion Verification</div>
+                      <div className="text-center py-2 bg-blue-50 rounded">
+                        <div className="font-semibold text-blue-600">{format(utcToStockholm(stockholmToUTC(publishAt)), "HH:mm")} UTC (Z-format)</div>
+                        <div className="my-1">↕️ utcToStockholm()</div>
+                        <div className="font-semibold text-orange-600">{format(publishAt, "HH:mm")} (Europe/Stockholm, {format(publishAt, 'zzz')} = UTC{format(publishAt, 'xxx')})</div>
+                        <div className="mt-2 text-[10px]">
+                          <span className="text-muted-foreground">Diff:</span>{' '}
+                          {format(publishAt, 'xxx')} ✅
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* C) Server Time & UTC Comparison */}
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-orange-900">C) Server Time & UTC Comparison</h4>
+                  <div className="bg-white p-3 rounded border space-y-1">
+                    <div>
+                      <span className="text-muted-foreground">Server Now (UTC):</span>{' '}
+                      <span className="font-semibold text-blue-600">{nowUTC()}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Server Now (Local):</span>{' '}
+                      {format(new Date(), "PPP 'kl.' HH:mm:ss", { locale: sv })}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Client Timezone:</span> Europe/Stockholm
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">UTC Offset för {format(new Date(), 'yyyy-MM-dd')}:</span>{' '}
+                      {format(new Date(), 'xxx')} ({format(new Date(), 'zzz')})
+                    </div>
+                    {publishAt && (
+                      <>
+                        <div className="mt-2 pt-2 border-t">
+                          <span className="text-muted-foreground">Publiceras om:</span>{' '}
+                          {(() => {
+                            const now = new Date();
+                            const diff = publishAt.getTime() - now.getTime();
+                            const hours = Math.floor(Math.abs(diff) / (1000 * 60 * 60));
+                            const minutes = Math.floor((Math.abs(diff) % (1000 * 60 * 60)) / (1000 * 60));
+                            if (diff < 0) {
+                              return <span className="text-green-600 font-semibold">Redan publicerad (för {hours}h {minutes}m sedan)</span>;
+                            }
+                            return <span className="text-orange-600 font-semibold">Om {hours}h {minutes}m</span>;
+                          })()}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">UTC-jämförelse:</span>{' '}
+                          {stockholmToUTC(publishAt) <= nowUTC() ? (
+                            <span className="text-green-600 font-semibold">✓ Ska vara publicerad</span>
+                          ) : (
+                            <span className="text-orange-600 font-semibold">○ Ännu inte publicerad</span>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Preview */}
           <Card className="lg:sticky lg:top-6 h-fit">

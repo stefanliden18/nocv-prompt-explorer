@@ -61,7 +61,7 @@ Skickat från NOCV kontaktformulär
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'NOCV Hemsida <onboarding@resend.dev>',
+        from: 'NOCV Hemsida <noreply@nocv.se>',
         to: ['stefanliden18@gmail.com'],
         subject: 'Kontakt från NOCV hemsida',
         text: emailBody,

@@ -64,6 +64,8 @@ export default function JobEdit() {
   const [slug, setSlug] = useState('');
   const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
   const [publishAt, setPublishAt] = useState<Date | undefined>(undefined);
+  const [publishHour, setPublishHour] = useState<string>('09');
+  const [publishMinute, setPublishMinute] = useState<string>('00');
 
   useEffect(() => {
     fetchCompanies();
@@ -112,7 +114,14 @@ export default function JobEdit() {
       setSlug(job.slug);
       setStatus(job.status);
       // Convert UTC time from database to Stockholm time for display
-      setPublishAt(job.publish_at ? toZonedTime(new Date(job.publish_at), 'Europe/Stockholm') : undefined);
+      if (job.publish_at) {
+        const stockholmDate = toZonedTime(new Date(job.publish_at), 'Europe/Stockholm');
+        setPublishAt(stockholmDate);
+        setPublishHour(stockholmDate.getHours().toString().padStart(2, '0'));
+        setPublishMinute(stockholmDate.getMinutes().toString().padStart(2, '0'));
+      } else {
+        setPublishAt(undefined);
+      }
     } catch (error: any) {
       console.error('Error fetching job:', error);
       toast.error('Kunde inte hämta jobb');
@@ -204,22 +213,11 @@ export default function JobEdit() {
   };
 
   const handleSchedule = () => {
-    const date = window.prompt('Ange datum och tid för publicering i Stockholm-tid (YYYY-MM-DD HH:MM):');
-    if (date) {
-      try {
-        // Parse the date as if it's in Stockholm timezone
-        const [datePart, timePart] = date.split(' ');
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hour, minute] = timePart.split(':').map(Number);
-        
-        // Create date in Stockholm timezone
-        const stockholmDate = new Date(year, month - 1, day, hour, minute);
-        setPublishAt(stockholmDate);
-        toast.success('Publiceringsdatum satt (Stockholm-tid)');
-      } catch (error) {
-        toast.error('Ogiltigt datum. Använd format: YYYY-MM-DD HH:MM');
-      }
+    if (!publishAt) {
+      toast.error('Välj först ett datum och tid för publicering');
+      return;
     }
+    updateJob('published');
   };
 
   const handleUnpublish = () => {
@@ -469,6 +467,7 @@ export default function JobEdit() {
 
               <div className="space-y-2">
                 <Label>Publiceringsdatum (valfritt)</Label>
+                <p className="text-xs text-muted-foreground mb-2">Stockholm-tid (CET/CEST)</p>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -479,22 +478,89 @@ export default function JobEdit() {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {publishAt ? format(publishAt, "PPP", { locale: sv }) : "Välj datum"}
+                      {publishAt ? (
+                        <>
+                          {format(publishAt, "PPP", { locale: sv })} kl. {publishHour}:{publishMinute}
+                        </>
+                      ) : (
+                        "Välj datum och tid"
+                      )}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
                       selected={publishAt}
-                      onSelect={setPublishAt}
+                      onSelect={(date) => {
+                        if (date) {
+                          const newDate = new Date(date);
+                          newDate.setHours(parseInt(publishHour), parseInt(publishMinute), 0, 0);
+                          setPublishAt(newDate);
+                        } else {
+                          setPublishAt(undefined);
+                        }
+                      }}
                       initialFocus
                       className="pointer-events-auto"
                     />
+                    <div className="p-3 border-t">
+                      <Label className="text-xs mb-2 block">Tid</Label>
+                      <div className="flex gap-2">
+                        <Select
+                          value={publishHour}
+                          onValueChange={(value) => {
+                            setPublishHour(value);
+                            if (publishAt) {
+                              const newDate = new Date(publishAt);
+                              newDate.setHours(parseInt(value), parseInt(publishMinute), 0, 0);
+                              setPublishAt(newDate);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-[70px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 24 }, (_, i) => {
+                              const hour = i.toString().padStart(2, '0');
+                              return (
+                                <SelectItem key={hour} value={hour}>
+                                  {hour}
+                                </SelectItem>
+                              );
+                            })}
+                          </SelectContent>
+                        </Select>
+                        <span className="flex items-center">:</span>
+                        <Select
+                          value={publishMinute}
+                          onValueChange={(value) => {
+                            setPublishMinute(value);
+                            if (publishAt) {
+                              const newDate = new Date(publishAt);
+                              newDate.setHours(parseInt(publishHour), parseInt(value), 0, 0);
+                              setPublishAt(newDate);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-[70px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {['00', '15', '30', '45'].map((minute) => (
+                              <SelectItem key={minute} value={minute}>
+                                {minute}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
                   </PopoverContent>
                 </Popover>
                 <p className="text-xs text-muted-foreground">
                   {publishAt && publishAt > toZonedTime(new Date(), 'Europe/Stockholm') && (
-                    "Jobbet kommer att publiceras automatiskt vid detta datum (Stockholm-tid)"
+                    "Jobbet kommer att publiceras automatiskt vid detta datum och tid"
                   )}
                 </p>
               </div>

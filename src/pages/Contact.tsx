@@ -69,7 +69,7 @@ const Contact = () => {
       
       toast({
         title: "Kunde inte skicka meddelandet",
-        description: error.message || "Ett fel uppstod. Försök igen eller kontakta oss direkt på michael@nocv.se",
+        description: error.message || "Ett fel uppstod. Försök igen senare.",
         variant: "destructive",
       });
     } finally {
@@ -108,7 +108,7 @@ const Contact = () => {
                       Tack! Vi återkommer till dig inom kort.
                     </h3>
                     <p className="text-muted-foreground mb-6">
-                      Ditt meddelande har skickats till michael@nocv.se
+                      Ditt meddelande har skickats till noreply@nocv.se
                     </p>
                     <Button 
                       onClick={() => setIsSubmitted(false)}

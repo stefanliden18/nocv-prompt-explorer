@@ -227,14 +227,25 @@ const Jobs = () => {
 
       <Navigation />
       
-      {/* Header */}
-      <section className="pt-24 pb-12 bg-background">
-        <div className="container mx-auto px-6">
+      {/* Header with background image */}
+      <section className="relative pt-24 pb-12 overflow-hidden">
+        {/* Background image with overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/images/jobs-hero-road.jpg" 
+            alt="Karriärsvägen framåt" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-background"></div>
+        </div>
+        
+        {/* Content on top of background */}
+        <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold font-heading text-foreground mb-4">
+            <h1 className="text-4xl md:text-5xl font-bold font-heading text-white mb-4 drop-shadow-lg">
               Lediga jobb
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
+            <p className="text-xl text-white/90 max-w-2xl mx-auto mb-6 drop-shadow-md">
               Hitta ditt nästa jobb baserat på vad du kan, inte vad du studerat
             </p>
             
@@ -303,7 +314,7 @@ const Jobs = () => {
           {/* Results counter */}
           {!loading && (
             <div className="text-center mb-8">
-              <p className="text-muted-foreground">
+              <p className="text-white/80 drop-shadow-md">
                 Visar {filteredJobs.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + filteredJobs.length, totalCount)} av {totalCount} jobb
               </p>
             </div>

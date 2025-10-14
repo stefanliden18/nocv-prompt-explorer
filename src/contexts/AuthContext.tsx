@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const checkAdminStatus = async (userId: string) => {
+  const checkAdminStatus = async (userId: string): Promise<string> => {
     try {
       console.log('🔍 Checking role for user:', userId);
       const { data, error } = await supabase
@@ -119,17 +119,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('❌ Error checking profile role:', error);
         setIsAdmin(false);
         setRole('user');
-        return;
+        return 'user';
       }
       
       const userRole = data?.role || 'user';
       console.log('✅ User role:', userRole);
       setRole(userRole);
       setIsAdmin(userRole === 'admin');
+      return userRole;
     } catch (error) {
       console.error('❌ Error in checkAdminStatus:', error);
       setIsAdmin(false);
       setRole('user');
+      return 'user';
     }
   };
 
@@ -137,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -146,6 +148,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error) throw error;
+      
+      // Vänta på att rollen är klar innan vi navigerar
+      if (data.user) {
+        await checkAdminStatus(data.user.id);
+      }
       
       toast.success('Konto skapat! Du är nu inloggad.');
       navigate('/admin');
@@ -157,12 +164,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
+      
+      // Vänta på att rollen är klar innan vi navigerar
+      if (data.user) {
+        await checkAdminStatus(data.user.id);
+      }
       
       toast.success('Inloggad!');
       navigate('/admin');

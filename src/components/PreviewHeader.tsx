@@ -41,6 +41,9 @@ export const PreviewHeader = ({ jobId }: PreviewHeaderProps) => {
               <a href="/companies" className="text-foreground hover:text-primary transition-colors font-medium">
                 För företag
               </a>
+              <a href="/om-oss" className="text-foreground hover:text-primary transition-colors font-medium">
+                Om oss
+              </a>
               <a href="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
                 Kontakt
               </a>
@@ -92,6 +95,13 @@ export const PreviewHeader = ({ jobId }: PreviewHeaderProps) => {
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       För företag
+                    </a>
+                    <a 
+                      href="/om-oss" 
+                      className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Om oss
                     </a>
                     <a 
                       href="/contact" 

@@ -24,6 +24,8 @@ import JobForm from "./pages/admin/JobForm";
 import JobEdit from "./pages/admin/JobEdit";
 import JobPreview from "./pages/admin/JobPreview";
 import NotFound from "./pages/NotFound";
+import About from "./pages/About";
+import AboutEdit from "./pages/admin/AboutEdit";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,7 @@ const App = () => (
             <Route path="/candidates" element={<Candidates />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/om-oss" element={<About />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/admin" 
@@ -127,6 +130,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <ActivityLogs />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/about/edit" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AboutEdit />
                 </ProtectedRoute>
               } 
             />

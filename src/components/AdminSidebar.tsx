@@ -32,6 +32,8 @@ const menuItems = [
   { title: "Användare", url: "/admin/users", icon: Users },
   { title: "Händelselogg", url: "/admin/activity", icon: Activity },
   { title: "Redigera Om oss", url: "/admin/about/edit", icon: FileEdit },
+  { title: "Redigera Kontakt", url: "/admin/contact/edit", icon: FileEdit },
+  { title: "Redigera Företag", url: "/admin/companies/edit", icon: FileEdit },
 ];
 
 export function AdminSidebar() {

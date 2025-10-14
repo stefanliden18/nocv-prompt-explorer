@@ -26,6 +26,8 @@ import JobPreview from "./pages/admin/JobPreview";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import AboutEdit from "./pages/admin/AboutEdit";
+import ContactEdit from "./pages/admin/ContactEdit";
+import CompaniesEdit from "./pages/admin/CompaniesEdit";
 
 const queryClient = new QueryClient();
 
@@ -138,6 +140,22 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <AboutEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/contact/edit" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <ContactEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/companies/edit" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <CompaniesEdit />
                 </ProtectedRoute>
               } 
             />

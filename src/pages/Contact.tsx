@@ -12,6 +12,8 @@ import { z } from "zod";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import DOMPurify from "dompurify";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ange ditt namn"),
@@ -24,6 +26,24 @@ const Contact = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  // Fetch content from database
+  const { data: contentSections } = useQuery({
+    queryKey: ['page-content', 'contact'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('page_content')
+        .select('*')
+        .eq('page_key', 'contact')
+        .order('display_order');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const heroSection = contentSections?.find(s => s.section_key === 'hero');
+  const formIntroSection = contentSections?.find(s => s.section_key === 'form_intro');
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -85,13 +105,23 @@ const Contact = () => {
       <section className="pt-24 pb-16 bg-gradient-hero text-white">
         <div className="container mx-auto px-6">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl font-bold font-heading mb-6 leading-tight animate-fade-in">
-              Kontakta oss
-            </h1>
-            
-            <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
-              Har du frågor? Vi hjälper gärna till.
-            </p>
+            {heroSection ? (
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-p:text-white prose-p:opacity-90 animate-fade-in"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(heroSection.content_html) 
+                }}
+              />
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-5xl font-bold font-heading mb-6 leading-tight animate-fade-in">
+                  Kontakta oss
+                </h1>
+                <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
+                  Har du frågor? Vi hjälper gärna till.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -100,6 +130,14 @@ const Contact = () => {
       <section className="py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="max-w-2xl mx-auto">
+            {formIntroSection && (
+              <div 
+                className="prose prose-base max-w-none dark:prose-invert mb-8 text-center"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(formIntroSection.content_html) 
+                }}
+              />
+            )}
             <Card className="bg-white border border-border shadow-card">
               <CardContent className="p-8">
                 {isSubmitted ? (

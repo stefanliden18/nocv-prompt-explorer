@@ -3,8 +3,31 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Users, Target, Clock } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import DOMPurify from "dompurify";
 
 const Companies = () => {
+  // Fetch content from database
+  const { data: contentSections } = useQuery({
+    queryKey: ['page-content', 'companies'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('page_content')
+        .select('*')
+        .eq('page_key', 'companies')
+        .order('display_order');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const heroSection = contentSections?.find(s => s.section_key === 'hero');
+  const benefitsIntroSection = contentSections?.find(s => s.section_key === 'benefits_intro');
+  const howItWorksSection = contentSections?.find(s => s.section_key === 'how_it_works');
+  const ctaSection = contentSections?.find(s => s.section_key === 'cta');
+
   const benefits = [
     {
       icon: Users,
@@ -34,15 +57,25 @@ const Companies = () => {
       <section className="pt-24 pb-16 bg-gradient-hero text-white">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold font-heading mb-6 leading-tight animate-fade-in">
-              Snabbare rekrytering utan CV
-            </h1>
-            
-            <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
-              NOCV hjälper ditt företag hitta rätt kandidater baserat på kunskaper och kompetens 
-              istället för traditionella CV. Fokusera på vad kandidaterna kan göra, 
-              inte vad de har studerat eller tidigare roller.
-            </p>
+            {heroSection ? (
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-p:text-white prose-p:opacity-90 animate-fade-in"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(heroSection.content_html) 
+                }}
+              />
+            ) : (
+              <>
+                <h1 className="text-4xl md:text-6xl font-bold font-heading mb-6 leading-tight animate-fade-in">
+                  Snabbare rekrytering utan CV
+                </h1>
+                <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
+                  NOCV hjälper ditt företag hitta rätt kandidater baserat på kunskaper och kompetens 
+                  istället för traditionella CV. Fokusera på vad kandidaterna kan göra, 
+                  inte vad de har studerat eller tidigare roller.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -51,13 +84,24 @@ const Companies = () => {
       <section className="py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
-              Fördelar för ditt företag
-            </h2>
-            <p className="text-lg text-muted-foreground leading-relaxed">
-              Med NOCV får du en modernare och mer effektiv rekryteringsprocess som 
-              fokuserar på kandidaternas faktiska förmågor och potential.
-            </p>
+            {benefitsIntroSection ? (
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(benefitsIntroSection.content_html) 
+                }}
+              />
+            ) : (
+              <>
+                <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
+                  Fördelar för ditt företag
+                </h2>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Med NOCV får du en modernare och mer effektiv rekryteringsprocess som 
+                  fokuserar på kandidaternas faktiska förmågor och potential.
+                </p>
+              </>
+            )}
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -103,13 +147,24 @@ const Companies = () => {
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-4">
-              Så fungerar NOCV för företag
-            </h3>
-            <p className="text-lg text-muted-foreground mb-8">
-              Publicera dina lediga tjänster och låt vårt system automatiskt matcha och 
-              intervjua kandidater baserat på de kunskaper och erfarenheter du söker.
-            </p>
+            {howItWorksSection ? (
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert mb-8"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(howItWorksSection.content_html) 
+                }}
+              />
+            ) : (
+              <>
+                <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-4">
+                  Så fungerar NOCV för företag
+                </h3>
+                <p className="text-lg text-muted-foreground mb-8">
+                  Publicera dina lediga tjänster och låt vårt system automatiskt matcha och 
+                  intervjua kandidater baserat på de kunskaper och erfarenheter du söker.
+                </p>
+              </>
+            )}
             
             <div className="grid md:grid-cols-4 gap-6 text-center">
               <div className="bg-white p-6 rounded-lg border border-border">
@@ -141,13 +196,24 @@ const Companies = () => {
       <section className="py-20 bg-background">
         <div className="container mx-auto px-6 text-center">
           <div className="max-w-3xl mx-auto">
-            <h3 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
-              Redo att förändra er rekrytering?
-            </h3>
-            <p className="text-lg text-muted-foreground mb-10">
-              Upptäck hur NOCV kan hjälpa ert företag hitta rätt kandidater snabbare 
-              och mer effektivt än traditionella metoder.
-            </p>
+            {ctaSection ? (
+              <div 
+                className="prose prose-lg max-w-none dark:prose-invert mb-10"
+                dangerouslySetInnerHTML={{ 
+                  __html: DOMPurify.sanitize(ctaSection.content_html) 
+                }}
+              />
+            ) : (
+              <>
+                <h3 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
+                  Redo att förändra er rekrytering?
+                </h3>
+                <p className="text-lg text-muted-foreground mb-10">
+                  Upptäck hur NOCV kan hjälpa ert företag hitta rätt kandidater snabbare 
+                  och mer effektivt än traditionella metoder.
+                </p>
+              </>
+            )}
             
             <Button 
               variant="cta-primary" 
@@ -156,11 +222,6 @@ const Companies = () => {
             >
               Kontakta oss för demo
             </Button>
-            
-            <p className="text-muted-foreground mt-6 max-w-2xl mx-auto">
-              Vi visar gärna hur NOCV fungerar och hur det kan passa ert företags 
-              rekryteringsbehov.
-            </p>
           </div>
         </div>
       </section>

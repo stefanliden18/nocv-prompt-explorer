@@ -1,5 +1,4 @@
 import { useDroppable } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { KanbanCard } from '@/components/KanbanCard';
@@ -92,18 +91,13 @@ export function KanbanColumn({
         ref={setNodeRef}
         className="p-3 overflow-y-auto flex-1 min-h-[500px] max-h-[calc(100vh-300px)]"
       >
-        <SortableContext 
-          items={applications.map(app => app.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {applications.map((application) => (
-            <KanbanCard
-              key={application.id}
-              application={application}
-              tags={tags[application.id] || []}
-            />
-          ))}
-        </SortableContext>
+        {applications.map((application) => (
+          <KanbanCard
+            key={application.id}
+            application={application}
+            tags={tags[application.id] || []}
+          />
+        ))}
       </div>
     </Card>
   );

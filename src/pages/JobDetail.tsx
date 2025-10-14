@@ -382,7 +382,7 @@ const JobDetail = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-10 border-white/30 text-white hover:bg-white/20"
+                  className="h-10 border-white/50 bg-white text-primary hover:bg-white/90 hover:border-white"
                   onClick={() => {
                     navigator.clipboard.writeText(`https://nocv.se/jobb/${job.slug}`);
                     setLinkCopied(true);

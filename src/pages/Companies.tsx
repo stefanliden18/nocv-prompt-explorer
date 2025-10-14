@@ -6,8 +6,11 @@ import Footer from "@/components/Footer";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DOMPurify from "dompurify";
+import { useNavigate } from "react-router-dom";
 
 const Companies = () => {
+  const navigate = useNavigate();
+  
   // Fetch content from database
   const { data: contentSections } = useQuery({
     queryKey: ['page-content', 'companies'],
@@ -219,6 +222,7 @@ const Companies = () => {
               variant="cta-primary" 
               size="xl"
               className="hover-scale"
+              onClick={() => navigate('/contact')}
             >
               Kontakta oss för demo
             </Button>

@@ -345,9 +345,10 @@ const JobDetail = () => {
                 <Card className="bg-white border border-border">
                   <CardContent className="p-8">
                     <h2 className="text-2xl font-heading mb-4">Om tjänsten</h2>
-                    <div className="prose prose-sm max-w-none text-foreground">
-                      <ReactMarkdown>{job.description_md}</ReactMarkdown>
-                    </div>
+                    <div 
+                      className="prose prose-sm max-w-none text-foreground"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description_md) }}
+                    />
                   </CardContent>
                 </Card>
               )}
@@ -357,9 +358,10 @@ const JobDetail = () => {
                 <Card className="bg-white border border-border">
                   <CardContent className="p-8">
                     <h2 className="text-2xl font-heading mb-4">Vad vi söker</h2>
-                    <div className="prose prose-sm max-w-none text-foreground">
-                      <ReactMarkdown>{job.requirements_md}</ReactMarkdown>
-                    </div>
+                    <div 
+                      className="prose prose-sm max-w-none text-foreground"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.requirements_md) }}
+                    />
                   </CardContent>
                 </Card>
               )}

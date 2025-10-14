@@ -3,7 +3,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { RichTextEditor } from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
+import DOMPurify from 'dompurify';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { fromZonedTime } from 'date-fns-tz';
@@ -60,8 +60,8 @@ export default function JobEdit() {
   const [region, setRegion] = useState('');
   const [category, setCategory] = useState('');
   const [employmentType, setEmploymentType] = useState('');
-  const [descriptionMd, setDescriptionMd] = useState('');
-  const [requirementsMd, setRequirementsMd] = useState('');
+  const [descriptionHtml, setDescriptionHtml] = useState('');
+  const [requirementsHtml, setRequirementsHtml] = useState('');
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
@@ -114,8 +114,11 @@ export default function JobEdit() {
       setRegion(job.region || '');
       setCategory(job.category);
       setEmploymentType(job.employment_type || '');
-      setDescriptionMd(job.description_md);
-      setRequirementsMd(job.requirements_md || '');
+      // Convert markdown to HTML if needed (backward compatibility)
+      const descContent = job.description_md || '';
+      const reqContent = job.requirements_md || '';
+      setDescriptionHtml(descContent);
+      setRequirementsHtml(reqContent);
       setDriverLicense(job.driver_license);
       setLanguage(job.language || '');
       setSlug(job.slug);
@@ -156,7 +159,7 @@ export default function JobEdit() {
   };
 
   const updateJob = async (newStatus?: 'draft' | 'published' | 'archived') => {
-    if (!title.trim() || !city.trim() || !category.trim() || !descriptionMd.trim() || !companyId) {
+    if (!title.trim() || !city.trim() || !category.trim() || !descriptionHtml.trim() || !companyId) {
       toast.error('Fyll i alla obligatoriska fält');
       return;
     }
@@ -170,8 +173,8 @@ export default function JobEdit() {
         region: region.trim() || null,
         category: category.trim(),
         employment_type: employmentType || null,
-        description_md: descriptionMd.trim(),
-        requirements_md: requirementsMd.trim() || null,
+        description_md: descriptionHtml.trim(),
+        requirements_md: requirementsHtml.trim() || null,
         driver_license: driverLicense,
         language: language.trim() || null,
         slug: slug,
@@ -420,25 +423,22 @@ export default function JobEdit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Beskrivning * (Markdown)</Label>
-                <Textarea
-                  id="description"
-                  value={descriptionMd}
-                  onChange={(e) => setDescriptionMd(e.target.value)}
+                <Label htmlFor="description">Beskrivning *</Label>
+                <RichTextEditor
+                  content={descriptionHtml}
+                  onChange={setDescriptionHtml}
                   placeholder="Beskriv jobbet..."
-                  rows={8}
-                  required
+                  minHeight="200px"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="requirements">Krav (Markdown)</Label>
-                <Textarea
-                  id="requirements"
-                  value={requirementsMd}
-                  onChange={(e) => setRequirementsMd(e.target.value)}
+                <Label htmlFor="requirements">Krav</Label>
+                <RichTextEditor
+                  content={requirementsHtml}
+                  onChange={setRequirementsHtml}
                   placeholder="Lista krav för jobbet..."
-                  rows={6}
+                  minHeight="150px"
                 />
               </div>
 
@@ -832,21 +832,23 @@ export default function JobEdit() {
 
                 <Separator />
 
-                {descriptionMd && (
+                {descriptionHtml && (
                   <div>
                     <h3 className="font-semibold mb-2">Om tjänsten</h3>
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown>{descriptionMd}</ReactMarkdown>
-                    </div>
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(descriptionHtml) }}
+                    />
                   </div>
                 )}
 
-                {requirementsMd && (
+                {requirementsHtml && (
                   <div>
                     <h3 className="font-semibold mb-2">Krav</h3>
-                    <div className="prose prose-sm max-w-none">
-                      <ReactMarkdown>{requirementsMd}</ReactMarkdown>
-                    </div>
+                    <div 
+                      className="prose prose-sm max-w-none"
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(requirementsHtml) }}
+                    />
                   </div>
                 )}
 

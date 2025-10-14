@@ -28,6 +28,9 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
 import DOMPurify from 'isomorphic-dompurify';
 import { analytics } from "@/lib/analytics";
+import { utcToStockholm } from "@/lib/timezone";
+import { format as formatDate } from "date-fns";
+import { sv } from 'date-fns/locale';
 
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
@@ -344,7 +347,7 @@ const JobDetail = () => {
               {job.publish_at && (
                 <div className="flex items-center">
                   <Clock className="w-5 h-5 mr-2" />
-                  Publicerad: {new Date(job.publish_at).toLocaleDateString('sv-SE')}
+                  Publicerad: {formatDate(utcToStockholm(job.publish_at), 'PPP', { locale: sv })}
                 </div>
               )}
             </div>

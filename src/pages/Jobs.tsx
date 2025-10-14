@@ -12,7 +12,7 @@ import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { nowUTC } from '@/lib/timezone';
+import { stockholmToUTC, nowInStockholm } from '@/lib/timezone';
 import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 12;
@@ -79,7 +79,7 @@ const Jobs = () => {
         .from('jobs')
         .select('city, category')
         .eq('status', 'published')
-        .lte('publish_at', nowUTC());
+        .lte('publish_at', stockholmToUTC(nowInStockholm()));
 
       if (error) throw error;
 
@@ -128,7 +128,7 @@ const Jobs = () => {
           )
         `, { count: 'exact' })
         .eq('status', 'published')
-        .lte('publish_at', nowUTC());
+        .lte('publish_at', stockholmToUTC(nowInStockholm()));
 
       // Apply city filter
       if (cityFilter !== "all") {

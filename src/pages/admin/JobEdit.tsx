@@ -150,9 +150,9 @@ export default function JobEdit() {
     }
     
     if (status === 'published') {
-      const nowUtc = new Date().toISOString();
+      const nowStockholmAsUtc = stockholmToUTC(nowInStockholm());
       const publishDateUtc = publishAt ? stockholmToUTC(publishAt) : null;
-      if (publishDateUtc && publishDateUtc > nowUtc) {
+      if (publishDateUtc && publishDateUtc > nowStockholmAsUtc) {
         return <Badge variant="outline">Planerad</Badge>;
       }
       return <Badge variant="default">Publicerad</Badge>;

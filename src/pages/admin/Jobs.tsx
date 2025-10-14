@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { utcToStockholm, nowInStockholm } from '@/lib/timezone';
+import { utcToStockholm, nowInStockholm, stockholmToUTC } from '@/lib/timezone';
 
 interface Job {
   id: string;
@@ -65,9 +65,9 @@ export default function AdminJobs() {
     }
     
     if (job.status === 'published') {
-      const nowUtc = new Date().toISOString();
+      const nowStockholmAsUtc = stockholmToUTC(nowInStockholm());
       const publishDateUtc = job.publish_at;
-      if (publishDateUtc && publishDateUtc > nowUtc) {
+      if (publishDateUtc && publishDateUtc > nowStockholmAsUtc) {
         return <Badge variant="outline">Planerad</Badge>;
       }
       return <Badge variant="default">Publicerad</Badge>;
@@ -127,7 +127,7 @@ export default function AdminJobs() {
                       </div>
                        <div className="text-xs text-muted-foreground mt-1">
                         Skapad: {format(utcToStockholm(job.created_at), "PPP 'kl.' HH:mm", { locale: sv })}
-                        {job.publish_at && job.publish_at > new Date().toISOString() && (
+                        {job.publish_at && job.publish_at > stockholmToUTC(nowInStockholm()) && (
                           <> • Planerad: {format(utcToStockholm(job.publish_at), "PPP 'kl.' HH:mm", { locale: sv })}</>
                         )}
                        </div>

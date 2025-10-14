@@ -176,6 +176,13 @@ const JobDetail = () => {
         title: "Intervju bokad!",
         description: "Vi har skickat en bekräftelse till din e-post med detaljer om din intervju.",
       });
+
+      // Redirect to GetKiku interview if URL is set
+      if (job.kiku_interview_url) {
+        setTimeout(() => {
+          window.location.href = job.kiku_interview_url;
+        }, 2000); // Wait 2 seconds so user can see the success message
+      }
       
     } catch (error: any) {
       console.error('Error sending application:', error);

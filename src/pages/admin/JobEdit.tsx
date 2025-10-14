@@ -43,6 +43,7 @@ interface Job {
   status: 'draft' | 'published' | 'archived';
   slug: string;
   publish_at: string | null;
+  kiku_interview_url: string | null;
 }
 
 export default function JobEdit() {
@@ -65,6 +66,7 @@ export default function JobEdit() {
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
+  const [kikuInterviewUrl, setKikuInterviewUrl] = useState('');
   const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
   const [publishAt, setPublishAt] = useState<Date | undefined>(undefined);
   const [publishHour, setPublishHour] = useState<string>('09');
@@ -122,6 +124,7 @@ export default function JobEdit() {
       setDriverLicense(job.driver_license);
       setLanguage(job.language || '');
       setSlug(job.slug);
+      setKikuInterviewUrl(job.kiku_interview_url || '');
       setStatus(job.status);
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
@@ -178,6 +181,7 @@ export default function JobEdit() {
         driver_license: driverLicense,
         language: language.trim() || null,
         slug: slug,
+        kiku_interview_url: kikuInterviewUrl.trim() || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: publishAt ? stockholmToUTC(publishAt) : null,
       };
@@ -471,6 +475,19 @@ export default function JobEdit() {
                   onChange={(e) => setSlug(e.target.value)}
                   placeholder="slug-for-jobbet"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="kikuInterviewUrl">GetKiku Intervjulänk (valfritt)</Label>
+                <Input
+                  id="kikuInterviewUrl"
+                  value={kikuInterviewUrl}
+                  onChange={(e) => setKikuInterviewUrl(e.target.value)}
+                  placeholder="https://getkiku.com/interview/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  Kandidater vidarebefordras automatiskt till denna länk efter att de bokat intervju.
+                </p>
               </div>
 
               <div className="space-y-2">

@@ -138,6 +138,7 @@ export type Database = {
           driver_license: boolean | null
           employment_type: string | null
           id: string
+          kiku_interview_url: string | null
           language: string | null
           publish_at: string | null
           region: string | null
@@ -157,6 +158,7 @@ export type Database = {
           driver_license?: boolean | null
           employment_type?: string | null
           id?: string
+          kiku_interview_url?: string | null
           language?: string | null
           publish_at?: string | null
           region?: string | null
@@ -176,6 +178,7 @@ export type Database = {
           driver_license?: boolean | null
           employment_type?: string | null
           id?: string
+          kiku_interview_url?: string | null
           language?: string | null
           publish_at?: string | null
           region?: string | null

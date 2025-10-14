@@ -183,7 +183,13 @@ export default function JobEdit() {
         slug: slug,
         kiku_interview_url: kikuInterviewUrl.trim() || null,
         // Convert Stockholm time to UTC for database storage
-        publish_at: publishAt ? stockholmToUTC(publishAt) : null,
+        publish_at: (() => {
+          if (!publishAt) return null;
+          const publishAtUTC = stockholmToUTC(publishAt);
+          console.log('🕐 Stockholm-tid vald:', publishAt);
+          console.log('🌍 Konverterad till UTC:', publishAtUTC);
+          return publishAtUTC;
+        })(),
       };
 
       if (newStatus) {

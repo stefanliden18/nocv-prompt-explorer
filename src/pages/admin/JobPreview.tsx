@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Helmet } from 'react-helmet-async';
 import ReactMarkdown from 'react-markdown';
-import { MapPin, Briefcase, Calendar, DollarSign, Car, Eye, X } from 'lucide-react';
+import { MapPin, Briefcase, Car } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PreviewHeader } from '@/components/PreviewHeader';
 
 interface Job {
   id: string;
@@ -64,26 +64,32 @@ export default function JobPreview() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <Skeleton className="h-64 w-full mb-8" />
-          <Skeleton className="h-32 w-full mb-4" />
-          <Skeleton className="h-32 w-full" />
+      <>
+        <PreviewHeader jobId={id!} />
+        <div className="min-h-screen bg-background pt-32">
+          <div className="container mx-auto px-4 py-8">
+            <Skeleton className="h-64 w-full mb-8" />
+            <Skeleton className="h-32 w-full mb-4" />
+            <Skeleton className="h-32 w-full" />
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Jobbet hittades inte</h1>
-          <Button onClick={() => navigate('/admin/jobs')}>
-            Tillbaka till jobb
-          </Button>
+      <>
+        <PreviewHeader jobId={id!} />
+        <div className="min-h-screen bg-background flex items-center justify-center pt-32">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Jobbet hittades inte</h1>
+            <Button onClick={() => navigate('/admin/jobs')}>
+              Tillbaka till jobb
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
@@ -94,28 +100,9 @@ export default function JobPreview() {
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
 
-      {/* Preview Banner */}
-      <div className="bg-warning text-warning-foreground sticky top-0 z-50 border-b-4 border-warning-foreground/20">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Eye className="h-5 w-5" />
-            <span className="font-semibold text-lg">
-              FÖRHANDSVISNING - Endast synlig för administratörer
-            </span>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(`/admin/jobs/${id}/edit`)}
-            className="bg-background"
-          >
-            <X className="h-4 w-4 mr-2" />
-            Stäng förhandsvisning
-          </Button>
-        </div>
-      </div>
+      <PreviewHeader jobId={id!} />
 
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pt-32">
         {/* Job Header */}
         <div className="bg-card border-b">
           <div className="container mx-auto px-4 py-12">

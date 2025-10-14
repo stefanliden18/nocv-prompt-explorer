@@ -3,10 +3,12 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { KanbanBoard } from '@/components/KanbanBoard';
 import { StageManagementDialog } from '@/components/StageManagementDialog';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { MultiSelect, MultiSelectWithBadges, type MultiSelectOption } from '@/components/ui/multi-select';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Settings2 } from 'lucide-react';
+import { Settings2, X, Filter } from 'lucide-react';
 import { DragEndEvent } from '@dnd-kit/core';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -40,15 +42,18 @@ export default function RecruitmentBoard() {
   const [stages, setStages] = useState<Stage[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [selectedJobId, setSelectedJobId] = useState<string>('all');
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [tags, setTags] = useState<Record<string, Array<{ name: string }>>>({});
   const [managementDialogOpen, setManagementDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [ratingFilter, setRatingFilter] = useState<string[]>([]);
+  const [tagFilter, setTagFilter] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchData();
-  }, [selectedJobId]);
+  }, [selectedJobIds]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -91,8 +96,8 @@ export default function RecruitmentBoard() {
         )
       `);
 
-    if (selectedJobId !== 'all') {
-      query = query.eq('job_id', selectedJobId);
+    if (selectedJobIds.length > 0) {
+      query = query.in('job_id', selectedJobIds);
     }
 
     const { data, error } = await query;
@@ -195,7 +200,66 @@ export default function RecruitmentBoard() {
     });
   };
 
-  const filteredApplications = applications;
+  const getAllUniqueTags = (): MultiSelectOption[] => {
+    const uniqueTags = new Set<string>();
+    Object.values(tags).forEach(tagArray => {
+      tagArray.forEach(tag => uniqueTags.add(tag.name));
+    });
+    return Array.from(uniqueTags).map(tag => ({ value: tag, label: tag }));
+  };
+
+  const filteredApplications = applications.filter(app => {
+    // Fritextsökning (namn, jobb, företag)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesName = app.candidate_name.toLowerCase().includes(query);
+      const matchesJob = app.jobs?.title.toLowerCase().includes(query);
+      const matchesCompany = app.jobs?.companies?.name.toLowerCase().includes(query);
+      
+      if (!matchesName && !matchesJob && !matchesCompany) {
+        return false;
+      }
+    }
+    
+    // Rating-filter
+    if (ratingFilter.length > 0) {
+      if (!app.rating || !ratingFilter.includes(app.rating.toString())) {
+        return false;
+      }
+    }
+    
+    // Tagg-filter
+    if (tagFilter.length > 0) {
+      const appTags = tags[app.id]?.map(t => t.name) || [];
+      const hasMatchingTag = tagFilter.some(tag => appTags.includes(tag));
+      if (!hasMatchingTag) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setRatingFilter([]);
+    setTagFilter([]);
+  };
+
+  const hasActiveFilters = searchQuery || ratingFilter.length > 0 || tagFilter.length > 0;
+
+  const ratingOptions: MultiSelectOption[] = [
+    { value: '5', label: '5 stjärnor' },
+    { value: '4', label: '4 stjärnor' },
+    { value: '3', label: '3 stjärnor' },
+    { value: '2', label: '2 stjärnor' },
+    { value: '1', label: '1 stjärna' },
+  ];
+
+  const jobOptions: MultiSelectOption[] = jobs.map(job => ({
+    value: job.id,
+    label: job.title,
+  }));
 
   if (loading) {
     return (
@@ -236,20 +300,83 @@ export default function RecruitmentBoard() {
           </Button>
         </div>
 
-        <div className="flex gap-4 items-center">
-          <Select value={selectedJobId} onValueChange={setSelectedJobId}>
-            <SelectTrigger className="w-64">
-              <SelectValue placeholder="Välj jobb" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alla jobb</SelectItem>
-              {jobs.map(job => (
-                <SelectItem key={job.id} value={job.id}>
-                  {job.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {/* Jobb-filter med badges */}
+        <div className="space-y-3">
+          <div className="flex gap-3 items-start flex-wrap">
+            <MultiSelect
+              options={jobOptions}
+              selected={selectedJobIds}
+              onChange={setSelectedJobIds}
+              placeholder="Välj jobb att visa"
+              className="w-64"
+            />
+            
+            {selectedJobIds.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedJobIds([])}
+              >
+                Visa alla jobb
+              </Button>
+            )}
+          </div>
+
+          {selectedJobIds.length > 0 && (
+            <div className="flex gap-2 flex-wrap">
+              {selectedJobIds.map(jobId => {
+                const job = jobs.find(j => j.id === jobId);
+                if (!job) return null;
+                
+                return (
+                  <Badge key={jobId} variant="secondary" className="gap-1">
+                    {job.title}
+                    <X 
+                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
+                      onClick={() => setSelectedJobIds(prev => 
+                        prev.filter(id => id !== jobId)
+                      )}
+                    />
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Sök- och filter-sektion */}
+        <div className="space-y-3">
+          <div className="flex gap-3 items-center flex-wrap">
+            <div className="flex-1 min-w-64">
+              <Input
+                placeholder="Sök på namn, jobb eller företag..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
+            <MultiSelect
+              options={ratingOptions}
+              selected={ratingFilter}
+              onChange={setRatingFilter}
+              placeholder="Filtrera på betyg"
+            />
+            
+            <MultiSelect
+              options={getAllUniqueTags()}
+              selected={tagFilter}
+              onChange={setTagFilter}
+              placeholder="Filtrera på taggar"
+            />
+            
+            {hasActiveFilters && (
+              <Button variant="outline" size="sm" onClick={clearFilters}>
+                <Filter className="h-4 w-4 mr-2" />
+                Rensa filter
+              </Button>
+            )}
+          </div>
         </div>
 
         <KanbanBoard

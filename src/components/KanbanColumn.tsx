@@ -91,13 +91,22 @@ export function KanbanColumn({
         ref={setNodeRef}
         className="p-3 overflow-y-auto flex-1 min-h-[500px] max-h-[calc(100vh-300px)]"
       >
-        {applications.map((application) => (
-          <KanbanCard
-            key={application.id}
-            application={application}
-            tags={tags[application.id] || []}
-          />
-        ))}
+        {[...applications]
+          .sort((a, b) => {
+            // Null ratings hamnar sist
+            if (a.rating === null && b.rating === null) return 0;
+            if (a.rating === null) return 1;
+            if (b.rating === null) return -1;
+            // Högst rating först
+            return b.rating - a.rating;
+          })
+          .map((application) => (
+            <KanbanCard
+              key={application.id}
+              application={application}
+              tags={tags[application.id] || []}
+            />
+          ))}
       </div>
     </Card>
   );

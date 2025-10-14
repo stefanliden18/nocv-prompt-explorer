@@ -17,6 +17,8 @@ interface Application {
   rating: number | null;
   job_id: string;
   pipeline_stage_id: string;
+  interview_scheduled_at?: string | null;
+  interview_link?: string | null;
   jobs?: {
     title: string;
     companies?: {

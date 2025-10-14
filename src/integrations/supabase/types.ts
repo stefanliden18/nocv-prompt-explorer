@@ -109,6 +109,7 @@ export type Database = {
           message: string | null
           notes: string | null
           phone: string | null
+          pipeline_stage_id: string
           rating: number | null
           status: Database["public"]["Enums"]["application_status"]
         }
@@ -122,6 +123,7 @@ export type Database = {
           message?: string | null
           notes?: string | null
           phone?: string | null
+          pipeline_stage_id: string
           rating?: number | null
           status?: Database["public"]["Enums"]["application_status"]
         }
@@ -135,6 +137,7 @@ export type Database = {
           message?: string | null
           notes?: string | null
           phone?: string | null
+          pipeline_stage_id?: string
           rating?: number | null
           status?: Database["public"]["Enums"]["application_status"]
         }
@@ -144,6 +147,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "applications_pipeline_stage_id_fkey"
+            columns: ["pipeline_stage_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
           },
         ]
@@ -287,6 +297,36 @@ export type Database = {
           page_key?: string
           section_key?: string
           title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      pipeline_stages: {
+        Row: {
+          color: string
+          created_at: string | null
+          display_order: number
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          display_order: number
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          display_order?: number
+          id?: string
+          is_default?: boolean | null
+          name?: string
           updated_at?: string | null
         }
         Relationships: []

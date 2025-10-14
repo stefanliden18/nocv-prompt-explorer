@@ -208,7 +208,7 @@ export function InterviewBookingDialog({
         {mode === 'create' ? (
           <Button variant="outline" size="sm" disabled={disabled}>
             <Calendar className="w-4 h-4 mr-2" />
-            Boka intervjutid
+            Boka tid för intervju
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="flex-1" disabled={disabled}>

@@ -475,7 +475,7 @@ const JobDetail = () => {
             <div className="lg:col-span-1">
               <Card className="bg-white border border-border sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-xl font-heading">Boka intervjutid</CardTitle>
+                  <CardTitle className="text-xl font-heading">Boka tid för intervju</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!showApplication ? (
@@ -492,7 +492,7 @@ const JobDetail = () => {
                         }}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Boka intervjutid
+                        Boka tid för intervju
                       </Button>
                     </div>
                   ) : isSubmitted ? (
@@ -584,7 +584,7 @@ const JobDetail = () => {
                             variant="cta-primary"
                             disabled={isLoading}
                           >
-                            {isLoading ? "Bokar..." : "Boka intervjutid"}
+                            {isLoading ? "Bokar..." : "Boka tid för intervju"}
                           </Button>
                           
                           <Button 

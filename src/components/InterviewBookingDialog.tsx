@@ -190,7 +190,7 @@ export function InterviewBookingDialog({
       console.error('Error booking interview:', error);
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte boka intervju",
+        description: "Kunde inte boka intervjutid",
         variant: "destructive",
       });
       onInterviewBooked(false);
@@ -208,7 +208,7 @@ export function InterviewBookingDialog({
         {mode === 'create' ? (
           <Button variant="outline" size="sm" disabled={disabled}>
             <Calendar className="w-4 h-4 mr-2" />
-            Boka intervju
+            Boka intervjutid
           </Button>
         ) : (
           <Button variant="outline" size="sm" className="flex-1" disabled={disabled}>

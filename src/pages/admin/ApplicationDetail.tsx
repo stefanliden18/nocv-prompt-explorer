@@ -130,7 +130,7 @@ export default function ApplicationDetail() {
       console.error('Error cancelling interview:', error);
       toast({
         title: 'Ett fel uppstod',
-        description: 'Kunde inte avboka intervjun',
+        description: 'Kunde inte avboka intervjutiden',
         variant: 'destructive',
       });
     } finally {
@@ -506,7 +506,7 @@ export default function ApplicationDetail() {
                       disabled={updating}
                     >
                       <XCircle className="w-4 h-4 mr-2" />
-                      Avboka intervju
+                      Avboka intervjutid
                     </Button>
                   </div>
                 </CardContent>

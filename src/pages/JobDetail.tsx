@@ -124,7 +124,7 @@ const JobDetail = () => {
       console.warn('Bot detected - honeypot field filled');
       toast({
         title: "Ett fel uppstod",
-        description: "Kunde inte boka intervju. Försök igen.",
+        description: "Kunde inte boka intervjutid. Försök igen.",
         variant: "destructive",
       });
       return;
@@ -195,7 +195,7 @@ const JobDetail = () => {
       
       toast({
         title: "Ett fel uppstod",
-        description: error.message || "Kunde inte boka intervju. Försök igen senare.",
+        description: error.message || "Kunde inte boka intervjutid. Försök igen senare.",
         variant: "destructive",
       });
       
@@ -475,7 +475,7 @@ const JobDetail = () => {
             <div className="lg:col-span-1">
               <Card className="bg-white border border-border sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-xl font-heading">Boka intervju</CardTitle>
+                  <CardTitle className="text-xl font-heading">Boka intervjutid</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!showApplication ? (
@@ -492,7 +492,7 @@ const JobDetail = () => {
                         }}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Boka intervju
+                        Boka intervjutid
                       </Button>
                     </div>
                   ) : isSubmitted ? (
@@ -584,7 +584,7 @@ const JobDetail = () => {
                             variant="cta-primary"
                             disabled={isLoading}
                           >
-                            {isLoading ? "Bokar..." : "Boka intervju"}
+                            {isLoading ? "Bokar..." : "Boka intervjutid"}
                           </Button>
                           
                           <Button 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -29,6 +30,9 @@ export default function ApplicationDetail() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [tags, setTags] = useState<any[]>([]);
+  const [notes, setNotes] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [lastSavedNotes, setLastSavedNotes] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchApplication();
@@ -55,6 +59,7 @@ export default function ApplicationDetail() {
 
       if (error) throw error;
       setApplication(data);
+      setNotes(data.notes || '');
 
       // Fetch tags
       await fetchTags();
@@ -151,6 +156,41 @@ export default function ApplicationDetail() {
       setUpdating(false);
     }
   };
+
+  const saveNotes = useCallback(async (notesText: string) => {
+    setSavingNotes(true);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ notes: notesText })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setApplication((prev: any) => ({ ...prev, notes: notesText }));
+      setLastSavedNotes(new Date());
+    } catch (error) {
+      console.error('Error saving notes:', error);
+      toast({
+        title: 'Ett fel uppstod',
+        description: 'Kunde inte spara anteckningar',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingNotes(false);
+    }
+  }, [id, toast]);
+
+  // Debounce notes saving
+  useEffect(() => {
+    if (notes === (application?.notes || '')) return;
+    
+    const timer = setTimeout(() => {
+      saveNotes(notes);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [notes, application?.notes, saveNotes]);
 
   if (loading) {
     return (
@@ -280,6 +320,29 @@ export default function ApplicationDetail() {
                     onTagsChange={fetchTags}
                   />
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Anteckningar</CardTitle>
+                <CardDescription>
+                  Interna kommentarer om kandidaten
+                  {lastSavedNotes && (
+                    <span className="block text-xs text-muted-foreground mt-1">
+                      {savingNotes ? 'Sparar...' : `Sparat ${format(lastSavedNotes, 'HH:mm:ss', { locale: sv })}`}
+                    </span>
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Textarea
+                  placeholder="Skriv anteckningar om kandidaten här..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-[150px] resize-y"
+                  disabled={savingNotes}
+                />
               </CardContent>
             </Card>
 

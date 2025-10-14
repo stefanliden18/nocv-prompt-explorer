@@ -5,11 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { Download, Eye } from 'lucide-react';
+import { Download, Eye, GitCompare, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ApplicationFilters } from '@/components/ApplicationFilters';
 import { StarRating } from '@/components/StarRating';
@@ -30,6 +31,7 @@ export default function AdminApplications() {
   const [minRating, setMinRating] = useState<number>(1);
   const [maxRating, setMaxRating] = useState<number>(5);
   const [selectedTags, setSelectedTags] = useState<any[]>([]);
+  const [selectedApplications, setSelectedApplications] = useState<string[]>([]);
 
   useEffect(() => {
     fetchApplications();
@@ -114,6 +116,42 @@ export default function AdminApplications() {
     return true;
   });
 
+  const toggleSelectAll = () => {
+    if (selectedApplications.length === filteredApplications.length) {
+      setSelectedApplications([]);
+    } else {
+      setSelectedApplications(filteredApplications.map(app => app.id));
+    }
+  };
+
+  const toggleSelectApplication = (id: string) => {
+    setSelectedApplications(prev => 
+      prev.includes(id) ? prev.filter(appId => appId !== id) : [...prev, id]
+    );
+  };
+
+  const handleCompare = () => {
+    if (selectedApplications.length < 2) {
+      toast({
+        title: 'För få kandidater',
+        description: 'Välj minst 2 kandidater för att jämföra',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (selectedApplications.length > 4) {
+      toast({
+        title: 'För många kandidater',
+        description: 'Max 4 kandidater kan jämföras samtidigt',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    navigate(`/admin/applications/compare?ids=${selectedApplications.join(',')}`);
+  };
+
   const exportToCSV = () => {
     const headers = ['Datum', 'Jobbtitel', 'Kandidat', 'E-post', 'Telefon', 'Status', 'Rating', 'Taggar', 'Meddelande', 'CV-länk'];
     const rows = filteredApplications.map(app => [
@@ -184,6 +222,35 @@ export default function AdminApplications() {
           }}
         />
 
+        {selectedApplications.length > 0 && (
+          <Card className="bg-muted/50">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">
+                    {selectedApplications.length} {selectedApplications.length === 1 ? 'kandidat' : 'kandidater'} valda
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedApplications([])}
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Rensa urval
+                  </Button>
+                </div>
+                <Button
+                  onClick={handleCompare}
+                  disabled={selectedApplications.length < 2 || selectedApplications.length > 4}
+                >
+                  <GitCompare className="w-4 h-4 mr-2" />
+                  Jämför valda ({selectedApplications.length})
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>
@@ -208,6 +275,12 @@ export default function AdminApplications() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={selectedApplications.length === filteredApplications.length && filteredApplications.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Datum</TableHead>
                     <TableHead>Jobbtitel</TableHead>
                     <TableHead>Kandidat</TableHead>
@@ -221,18 +294,32 @@ export default function AdminApplications() {
                 </TableHeader>
                 <TableBody>
                   {filteredApplications.map((app) => (
-                    <TableRow key={app.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                      <TableCell className="font-medium">
+                    <TableRow key={app.id} className="cursor-pointer hover:bg-muted/50">
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedApplications.includes(app.id)}
+                          onCheckedChange={() => toggleSelectApplication(app.id)}
+                        />
+                      </TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)} className="font-medium">
                         {format(new Date(app.created_at), 'd MMM yyyy', { locale: sv })}
                       </TableCell>
-                      <TableCell>{app.jobs?.title || 'Okänt jobb'}</TableCell>
-                      <TableCell>{app.candidate_name}</TableCell>
-                      <TableCell>{app.email}</TableCell>
-                      <TableCell>{app.phone || '-'}</TableCell>
-                      <TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                        {app.jobs?.title || 'Okänt jobb'}
+                      </TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                        {app.candidate_name}
+                      </TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                        {app.email}
+                      </TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                        {app.phone || '-'}
+                      </TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
                         <StarRating rating={app.rating} readonly size="sm" />
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
                         <div className="flex flex-wrap gap-1">
                           {app.tags?.slice(0, 3).map((tag: any) => (
                             <Badge key={tag.id} variant="outline" className="text-xs">
@@ -246,7 +333,7 @@ export default function AdminApplications() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
                         <Badge variant={statusMap[app.status as keyof typeof statusMap]?.variant || 'secondary'}>
                           {statusMap[app.status as keyof typeof statusMap]?.label || app.status}
                         </Badge>

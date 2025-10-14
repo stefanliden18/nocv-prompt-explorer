@@ -17,6 +17,7 @@ import AdminJobs from "./pages/admin/Jobs";
 import JobImport from "./pages/admin/JobImport";
 import AdminApplications from "./pages/admin/Applications";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
+import CompareApplications from "./pages/admin/CompareApplications";
 import AdminCompanies from "./pages/admin/Companies";
 import AdminUsers from "./pages/admin/Users";
 import ActivityLogs from "./pages/admin/ActivityLogs";
@@ -112,6 +113,14 @@ const App = () => (
               } 
             />
             <Route 
+              path="/admin/applications/compare" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <CompareApplications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route
               path="/admin/companies" 
               element={
                 <ProtectedRoute requireAdmin>

@@ -24,6 +24,7 @@ import ActivityLogs from "./pages/admin/ActivityLogs";
 import JobForm from "./pages/admin/JobForm";
 import JobEdit from "./pages/admin/JobEdit";
 import JobPreview from "./pages/admin/JobPreview";
+import RecruitmentBoard from "./pages/admin/RecruitmentBoard";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import AboutEdit from "./pages/admin/AboutEdit";
@@ -120,8 +121,16 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            <Route 
+              path="/admin/recruitment-board" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <RecruitmentBoard />
+                </ProtectedRoute>
+              } 
+            />
             <Route
-              path="/admin/companies" 
+              path="/admin/companies"
               element={
                 <ProtectedRoute requireAdmin>
                   <AdminCompanies />

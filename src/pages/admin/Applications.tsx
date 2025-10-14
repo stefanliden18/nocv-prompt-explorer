@@ -4,14 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { Download, Eye, ExternalLink } from 'lucide-react';
+import { Download, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { ApplicationFilters } from '@/components/ApplicationFilters';
+import { StarRating } from '@/components/StarRating';
 
 const statusMap = {
   new: { label: 'Ny', variant: 'default' as const },
@@ -26,6 +27,9 @@ export default function AdminApplications() {
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [minRating, setMinRating] = useState<number>(1);
+  const [maxRating, setMaxRating] = useState<number>(5);
+  const [selectedTags, setSelectedTags] = useState<any[]>([]);
 
   useEffect(() => {
     fetchApplications();
@@ -34,7 +38,8 @@ export default function AdminApplications() {
   const fetchApplications = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch applications
+      const { data: appsData, error: appsError } = await supabase
         .from('applications')
         .select(`
           *,
@@ -46,8 +51,31 @@ export default function AdminApplications() {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setApplications(data || []);
+      if (appsError) throw appsError;
+
+      // Fetch tags for all applications
+      const { data: tagsData, error: tagsError } = await supabase
+        .from('application_tag_relations')
+        .select(`
+          application_id,
+          application_tags (
+            id,
+            name
+          )
+        `);
+
+      if (tagsError) throw tagsError;
+
+      // Combine applications with their tags
+      const applicationsWithTags = (appsData || []).map(app => ({
+        ...app,
+        tags: tagsData
+          ?.filter(rel => rel.application_id === app.id)
+          .map(rel => rel.application_tags)
+          .filter(Boolean) || []
+      }));
+
+      setApplications(applicationsWithTags);
     } catch (error) {
       console.error('Error fetching applications:', error);
       toast({
@@ -60,12 +88,34 @@ export default function AdminApplications() {
     }
   };
 
-  const filteredApplications = statusFilter === 'all' 
-    ? applications 
-    : applications.filter(app => app.status === statusFilter);
+  const filteredApplications = applications.filter(app => {
+    // Status filter
+    if (statusFilter !== 'all' && app.status !== statusFilter) {
+      return false;
+    }
+
+    // Rating filter
+    const appRating = app.rating || 0;
+    if (appRating > 0 && (appRating < minRating || appRating > maxRating)) {
+      return false;
+    }
+
+    // Tag filter (all selected tags must be present)
+    if (selectedTags.length > 0) {
+      const appTagIds = (app.tags || []).map((t: any) => t.id);
+      const hasAllTags = selectedTags.every(selectedTag => 
+        appTagIds.includes(selectedTag.id)
+      );
+      if (!hasAllTags) {
+        return false;
+      }
+    }
+
+    return true;
+  });
 
   const exportToCSV = () => {
-    const headers = ['Datum', 'Jobbtitel', 'Kandidat', 'E-post', 'Telefon', 'Status', 'Meddelande', 'CV-länk'];
+    const headers = ['Datum', 'Jobbtitel', 'Kandidat', 'E-post', 'Telefon', 'Status', 'Rating', 'Taggar', 'Meddelande', 'CV-länk'];
     const rows = filteredApplications.map(app => [
       format(new Date(app.created_at), 'yyyy-MM-dd HH:mm', { locale: sv }),
       app.jobs?.title || 'Okänt jobb',
@@ -73,6 +123,8 @@ export default function AdminApplications() {
       app.email,
       app.phone || '-',
       statusMap[app.status as keyof typeof statusMap]?.label || app.status,
+      app.rating ? `${app.rating}/5` : '-',
+      app.tags?.map((t: any) => t.name).join(', ') || '-',
       app.message || '-',
       app.cv_url || '-'
     ]);
@@ -112,20 +164,25 @@ export default function AdminApplications() {
           </Button>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filtrera status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Alla ({applications.length})</SelectItem>
-              <SelectItem value="new">Nya ({applications.filter(a => a.status === 'new').length})</SelectItem>
-              <SelectItem value="viewed">Sedda ({applications.filter(a => a.status === 'viewed').length})</SelectItem>
-              <SelectItem value="booked">Bokade ({applications.filter(a => a.status === 'booked').length})</SelectItem>
-              <SelectItem value="rejected">Avvisade ({applications.filter(a => a.status === 'rejected').length})</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ApplicationFilters
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          minRating={minRating}
+          maxRating={maxRating}
+          onRatingChange={(min, max) => {
+            setMinRating(min);
+            setMaxRating(max);
+          }}
+          selectedTags={selectedTags}
+          onTagsChange={setSelectedTags}
+          applicationCounts={{
+            total: applications.length,
+            new: applications.filter(a => a.status === 'new').length,
+            viewed: applications.filter(a => a.status === 'viewed').length,
+            booked: applications.filter(a => a.status === 'booked').length,
+            rejected: applications.filter(a => a.status === 'rejected').length,
+          }}
+        />
 
         <Card>
           <CardHeader>
@@ -156,6 +213,8 @@ export default function AdminApplications() {
                     <TableHead>Kandidat</TableHead>
                     <TableHead>E-post</TableHead>
                     <TableHead>Telefon</TableHead>
+                    <TableHead>Rating</TableHead>
+                    <TableHead>Taggar</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Åtgärder</TableHead>
                   </TableRow>
@@ -170,6 +229,23 @@ export default function AdminApplications() {
                       <TableCell>{app.candidate_name}</TableCell>
                       <TableCell>{app.email}</TableCell>
                       <TableCell>{app.phone || '-'}</TableCell>
+                      <TableCell>
+                        <StarRating rating={app.rating} readonly size="sm" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {app.tags?.slice(0, 3).map((tag: any) => (
+                            <Badge key={tag.id} variant="outline" className="text-xs">
+                              {tag.name}
+                            </Badge>
+                          ))}
+                          {app.tags?.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{app.tags.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant={statusMap[app.status as keyof typeof statusMap]?.variant || 'secondary'}>
                           {statusMap[app.status as keyof typeof statusMap]?.label || app.status}

@@ -44,6 +44,60 @@ export type Database = {
         }
         Relationships: []
       }
+      application_tag_relations: {
+        Row: {
+          application_id: string
+          created_at: string
+          id: string
+          tag_id: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          id?: string
+          tag_id: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_tag_relations_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_tag_relations_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "application_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      application_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       applications: {
         Row: {
           candidate_name: string
@@ -54,6 +108,7 @@ export type Database = {
           job_id: string
           message: string | null
           phone: string | null
+          rating: number | null
           status: Database["public"]["Enums"]["application_status"]
         }
         Insert: {
@@ -65,6 +120,7 @@ export type Database = {
           job_id: string
           message?: string | null
           phone?: string | null
+          rating?: number | null
           status?: Database["public"]["Enums"]["application_status"]
         }
         Update: {
@@ -76,6 +132,7 @@ export type Database = {
           job_id?: string
           message?: string | null
           phone?: string | null
+          rating?: number | null
           status?: Database["public"]["Enums"]["application_status"]
         }
         Relationships: [

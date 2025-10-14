@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { ArrowLeft, ExternalLink, Mail, Phone, FileText, Eye, Calendar, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { StarRating } from '@/components/StarRating';
+import { TagManager } from '@/components/TagManager';
 
 const statusMap = {
   new: { label: 'Ny', variant: 'default' as const },
@@ -26,6 +28,7 @@ export default function ApplicationDetail() {
   const [application, setApplication] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [tags, setTags] = useState<any[]>([]);
 
   useEffect(() => {
     fetchApplication();
@@ -53,6 +56,9 @@ export default function ApplicationDetail() {
       if (error) throw error;
       setApplication(data);
 
+      // Fetch tags
+      await fetchTags();
+
       // Mark as viewed if it's new
       if (data.status === 'new') {
         await updateStatus('viewed');
@@ -67,6 +73,26 @@ export default function ApplicationDetail() {
       navigate('/admin/applications');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('application_tag_relations')
+        .select(`
+          tag_id,
+          application_tags (
+            id,
+            name
+          )
+        `)
+        .eq('application_id', id);
+
+      if (error) throw error;
+      setTags(data?.map(item => item.application_tags).filter(Boolean) || []);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
     }
   };
 
@@ -91,6 +117,34 @@ export default function ApplicationDetail() {
       toast({
         title: 'Ett fel uppstod',
         description: 'Kunde inte uppdatera status',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const updateRating = async (rating: number) => {
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ rating })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setApplication((prev: any) => ({ ...prev, rating }));
+      
+      toast({
+        title: 'Rating uppdaterad',
+        description: `Kandidat bedömd med ${rating} stjärnor`,
+      });
+    } catch (error) {
+      console.error('Error updating rating:', error);
+      toast({
+        title: 'Ett fel uppstod',
+        description: 'Kunde inte uppdatera rating',
         variant: 'destructive',
       });
     } finally {
@@ -203,6 +257,32 @@ export default function ApplicationDetail() {
           </Card>
 
           <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rating & Taggar</CardTitle>
+                <CardDescription>Betygsätt och märk kandidaten</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">Betyg</p>
+                  <StarRating
+                    rating={application.rating}
+                    onRatingChange={updateRating}
+                    size="lg"
+                  />
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium mb-2">Taggar</p>
+                  <TagManager
+                    applicationId={application.id}
+                    currentTags={tags}
+                    onTagsChange={fetchTags}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle>Åtgärder</CardTitle>

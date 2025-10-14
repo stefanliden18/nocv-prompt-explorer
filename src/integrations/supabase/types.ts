@@ -195,6 +195,39 @@ export type Database = {
           },
         ]
       }
+      page_content: {
+        Row: {
+          content_html: string
+          created_at: string | null
+          display_order: number | null
+          id: string
+          page_key: string
+          section_key: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_html: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          page_key: string
+          section_key: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_html?: string
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          page_key?: string
+          section_key?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

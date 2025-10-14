@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { Edit } from "lucide-react";
 import { Helmet } from "react-helmet-async";
+import heroImage from "@/assets/about-hero-industrial-team.jpg";
 
 export default function About() {
   const { isAdmin } = useAuth();
@@ -44,9 +45,13 @@ export default function About() {
 
       <Navigation />
       
-      {/* Hero section with gradient */}
-      <section className="pt-32 pb-16 px-6 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-        <div className="container mx-auto max-w-4xl">
+      {/* Hero section with image */}
+      <section 
+        className="relative pt-32 pb-16 px-6 bg-cover bg-center"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/80 to-background"></div>
+        <div className="relative container mx-auto max-w-4xl z-10">
           {isAdmin && (
             <Button
               onClick={() => navigate('/admin/about/edit')}

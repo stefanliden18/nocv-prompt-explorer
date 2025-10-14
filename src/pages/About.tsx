@@ -82,12 +82,12 @@ export default function About() {
       </section>
 
       {/* Content sections */}
-      <section className="py-16 px-6">
-        <div className="container mx-auto max-w-4xl space-y-12">
+      <section className="py-16 px-6 bg-gradient-to-b from-background via-primary/5 to-background">
+        <div className="container mx-auto max-w-4xl space-y-8">
           {isLoading ? (
             <>
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-card rounded-lg p-8 shadow-sm border border-border animate-pulse">
+                <div key={i} className="animate-pulse">
                   <div className="h-6 bg-muted rounded w-1/3 mb-4"></div>
                   <div className="space-y-3">
                     <div className="h-4 bg-muted rounded w-full"></div>
@@ -101,10 +101,9 @@ export default function About() {
             contentSections?.map((section) => (
               <div 
                 key={section.id}
-                className="bg-card rounded-lg p-8 shadow-sm border border-border"
               >
                 <div 
-                  className="prose prose-sm max-w-none dark:prose-invert"
+                  className="prose prose-lg max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(section.content_html) 
                   }}

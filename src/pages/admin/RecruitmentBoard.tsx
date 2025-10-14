@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelect, MultiSelectWithBadges, type MultiSelectOption } from '@/components/ui/multi-select';
+import { AIChat } from '@/components/AIChat';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Settings2, X, Filter } from 'lucide-react';
@@ -394,6 +395,15 @@ export default function RecruitmentBoard() {
         open={managementDialogOpen}
         onOpenChange={setManagementDialogOpen}
         onStagesUpdated={fetchData}
+      />
+
+      <AIChat 
+        context={{
+          selectedJobIds,
+          searchQuery,
+          ratingFilter,
+          tagFilter
+        }}
       />
     </AdminLayout>
   );

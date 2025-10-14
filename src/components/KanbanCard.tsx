@@ -41,22 +41,25 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
   const displayTags = tags.slice(0, 3);
   const remainingCount = tags.length - 3;
 
+  const handleClick = () => {
+    if (!isDragging) {
+      navigate(`/admin/applications/${application.id}`);
+    }
+  };
+
   return (
     <Card
       ref={setNodeRef}
       style={style}
       className="p-3 mb-2 cursor-pointer hover:shadow-md transition-shadow bg-card"
-      onClick={() => navigate(`/admin/applications/${application.id}`)}
+      onClick={handleClick}
+      {...attributes}
+      {...listeners}
     >
       <div className="flex items-start gap-2">
-        <button
-          className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hover:text-foreground"
-          {...attributes}
-          {...listeners}
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground">
           <GripVertical className="h-4 w-4" />
-        </button>
+        </div>
         
         <div className="flex-1 min-w-0">
           <h4 className="font-semibold text-sm mb-1 truncate">{application.candidate_name}</h4>

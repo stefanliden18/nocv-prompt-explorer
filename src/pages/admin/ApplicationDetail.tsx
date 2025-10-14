@@ -10,10 +10,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
-import { ArrowLeft, ExternalLink, Mail, Phone, FileText, Eye, Calendar, XCircle } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Mail, Phone, FileText, Eye, Calendar, XCircle, Video } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { StarRating } from '@/components/StarRating';
 import { TagManager } from '@/components/TagManager';
+import { InterviewBookingDialog } from '@/components/InterviewBookingDialog';
 
 const statusMap = {
   new: { label: 'Ny', variant: 'default' as const },
@@ -78,6 +79,61 @@ export default function ApplicationDetail() {
       navigate('/admin/applications');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInterviewBooked = async (success: boolean) => {
+    if (success) {
+      await fetchApplication();
+    }
+  };
+
+  const handleCancelInterview = async () => {
+    const confirmed = window.confirm(
+      'Är du säker på att du vill avboka intervjun? Kandidaten kommer att meddelas.'
+    );
+    
+    if (!confirmed) return;
+
+    setUpdating(true);
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({
+          status: 'viewed',
+          interview_scheduled_at: null,
+          interview_link: null,
+          interview_notes: null,
+          reminder_sent: false,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Send cancellation email
+      await supabase.functions.invoke('send-interview-cancellation', {
+        body: {
+          candidateName: application.candidate_name,
+          candidateEmail: application.email,
+          jobTitle: application.jobs?.title || 'denna position',
+        },
+      });
+
+      await fetchApplication();
+      
+      toast({
+        title: 'Intervju avbokad',
+        description: 'Kandidaten har meddelats om avbokningen.',
+      });
+    } catch (error) {
+      console.error('Error cancelling interview:', error);
+      toast({
+        title: 'Ett fel uppstod',
+        description: 'Kunde inte avboka intervjun',
+        variant: 'destructive',
+      });
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -364,16 +420,13 @@ export default function ApplicationDetail() {
                   </Button>
                 )}
                 
-                {application.status !== 'booked' && (
-                  <Button 
-                    variant="default" 
-                    className="w-full justify-start"
-                    onClick={() => updateStatus('booked')}
+                {!application.interview_scheduled_at && (
+                  <InterviewBookingDialog
+                    application={application}
+                    onInterviewBooked={handleInterviewBooked}
                     disabled={updating}
-                  >
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Boka intervju
-                  </Button>
+                    mode="create"
+                  />
                 )}
                 
                 {application.status !== 'rejected' && (
@@ -389,6 +442,75 @@ export default function ApplicationDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Booked Interview Section */}
+            {application.interview_scheduled_at && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-blue-600" />
+                        Bokad intervju
+                      </CardTitle>
+                      <CardDescription>
+                        {format(new Date(application.interview_scheduled_at), 'd MMMM yyyy, HH:mm', { locale: sv })}
+                      </CardDescription>
+                    </div>
+                    <Badge variant="default" className="bg-blue-600">
+                      Bokad
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {application.interview_link && (
+                    <div>
+                      <p className="text-sm font-medium mb-2">Videolänk</p>
+                      <Button variant="outline" size="sm" className="w-full" asChild>
+                        <a href={application.interview_link} target="_blank" rel="noopener noreferrer">
+                          <Video className="w-4 h-4 mr-2" />
+                          Öppna videolänk
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {application.interview_notes && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className="text-sm font-medium mb-1">Meddelande till kandidat</p>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap max-h-32 overflow-y-auto">
+                          {application.interview_notes}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  
+                  <Separator />
+                  
+                  <div className="flex flex-col gap-2">
+                    <InterviewBookingDialog
+                      application={application}
+                      onInterviewBooked={handleInterviewBooked}
+                      disabled={updating}
+                      mode="edit"
+                    />
+                    
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={handleCancelInterview}
+                      disabled={updating}
+                    >
+                      <XCircle className="w-4 h-4 mr-2" />
+                      Avboka intervju
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>

@@ -8,3 +8,12 @@ verify_jwt = false
 
 [functions.ai-recruiter-assistant]
 verify_jwt = true
+
+[functions.send-interview-invitation]
+verify_jwt = true
+
+[functions.send-interview-reminder]
+verify_jwt = false
+
+[functions.send-interview-cancellation]
+verify_jwt = true

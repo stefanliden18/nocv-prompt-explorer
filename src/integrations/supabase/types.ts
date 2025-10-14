@@ -105,12 +105,16 @@ export type Database = {
           cv_url: string | null
           email: string
           id: string
+          interview_link: string | null
+          interview_notes: string | null
+          interview_scheduled_at: string | null
           job_id: string
           message: string | null
           notes: string | null
           phone: string | null
           pipeline_stage_id: string
           rating: number | null
+          reminder_sent: boolean | null
           status: Database["public"]["Enums"]["application_status"]
         }
         Insert: {
@@ -119,12 +123,16 @@ export type Database = {
           cv_url?: string | null
           email: string
           id?: string
+          interview_link?: string | null
+          interview_notes?: string | null
+          interview_scheduled_at?: string | null
           job_id: string
           message?: string | null
           notes?: string | null
           phone?: string | null
           pipeline_stage_id: string
           rating?: number | null
+          reminder_sent?: boolean | null
           status?: Database["public"]["Enums"]["application_status"]
         }
         Update: {
@@ -133,12 +141,16 @@ export type Database = {
           cv_url?: string | null
           email?: string
           id?: string
+          interview_link?: string | null
+          interview_notes?: string | null
+          interview_scheduled_at?: string | null
           job_id?: string
           message?: string | null
           notes?: string | null
           phone?: string | null
           pipeline_stage_id?: string
           rating?: number | null
+          reminder_sent?: boolean | null
           status?: Database["public"]["Enums"]["application_status"]
         }
         Relationships: [

@@ -2,8 +2,11 @@ import { useDraggable } from '@dnd-kit/core';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StarRating } from '@/components/StarRating';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Calendar, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
+import { sv } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface KanbanCardProps {
   application: {
@@ -11,6 +14,8 @@ interface KanbanCardProps {
     candidate_name: string;
     rating: number | null;
     job_id: string;
+    interview_scheduled_at?: string | null;
+    interview_link?: string | null;
     jobs?: {
       title: string;
       companies?: {
@@ -51,7 +56,10 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
     <Card
       ref={setNodeRef}
       style={style}
-      className="p-3 mb-2 cursor-pointer hover:shadow-md transition-shadow bg-card"
+      className={cn(
+        "p-3 mb-2 cursor-pointer hover:shadow-md transition-shadow bg-card",
+        application.interview_scheduled_at && "border-l-4 border-l-blue-500"
+      )}
       onClick={handleClick}
       {...attributes}
       {...listeners}
@@ -71,6 +79,18 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
               size="sm"
             />
           </div>
+
+          {application.interview_scheduled_at && (
+            <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-1 rounded mb-2">
+              <Calendar className="h-3 w-3" />
+              <span className="font-medium">
+                {format(new Date(application.interview_scheduled_at), 'd MMM, HH:mm', { locale: sv })}
+              </span>
+              {application.interview_link && (
+                <ExternalLink className="h-3 w-3 ml-1" />
+              )}
+            </div>
+          )}
 
           {displayTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-2">

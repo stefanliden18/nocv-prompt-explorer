@@ -75,6 +75,7 @@ export default function JobEdit() {
   const [tempDate, setTempDate] = useState<Date | undefined>(undefined);
   const [tempHour, setTempHour] = useState<string>('09');
   const [tempMinute, setTempMinute] = useState<string>('00');
+  const [hasSelectedTime, setHasSelectedTime] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -322,12 +323,24 @@ export default function JobEdit() {
             </Button>
             
             <Button
-              onClick={handleSchedule}
+              onClick={() => {
+                if (hasSelectedTime) {
+                  // Användaren har valt tid - spara schemaläggningen
+                  handleSchedule();
+                  setHasSelectedTime(false);
+                } else {
+                  // Användaren har inte valt tid - öppna kalendern
+                  setIsPopoverOpen(true);
+                }
+              }}
               disabled={loading || !buttons.schedule}
-              variant="outline"
+              variant={hasSelectedTime ? "default" : "outline"}
+              className={cn(
+                hasSelectedTime && "bg-green-600 hover:bg-green-700 animate-pulse"
+              )}
             >
               <CalendarIcon className="h-4 w-4 mr-2" />
-              Planera publicering
+              {hasSelectedTime ? "SPARA SCHEMALÄGGNING" : "VÄLJ DATUM OCH TID"}
             </Button>
             
             {buttons.unpublish && (
@@ -511,6 +524,11 @@ export default function JobEdit() {
                       setTempHour('09');
                       setTempMinute('00');
                     }
+                  } else {
+                    // Återställ hasSelectedTime om kalendern stängs utan att spara
+                    if (!publishAt) {
+                      setHasSelectedTime(false);
+                    }
                   }
                 }}>
                   <PopoverTrigger asChild>
@@ -586,7 +604,10 @@ export default function JobEdit() {
                           variant="outline"
                           size="sm"
                           className="flex-1"
-                          onClick={() => setIsPopoverOpen(false)}
+                          onClick={() => {
+                            setIsPopoverOpen(false);
+                            setHasSelectedTime(false);
+                          }}
                         >
                           Avbryt
                         </Button>
@@ -603,8 +624,10 @@ export default function JobEdit() {
                               setPublishAt(newDate);
                               setPublishHour(tempHour);
                               setPublishMinute(tempMinute);
+                              setHasSelectedTime(true);
                             } else {
                               setPublishAt(undefined);
+                              setHasSelectedTime(false);
                             }
                             setIsPopoverOpen(false);
                           }}

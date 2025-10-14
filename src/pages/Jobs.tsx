@@ -13,11 +13,13 @@ import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { nowUTC } from '@/lib/timezone';
+import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 12;
 
 const Jobs = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [jobs, setJobs] = useState<any[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +29,7 @@ const Jobs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [cities, setCities] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [spontanUrl, setSpontanUrl] = useState<string | null>(null);
 
   const [totalCount, setTotalCount] = useState(0);
 
@@ -35,10 +38,40 @@ const Jobs = () => {
     fetchJobs();
   }, [currentPage, cityFilter, categoryFilter, searchQuery]);
 
-  // Fetch initial data for filters
+  // Fetch initial data for filters and spontan URL
   useEffect(() => {
     fetchFilterOptions();
+    fetchSpontanUrl();
   }, []);
+
+  const fetchSpontanUrl = async () => {
+    try {
+      const { data } = await supabase
+        .from('page_content')
+        .select('content_html')
+        .eq('page_key', 'jobs')
+        .eq('section_key', 'spontanansökan_url')
+        .maybeSingle();
+      
+      if (data?.content_html) {
+        setSpontanUrl(data.content_html);
+      }
+    } catch (error) {
+      console.error('Error fetching spontan URL:', error);
+    }
+  };
+
+  const handleSpontanClick = () => {
+    if (spontanUrl) {
+      window.location.href = spontanUrl;
+    } else {
+      toast({
+        title: "Spontanansökan ej tillgänglig",
+        description: "Kontakta oss via kontaktformuläret istället.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const fetchFilterOptions = async () => {
     try {
@@ -201,9 +234,22 @@ const Jobs = () => {
             <h1 className="text-4xl md:text-5xl font-bold font-heading text-foreground mb-4">
               Lediga jobb
             </h1>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
               Hitta ditt nästa jobb baserat på vad du kan, inte vad du studerat
             </p>
+            
+            {spontanUrl && (
+              <div className="flex justify-center">
+                <Button 
+                  variant="cta-primary" 
+                  size="lg"
+                  onClick={handleSpontanClick}
+                  className="shadow-lg hover:shadow-xl transition-all"
+                >
+                  Spontanansökan
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Filters */}

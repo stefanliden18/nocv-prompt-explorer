@@ -1,13 +1,17 @@
 import { AdminLayout } from '@/components/AdminLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Briefcase, FileText, Building2, Users, Activity } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { sv } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface DashboardStats {
   jobs: number;
@@ -26,13 +30,55 @@ interface ActivityLog {
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats>({ jobs: 0, applications: 0, companies: 0, users: 0 });
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [spontanUrl, setSpontanUrl] = useState('');
 
   useEffect(() => {
     fetchDashboardData();
+    fetchSpontanUrl();
   }, []);
+
+  const fetchSpontanUrl = async () => {
+    try {
+      const { data } = await supabase
+        .from('page_content')
+        .select('content_html')
+        .eq('page_key', 'jobs')
+        .eq('section_key', 'spontanansökan_url')
+        .maybeSingle();
+      
+      if (data) setSpontanUrl(data.content_html || '');
+    } catch (error) {
+      console.error('Error fetching spontan URL:', error);
+    }
+  };
+
+  const updateSpontanUrl = async () => {
+    try {
+      const { error } = await supabase
+        .from('page_content')
+        .update({ content_html: spontanUrl })
+        .eq('page_key', 'jobs')
+        .eq('section_key', 'spontanansökan_url');
+
+      if (error) throw error;
+
+      toast({
+        title: "Sparat!",
+        description: "Spontanansöknings-länken har uppdaterats.",
+      });
+    } catch (error) {
+      console.error('Error updating spontan URL:', error);
+      toast({
+        title: "Fel",
+        description: "Kunde inte uppdatera länken. Försök igen.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -218,6 +264,30 @@ export default function AdminDashboard() {
               </div>
             )}
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Spontanansökan - GetKiku Integration</CardTitle>
+            <CardDescription>Konfigurera länk för spontanansökningar via GetKiku</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="spontanUrl">GetKiku Spontanansöknings-länk</Label>
+              <Input 
+                id="spontanUrl"
+                value={spontanUrl}
+                onChange={(e) => setSpontanUrl(e.target.value)}
+                placeholder="https://getkiku.com/interview/spontan..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Kandidater som klickar på "Spontanansökan" på jobbsidan skickas till denna länk. Lämna tom för att dölja knappen.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={updateSpontanUrl}>Spara länk</Button>
+          </CardFooter>
         </Card>
       </div>
     </AdminLayout>

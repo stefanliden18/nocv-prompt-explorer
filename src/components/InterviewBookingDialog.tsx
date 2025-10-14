@@ -18,6 +18,7 @@ import { getInterviewMessageTemplate } from "@/utils/interviewTemplates";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Edit } from "lucide-react";
+import { stockholmToUTC } from "@/lib/timezone";
 
 interface InterviewBookingDialogProps {
   application: {
@@ -140,7 +141,7 @@ export function InterviewBookingDialog({
         body: {
           applicationId: application.id,
           interviewLink,
-          scheduledAt: scheduledAt.toISOString(),
+          scheduledAt: stockholmToUTC(scheduledAt),
           message,
           isUpdate: mode === 'edit',
           sendEmail,

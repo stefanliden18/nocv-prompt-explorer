@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { utcToStockholm } from '@/lib/timezone';
 
 interface KanbanCardProps {
   application: {
@@ -84,7 +85,7 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
             <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-1 rounded mb-2">
               <Calendar className="h-3 w-3" />
               <span className="font-medium">
-                {format(new Date(application.interview_scheduled_at), 'd MMM, HH:mm', { locale: sv })}
+                {format(utcToStockholm(application.interview_scheduled_at), 'd MMM, HH:mm', { locale: sv })}
               </span>
               {application.interview_link && (
                 <ExternalLink className="h-3 w-3 ml-1" />

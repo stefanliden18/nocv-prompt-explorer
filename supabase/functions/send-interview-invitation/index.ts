@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Resend } from "npm:resend@2.0.0";
 import { format } from "https://esm.sh/date-fns@3.6.0";
 import { sv } from "https://esm.sh/date-fns@3.6.0/locale";
+import { toZonedTime } from "https://esm.sh/date-fns-tz@3.2.0";
+
+const STOCKHOLM_TZ = 'Europe/Stockholm';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -120,8 +123,10 @@ serve(async (req) => {
 
     // Send email if requested
     if (sendEmail) {
-      const interviewDate = format(scheduledDate, "d MMMM yyyy", { locale: sv });
-      const interviewTime = format(scheduledDate, "HH:mm", { locale: sv });
+      // Konvertera UTC till Stockholm-tid för visning
+      const stockholmDate = toZonedTime(scheduledDate, STOCKHOLM_TZ);
+      const interviewDate = format(stockholmDate, "d MMMM yyyy", { locale: sv });
+      const interviewTime = format(stockholmDate, "HH:mm", { locale: sv });
       const jobTitle = application.jobs?.title || "denna position";
 
       const emailHtml = getInvitationEmailTemplate(

@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { StarRating } from '@/components/StarRating';
 import { TagManager } from '@/components/TagManager';
 import { InterviewBookingDialog } from '@/components/InterviewBookingDialog';
+import { utcToStockholm } from '@/lib/timezone';
 
 const statusMap = {
   new: { label: 'Ny', variant: 'default' as const },
@@ -454,7 +455,7 @@ export default function ApplicationDetail() {
                         Bokad intervju
                       </CardTitle>
                       <CardDescription>
-                        {format(new Date(application.interview_scheduled_at), 'd MMMM yyyy, HH:mm', { locale: sv })}
+                        {format(utcToStockholm(application.interview_scheduled_at), 'd MMMM yyyy, HH:mm', { locale: sv })}
                       </CardDescription>
                     </div>
                     <Badge variant="default" className="bg-blue-600">

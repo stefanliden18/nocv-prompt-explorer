@@ -46,8 +46,13 @@ const Navigation = () => {
           </div>
 
           {/* CTA Buttons and Mobile Menu */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <div className="hidden sm:flex">
+              <AdminStatusButton />
+            </div>
+            
+            {/* Mobile Login Button - Always visible on mobile */}
+            <div className="sm:hidden">
               <AdminStatusButton />
             </div>
             

@@ -7,7 +7,17 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { MapPin, Building2, Clock, ArrowLeft, Send } from "lucide-react";
+import { MapPin, Building2, Clock, ArrowLeft, Send, Share2, Check } from "lucide-react";
+import { 
+  LinkedinShareButton, 
+  FacebookShareButton, 
+  TwitterShareButton, 
+  WhatsappShareButton,
+  LinkedinIcon,
+  FacebookIcon,
+  XIcon,
+  WhatsappIcon 
+} from 'react-share';
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useForm } from "react-hook-form";
@@ -35,6 +45,7 @@ const JobDetail = () => {
   const [showApplication, setShowApplication] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof applicationSchema>>({
@@ -329,6 +340,72 @@ const JobDetail = () => {
                   Publicerad: {new Date(job.publish_at).toLocaleDateString('sv-SE')}
                 </div>
               )}
+            </div>
+
+            {/* Social Sharing */}
+            <div className="mt-6 pt-6 border-t border-white/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Share2 className="w-4 h-4" />
+                <span className="text-sm font-medium">Dela jobbet:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <LinkedinShareButton
+                  url={`https://nocv.se/jobb/${job.slug}`}
+                  title={`${job.title} hos ${job.companies?.name || 'företaget'}`}
+                  summary={job.description_md?.substring(0, 200) || ''}
+                >
+                  <LinkedinIcon size={40} round className="hover:opacity-80 transition-opacity" />
+                </LinkedinShareButton>
+
+                <FacebookShareButton
+                  url={`https://nocv.se/jobb/${job.slug}`}
+                  hashtag="#jobb"
+                >
+                  <FacebookIcon size={40} round className="hover:opacity-80 transition-opacity" />
+                </FacebookShareButton>
+
+                <TwitterShareButton
+                  url={`https://nocv.se/jobb/${job.slug}`}
+                  title={`${job.title} hos ${job.companies?.name || 'företaget'}`}
+                  hashtags={['jobb', 'karriär']}
+                >
+                  <XIcon size={40} round className="hover:opacity-80 transition-opacity" />
+                </TwitterShareButton>
+
+                <WhatsappShareButton
+                  url={`https://nocv.se/jobb/${job.slug}`}
+                  title={`${job.title} hos ${job.companies?.name || 'företaget'}`}
+                >
+                  <WhatsappIcon size={40} round className="hover:opacity-80 transition-opacity" />
+                </WhatsappShareButton>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-10 border-white/30 text-white hover:bg-white/20"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://nocv.se/jobb/${job.slug}`);
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                    toast({
+                      title: "Länk kopierad!",
+                      description: "Jobblänken har kopierats till urklipp.",
+                    });
+                  }}
+                >
+                  {linkCopied ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Kopierad!
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Kopiera länk
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
         </div>

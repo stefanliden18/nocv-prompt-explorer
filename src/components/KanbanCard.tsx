@@ -1,8 +1,10 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { StarRating } from '@/components/StarRating';
-import { GripVertical, Calendar, ExternalLink } from 'lucide-react';
+import { GripVertical, Calendar, ExternalLink, MoveRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -25,9 +27,11 @@ interface KanbanCardProps {
     };
   };
   tags: Array<{ name: string }>;
+  stages?: Array<{ id: string; name: string; color: string }>;
+  onMoveToStage?: (applicationId: string, stageId: string) => void;
 }
 
-export function KanbanCard({ application, tags }: KanbanCardProps) {
+export function KanbanCard({ application, tags, stages, onMoveToStage }: KanbanCardProps) {
   const navigate = useNavigate();
   const {
     attributes,
@@ -58,16 +62,57 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-2 mb-1.5 cursor-pointer hover:shadow-md transition-shadow bg-card",
+        "relative p-1.5 sm:p-2 mb-1 sm:mb-1.5 cursor-pointer hover:shadow-md transition-shadow bg-card",
         application.interview_scheduled_at && "border-l-4 border-l-blue-500"
       )}
       onClick={handleClick}
       {...attributes}
       {...listeners}
     >
-      <div className="flex items-start gap-2">
-        <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground">
-          <GripVertical className="h-3 w-3" />
+      {/* Move button - endast mobil */}
+      {stages && onMoveToStage && (
+        <div className="md:hidden absolute top-1 right-1 z-10">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-6 w-6"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoveRight className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="end" onClick={(e) => e.stopPropagation()}>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold mb-2">Flytta till:</p>
+                {stages.map((stage) => (
+                  <Button
+                    key={stage.id}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start text-xs h-8"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveToStage(application.id, stage.id);
+                    }}
+                  >
+                    <div 
+                      className="w-2 h-2 rounded-full mr-2" 
+                      style={{ backgroundColor: stage.color }}
+                    />
+                    {stage.name}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      )}
+      
+      <div className="flex items-start gap-1 sm:gap-2">
+        <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block">
+          <GripVertical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
         </div>
         
         <div className="flex-1 min-w-0">

@@ -76,6 +76,15 @@ export function KanbanBoard({
     onDragEnd(event);
   };
 
+  const handleMoveApplication = (applicationId: string, newStageId: string) => {
+    const mockEvent: DragEndEvent = {
+      active: { id: applicationId },
+      over: { id: newStageId },
+    } as DragEndEvent;
+    
+    onDragEnd(mockEvent);
+  };
+
   const getApplicationsForStage = (stageId: string) => {
     return applications.filter(app => app.pipeline_stage_id === stageId);
   };
@@ -90,7 +99,7 @@ export function KanbanBoard({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 px-2">
+      <div className="flex gap-2 sm:gap-4 overflow-x-auto pb-4 px-2">
         {stages
           .sort((a, b) => a.display_order - b.display_order)
           .map((stage) => (
@@ -99,8 +108,10 @@ export function KanbanBoard({
               stage={stage}
               applications={getApplicationsForStage(stage.id)}
               tags={tags}
+              allStages={stages}
               onEditStage={onEditStage}
               onDeleteStage={onDeleteStage}
+              onMoveApplication={handleMoveApplication}
             />
           ))}
         
@@ -112,6 +123,7 @@ export function KanbanBoard({
           <KanbanCard 
             application={activeApplication}
             tags={tags[activeApplication.id] || []}
+            stages={stages}
           />
         ) : null}
       </DragOverlay>

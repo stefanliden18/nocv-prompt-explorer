@@ -45,12 +45,12 @@ export function KanbanColumn({
 
   return (
     <Card 
-      className={`flex-shrink-0 w-80 flex flex-col transition-colors ${
+      className={`flex-shrink-0 w-64 flex flex-col transition-colors ${
         isOver ? 'ring-2 ring-primary' : ''
       }`}
     >
       <div 
-        className="p-4 border-b flex items-center justify-between"
+        className="p-3 border-b flex items-center justify-between"
         style={{ 
           backgroundColor: `${stage.color}15`,
           borderTopColor: stage.color,
@@ -74,7 +74,7 @@ export function KanbanColumn({
             className="h-7 w-7"
             onClick={() => onEditStage(stage)}
           >
-            <Edit2 className="h-3 w-3" />
+            <Edit2 className="h-2.5 w-2.5" />
           </Button>
           <Button
             variant="ghost"
@@ -82,14 +82,14 @@ export function KanbanColumn({
             className="h-7 w-7"
             onClick={() => onDeleteStage(stage.id)}
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-2.5 w-2.5" />
           </Button>
         </div>
       </div>
 
       <div 
         ref={setNodeRef}
-        className="p-3 overflow-y-auto flex-1 min-h-[500px] max-h-[calc(100vh-300px)]"
+        className="p-3 overflow-y-auto flex-1 min-h-[400px] max-h-[calc(100vh-350px)]"
       >
         {[...applications]
           .sort((a, b) => {

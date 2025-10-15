@@ -58,7 +58,7 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 mb-2 cursor-pointer hover:shadow-md transition-shadow bg-card",
+        "p-2 mb-1.5 cursor-pointer hover:shadow-md transition-shadow bg-card",
         application.interview_scheduled_at && "border-l-4 border-l-blue-500"
       )}
       onClick={handleClick}
@@ -67,11 +67,11 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
     >
       <div className="flex items-start gap-2">
         <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground">
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="h-3 w-3" />
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-sm mb-1 truncate">{application.candidate_name}</h4>
+          <h4 className="font-semibold text-xs mb-1 truncate">{application.candidate_name}</h4>
           
           <div className="mb-2">
             <StarRating 
@@ -82,19 +82,19 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
           </div>
 
           {application.interview_scheduled_at && (
-            <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950 px-2 py-1 rounded mb-2">
-              <Calendar className="h-3 w-3" />
+            <div className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 dark:bg-blue-950 px-1.5 py-0.5 rounded mb-1.5">
+              <Calendar className="h-2.5 w-2.5" />
               <span className="font-medium">
                 {format(utcToStockholm(application.interview_scheduled_at), 'd MMM, HH:mm', { locale: sv })}
               </span>
               {application.interview_link && (
-                <ExternalLink className="h-3 w-3 ml-1" />
+                <ExternalLink className="h-2.5 w-2.5 ml-1" />
               )}
             </div>
           )}
 
           {displayTags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
+            <div className="flex flex-wrap gap-1 mb-1.5">
               {displayTags.map((tag) => (
                 <Badge key={tag.name} variant="secondary" className="text-xs">
                   {tag.name}

@@ -91,12 +91,12 @@ export function ApplicationFilters({
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Status Filter */}
         <div className="space-y-2">
           <Label>Status</Label>
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Filtrera status" />
             </SelectTrigger>
             <SelectContent>

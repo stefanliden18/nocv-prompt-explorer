@@ -275,13 +275,13 @@ export default function ApplicationDetail() {
           </Button>
         </div>
 
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-bold">{application.candidate_name}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold">{application.candidate_name}</h1>
+            <p className="text-sm text-muted-foreground">
               Ansökan till {application.jobs?.title || 'Okänt jobb'}
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Mottagen {format(new Date(application.created_at), 'd MMMM yyyy, HH:mm', { locale: sv })}
             </p>
           </div>
@@ -290,8 +290,8 @@ export default function ApplicationDetail() {
           </Badge>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <Card className="md:col-span-2">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle>Kontaktinformation</CardTitle>
             </CardHeader>

@@ -45,7 +45,7 @@ export function KanbanColumn({
 
   return (
     <Card 
-      className={`flex-shrink-0 w-64 flex flex-col transition-colors ${
+      className={`flex-shrink-0 w-72 sm:w-80 flex flex-col transition-colors ${
         isOver ? 'ring-2 ring-primary' : ''
       }`}
     >

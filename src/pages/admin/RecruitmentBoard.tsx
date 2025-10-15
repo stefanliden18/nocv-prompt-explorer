@@ -284,10 +284,10 @@ export default function RecruitmentBoard() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Rekryteringstavla</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Rekryteringstavla</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Visa: {filteredApplications.length} kandidater
             </p>
           </div>
@@ -295,6 +295,7 @@ export default function RecruitmentBoard() {
           <Button
             variant="outline"
             onClick={() => setManagementDialogOpen(true)}
+            className="w-full sm:w-auto"
           >
             <Settings2 className="h-4 w-4 mr-2" />
             Hantera stadier
@@ -347,8 +348,8 @@ export default function RecruitmentBoard() {
 
         {/* Sök- och filter-sektion */}
         <div className="space-y-3">
-          <div className="flex gap-3 items-center flex-wrap">
-            <div className="flex-1 min-w-64">
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <div className="w-full sm:flex-1 sm:min-w-64">
               <Input
                 placeholder="Sök på namn, jobb eller företag..."
                 value={searchQuery}
@@ -362,6 +363,7 @@ export default function RecruitmentBoard() {
               selected={ratingFilter}
               onChange={setRatingFilter}
               placeholder="Filtrera på betyg"
+              className="w-full sm:w-auto"
             />
             
             <MultiSelect
@@ -369,10 +371,11 @@ export default function RecruitmentBoard() {
               selected={tagFilter}
               onChange={setTagFilter}
               placeholder="Filtrera på taggar"
+              className="w-full sm:w-auto"
             />
             
             {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={clearFilters}>
+              <Button variant="outline" size="sm" onClick={clearFilters} className="w-full sm:w-auto">
                 <Filter className="h-4 w-4 mr-2" />
                 Rensa filter
               </Button>

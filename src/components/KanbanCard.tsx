@@ -71,13 +71,13 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-xs mb-1 truncate">{application.candidate_name}</h4>
+          <h4 className="font-semibold text-xs sm:text-sm mb-1 truncate">{application.candidate_name}</h4>
           
-          <div className="mb-2">
+          <div className="mb-1.5 sm:mb-2">
             <StarRating 
               rating={application.rating || 0} 
               readonly 
-              size="sm"
+              size="xs"
             />
           </div>
 
@@ -96,12 +96,12 @@ export function KanbanCard({ application, tags }: KanbanCardProps) {
           {displayTags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-1.5">
               {displayTags.map((tag) => (
-                <Badge key={tag.name} variant="secondary" className="text-xs">
+                <Badge key={tag.name} variant="secondary" className="text-[10px] sm:text-xs">
                   {tag.name}
                 </Badge>
               ))}
               {remainingCount > 0 && (
-                <Badge variant="outline" className="text-xs">
+                <Badge variant="outline" className="text-[10px] sm:text-xs">
                   +{remainingCount}
                 </Badge>
               )}

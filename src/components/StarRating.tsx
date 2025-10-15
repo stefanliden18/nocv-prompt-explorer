@@ -6,7 +6,7 @@ interface StarRatingProps {
   rating: number | null;
   onRatingChange?: (rating: number) => void;
   readonly?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export function StarRating({ rating, onRatingChange, readonly = false, size = 'md' }: StarRatingProps) {
@@ -14,6 +14,7 @@ export function StarRating({ rating, onRatingChange, readonly = false, size = 'm
   const [hoverRating, setHoverRating] = useState<number | null>(null);
 
   const sizeClasses = {
+    xs: 'w-3 h-3',
     sm: 'w-4 h-4',
     md: 'w-5 h-5',
     lg: 'w-6 h-6',
@@ -96,7 +97,7 @@ export function StarRating({ rating, onRatingChange, readonly = false, size = 'm
   }, [isDragging, hoverRating]);
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5 sm:gap-1">
       {[1, 2, 3, 4, 5].map((value) => (
         <button
           key={value}
@@ -126,7 +127,7 @@ export function StarRating({ rating, onRatingChange, readonly = false, size = 'm
         </button>
       ))}
       {rating && (
-        <span className="ml-2 text-sm text-muted-foreground">
+        <span className="ml-1 sm:ml-2 text-xs sm:text-sm text-muted-foreground hidden sm:inline">
           ({rating}/5)
         </span>
       )}

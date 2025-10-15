@@ -23,8 +23,8 @@ export function AdminHeader() {
         <h1 className="text-xl font-semibold">Admin Panel</h1>
       </div>
       
-      <div className="flex items-center gap-3">
-        <div className="text-right">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <div className="text-right hidden sm:block">
           <p className="text-sm font-medium">{user?.email}</p>
           <div className="flex justify-end">
             {getRoleBadge()}

@@ -191,12 +191,12 @@ export default function AdminApplications() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-start">
+        <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Ansökningar</h1>
-            <p className="text-muted-foreground">Hantera alla ansökningar</p>
+            <h1 className="text-2xl sm:text-3xl font-bold">Ansökningar</h1>
+            <p className="text-sm text-muted-foreground">Hantera alla ansökningar</p>
           </div>
-          <Button onClick={exportToCSV} variant="outline" disabled={filteredApplications.length === 0}>
+          <Button onClick={exportToCSV} variant="outline" disabled={filteredApplications.length === 0} className="w-full sm:w-auto">
             <Download className="w-4 h-4 mr-2" />
             Exportera CSV
           </Button>
@@ -272,88 +272,144 @@ export default function AdminApplications() {
                 Inga ansökningar hittades
               </p>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedApplications.length === filteredApplications.length && filteredApplications.length > 0}
-                        onCheckedChange={toggleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Datum</TableHead>
-                    <TableHead>Jobbtitel</TableHead>
-                    <TableHead>Kandidat</TableHead>
-                    <TableHead>E-post</TableHead>
-                    <TableHead>Telefon</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Taggar</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Åtgärder</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox
+                            checked={selectedApplications.length === filteredApplications.length && filteredApplications.length > 0}
+                            onCheckedChange={toggleSelectAll}
+                          />
+                        </TableHead>
+                        <TableHead>Datum</TableHead>
+                        <TableHead>Jobbtitel</TableHead>
+                        <TableHead>Kandidat</TableHead>
+                        <TableHead>E-post</TableHead>
+                        <TableHead>Telefon</TableHead>
+                        <TableHead>Rating</TableHead>
+                        <TableHead>Taggar</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Åtgärder</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredApplications.map((app) => (
+                        <TableRow key={app.id} className="cursor-pointer hover:bg-muted/50">
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedApplications.includes(app.id)}
+                              onCheckedChange={() => toggleSelectApplication(app.id)}
+                            />
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)} className="font-medium">
+                            {format(new Date(app.created_at), 'd MMM yyyy', { locale: sv })}
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            {app.jobs?.title || 'Okänt jobb'}
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            {app.candidate_name}
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            {app.email}
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            {app.phone || '-'}
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            <StarRating rating={app.rating} readonly size="sm" />
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            <div className="flex flex-wrap gap-1">
+                              {app.tags?.slice(0, 3).map((tag: any) => (
+                                <Badge key={tag.id} variant="outline" className="text-xs">
+                                  {tag.name}
+                                </Badge>
+                              ))}
+                              {app.tags?.length > 3 && (
+                                <Badge variant="outline" className="text-xs">
+                                  +{app.tags.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
+                            <Badge variant={statusMap[app.status as keyof typeof statusMap]?.variant || 'secondary'}>
+                              {statusMap[app.status as keyof typeof statusMap]?.label || app.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/admin/applications/${app.id}`);
+                              }}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="md:hidden space-y-3">
                   {filteredApplications.map((app) => (
-                    <TableRow key={app.id} className="cursor-pointer hover:bg-muted/50">
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Card 
+                      key={app.id} 
+                      className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+                      onClick={() => navigate(`/admin/applications/${app.id}`)}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold truncate">{app.candidate_name}</h3>
+                          <p className="text-sm text-muted-foreground truncate">{app.jobs?.title}</p>
+                        </div>
                         <Checkbox
                           checked={selectedApplications.includes(app.id)}
                           onCheckedChange={() => toggleSelectApplication(app.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="ml-2"
                         />
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)} className="font-medium">
-                        {format(new Date(app.created_at), 'd MMM yyyy', { locale: sv })}
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        {app.jobs?.title || 'Okänt jobb'}
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        {app.candidate_name}
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        {app.email}
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        {app.phone || '-'}
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        <StarRating rating={app.rating} readonly size="sm" />
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        <div className="flex flex-wrap gap-1">
-                          {app.tags?.slice(0, 3).map((tag: any) => (
+                      </div>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <StarRating rating={app.rating} readonly size="xs" />
+                        <Badge variant={statusMap[app.status as keyof typeof statusMap]?.variant}>
+                          {statusMap[app.status as keyof typeof statusMap]?.label}
+                        </Badge>
+                      </div>
+                      
+                      {app.tags?.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {app.tags?.slice(0, 2).map((tag: any) => (
                             <Badge key={tag.id} variant="outline" className="text-xs">
                               {tag.name}
                             </Badge>
                           ))}
-                          {app.tags?.length > 3 && (
+                          {app.tags?.length > 2 && (
                             <Badge variant="outline" className="text-xs">
-                              +{app.tags.length - 3}
+                              +{app.tags.length - 2}
                             </Badge>
                           )}
                         </div>
-                      </TableCell>
-                      <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                        <Badge variant={statusMap[app.status as keyof typeof statusMap]?.variant || 'secondary'}>
-                          {statusMap[app.status as keyof typeof statusMap]?.label || app.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/admin/applications/${app.id}`);
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                      )}
+                      
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{format(new Date(app.created_at), 'd MMM yyyy', { locale: sv })}</span>
+                        <span className="truncate ml-2">{app.email}</span>
+                      </div>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>

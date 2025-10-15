@@ -217,7 +217,7 @@ export function InterviewBookingDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>
             {mode === 'edit' ? 'Redigera intervju' : 'Boka videointervju'}
@@ -266,8 +266,8 @@ export function InterviewBookingDialog({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               disabled={saving}
-              rows={10}
-              className="resize-none"
+              rows={8}
+              className="resize-none text-sm"
             />
             <p className="text-xs text-muted-foreground">
               Max 1000 tecken. Du kan redigera standardmallen ovan.

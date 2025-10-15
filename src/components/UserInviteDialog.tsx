@@ -68,43 +68,12 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
         return;
       }
 
-      // Invite new user
-      const redirectUrl = `${window.location.origin}/auth`;
-      const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(email, {
-        redirectTo: redirectUrl,
+      // Invite new user via edge function
+      const { data, error: inviteError } = await supabase.functions.invoke('invite-user', {
+        body: { email, role },
       });
 
       if (inviteError) throw inviteError;
-
-      // Update profile role
-      if (inviteData.user) {
-        const { error: profileUpdateError } = await supabase
-          .from('profiles')
-          .update({ role: role as any })
-          .eq('id', inviteData.user.id);
-
-        if (profileUpdateError) {
-          console.error('Error updating profile role:', profileUpdateError);
-        }
-
-        // Set role in user_roles table
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: inviteData.user.id,
-            role: role as any,
-          } as any);
-
-        if (roleError) {
-          console.error('Error setting role:', roleError);
-        }
-      }
-
-      // Send invitation email
-      const inviteLink = `${window.location.origin}/auth`;
-      await supabase.functions.invoke('send-user-invitation', {
-        body: { email, role, inviteLink },
-      });
 
       toast({
         title: 'Inbjudan skickad',

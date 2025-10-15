@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.send-interview-cancellation]
 verify_jwt = true
+
+[functions.invite-user]
+verify_jwt = true

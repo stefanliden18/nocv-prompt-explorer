@@ -20,7 +20,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, role }: InviteUserRequest = await req.json();
 
-    console.log("Inviting user:", email, "with role:", role);
+    console.log("Processing user invitation/update:", email, "with role:", role);
 
     // Create admin client with service role
     const supabaseAdmin = createClient(
@@ -34,7 +34,60 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
-    // Invite user via admin API
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === email);
+
+    if (existingUser) {
+      console.log("User already exists, updating role:", existingUser.id);
+      
+      // Update profile role
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .update({ role })
+        .eq("id", existingUser.id);
+
+      if (profileError) {
+        console.error("Error updating profile:", profileError);
+        throw profileError;
+      }
+
+      // Remove old roles
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", existingUser.id);
+
+      // Insert new role
+      const { error: roleError } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: existingUser.id, role });
+
+      if (roleError) {
+        console.error("Error inserting user role:", roleError);
+        throw roleError;
+      }
+
+      console.log("Role updated successfully for:", existingUser.id);
+
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          userId: existingUser.id, 
+          updated: true 
+        }),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+        }
+      );
+    }
+
+    // Invite new user via admin API
+    console.log("User does not exist, sending invitation");
     const redirectUrl = `${Deno.env.get("SUPABASE_URL")?.replace(
       ".supabase.co",
       ".lovableproject.com"
@@ -92,7 +145,11 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({ success: true, userId: inviteData.user.id }),
+      JSON.stringify({ 
+        success: true, 
+        userId: inviteData.user.id,
+        updated: false
+      }),
       {
         status: 200,
         headers: {

@@ -7,16 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 
 interface UserInviteDialogProps {
   open: boolean;
@@ -28,8 +18,6 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'user' | 'recruiter' | 'admin'>('user');
   const [loading, setLoading] = useState(false);
-  const [existingUser, setExistingUser] = useState<{ id: string; email: string; currentRole: string } | null>(null);
-  const [showRoleChangeDialog, setShowRoleChangeDialog] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,39 +34,24 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
     setLoading(true);
 
     try {
-      // Check if user already exists
-      const { data: existingProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, email, role')
-        .eq('email', email)
-        .maybeSingle();
-
-      if (profileError && profileError.code !== 'PGRST116') {
-        throw profileError;
-      }
-
-      if (existingProfile) {
-        setExistingUser({
-          id: existingProfile.id,
-          email: existingProfile.email,
-          currentRole: existingProfile.role,
-        });
-        setShowRoleChangeDialog(true);
-        setLoading(false);
-        return;
-      }
-
-      // Invite new user via edge function
+      // Call edge function - it handles both new and existing users
       const { data, error: inviteError } = await supabase.functions.invoke('invite-user', {
         body: { email, role },
       });
 
       if (inviteError) throw inviteError;
 
-      toast({
-        title: 'Inbjudan skickad',
-        description: `En inbjudan har skickats till ${email}`,
-      });
+      if (data?.updated) {
+        toast({
+          title: 'Roll uppdaterad',
+          description: `Roll uppdaterad för ${email} till ${role}`,
+        });
+      } else {
+        toast({
+          title: 'Inbjudan skickad',
+          description: `En inbjudan har skickats till ${email}`,
+        });
+      }
 
       setEmail('');
       setRole('user');
@@ -96,53 +69,6 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
     }
   };
 
-  const handleRoleChange = async () => {
-    if (!existingUser) return;
-
-    setLoading(true);
-    try {
-      // Update profile role
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ role: role as any })
-        .eq('id', existingUser.id);
-
-      if (profileError) throw profileError;
-
-      // Update user_roles
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: existingUser.id,
-          role: role as any,
-        } as any, {
-          onConflict: 'user_id,role',
-        });
-
-      if (roleError) throw roleError;
-
-      toast({
-        title: 'Roll uppdaterad',
-        description: `Rollen för ${existingUser.email} har uppdaterats till ${role}`,
-      });
-
-      setShowRoleChangeDialog(false);
-      setExistingUser(null);
-      setEmail('');
-      setRole('user');
-      onOpenChange(false);
-      onSuccess();
-    } catch (error: any) {
-      console.error('Error updating role:', error);
-      toast({
-        title: 'Fel',
-        description: error.message || 'Kunde inte uppdatera roll',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <>
@@ -191,31 +117,6 @@ export function UserInviteDialog({ open, onOpenChange, onSuccess }: UserInviteDi
           </form>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog open={showRoleChangeDialog} onOpenChange={setShowRoleChangeDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Användaren finns redan</AlertDialogTitle>
-            <AlertDialogDescription>
-              Användaren {existingUser?.email} finns redan i systemet med rollen{' '}
-              <strong>{existingUser?.currentRole}</strong>. Vill du ändra rollen till{' '}
-              <strong>{role}</strong>?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setShowRoleChangeDialog(false);
-              setExistingUser(null);
-            }}>
-              Avbryt
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={handleRoleChange} disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Byt roll
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

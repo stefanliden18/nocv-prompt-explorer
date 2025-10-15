@@ -43,31 +43,13 @@ export default function AdminUsers() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const { data: profiles, error } = await supabase
-        .from('profiles')
-        .select('id, email, role, created_at')
-        .order('created_at', { ascending: false });
+      // Call Edge Function to fetch users with auth data
+      const { data, error } = await supabase.functions.invoke('get-users');
 
       if (error) throw error;
 
-      // Get auth data for last sign in and banned status
-      const usersWithAuth: UserData[] = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { data: authData } = await supabase.auth.admin.getUserById(profile.id);
-          const authUser = authData.user as any;
-          return {
-            id: profile.id,
-            email: profile.email,
-            role: profile.role,
-            created_at: profile.created_at,
-            last_sign_in_at: authUser?.last_sign_in_at || null,
-            banned_until: authUser?.banned_until || null,
-          };
-        })
-      );
-
-      setUsers(usersWithAuth);
-      setFilteredUsers(usersWithAuth);
+      setUsers(data.users || []);
+      setFilteredUsers(data.users || []);
 
       // Count active admins
       const { data: count } = await supabase.rpc('count_active_admins');

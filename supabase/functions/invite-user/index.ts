@@ -41,7 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (existingUser) {
       console.log("User already exists, updating role:", existingUser.id);
       
-      // Update profile role
+      // Update profile role (trigger will sync user_roles automatically)
       const { error: profileError } = await supabaseAdmin
         .from("profiles")
         .update({ role })
@@ -50,22 +50,6 @@ const handler = async (req: Request): Promise<Response> => {
       if (profileError) {
         console.error("Error updating profile:", profileError);
         throw profileError;
-      }
-
-      // Remove old roles
-      await supabaseAdmin
-        .from("user_roles")
-        .delete()
-        .eq("user_id", existingUser.id);
-
-      // Insert new role
-      const { error: roleError } = await supabaseAdmin
-        .from("user_roles")
-        .insert({ user_id: existingUser.id, role });
-
-      if (roleError) {
-        console.error("Error inserting user role:", roleError);
-        throw roleError;
       }
 
       console.log("Role updated successfully for:", existingUser.id);
@@ -106,7 +90,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("User invited successfully:", inviteData.user.id);
 
-    // Update profile role
+    // Update profile role (trigger will sync user_roles automatically)
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
       .update({ role })
@@ -115,19 +99,6 @@ const handler = async (req: Request): Promise<Response> => {
     if (profileError) {
       console.error("Error updating profile:", profileError);
       throw profileError;
-    }
-
-    // Insert role in user_roles table
-    const { error: roleError } = await supabaseAdmin
-      .from("user_roles")
-      .insert({
-        user_id: inviteData.user.id,
-        role,
-      });
-
-    if (roleError) {
-      console.error("Error inserting user role:", roleError);
-      throw roleError;
     }
 
     // Send invitation email

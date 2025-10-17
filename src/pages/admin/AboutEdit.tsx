@@ -123,7 +123,7 @@ export default function AboutEdit() {
             </CardHeader>
             <CardContent>
               <div 
-                className="prose prose-sm max-w-none dark:prose-invert"
+                className="prose prose-lg max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{ 
                   __html: DOMPurify.sanitize(heroContent) 
                 }}

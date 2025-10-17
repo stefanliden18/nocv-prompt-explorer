@@ -401,6 +401,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      enforce_application_limits: {
+        Args: { p_email: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

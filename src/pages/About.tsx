@@ -50,7 +50,7 @@ export default function About() {
         className="relative pt-32 pb-16 px-6 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/80 to-background"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background"></div>
         <div className="relative container mx-auto max-w-4xl z-10">
           {isAdmin && (
             <Button

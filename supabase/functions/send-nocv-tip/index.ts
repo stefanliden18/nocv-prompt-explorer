@@ -254,16 +254,26 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const requestBody = await req.json();
+    console.log("Received NOCV tip request:", JSON.stringify(requestBody, null, 2));
+
     const {
       senderName,
       senderEmail,
       friendEmail,
       category,
       personalMessage = "",
-    }: NOCVTipRequest = await req.json();
+    }: NOCVTipRequest = requestBody;
 
-    if (!senderName || !senderEmail || !friendEmail || !category) {
-      throw new Error("Missing required fields");
+    // Validate required fields with detailed error
+    const missingFields = [];
+    if (!senderName?.trim()) missingFields.push('senderName');
+    if (!senderEmail?.trim()) missingFields.push('senderEmail');
+    if (!friendEmail?.trim()) missingFields.push('friendEmail');
+    if (!category) missingFields.push('category');
+
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
     if (!checkRateLimit(senderEmail)) {

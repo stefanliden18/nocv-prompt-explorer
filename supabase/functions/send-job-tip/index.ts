@@ -53,6 +53,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const requestBody = await req.json();
+    console.log("Received job tip request:", JSON.stringify(requestBody, null, 2));
+
     const {
       senderName,
       senderEmail,
@@ -62,11 +65,19 @@ const handler = async (req: Request): Promise<Response> => {
       companyName,
       location,
       personalMessage = "",
-    }: JobTipRequest = await req.json();
+    }: JobTipRequest = requestBody;
 
-    // Validate required fields
-    if (!senderName || !senderEmail || !friendEmail || !jobTitle || !jobSlug || !companyName) {
-      throw new Error("Missing required fields");
+    // Validate required fields with detailed error
+    const missingFields = [];
+    if (!senderName?.trim()) missingFields.push('senderName');
+    if (!senderEmail?.trim()) missingFields.push('senderEmail');
+    if (!friendEmail?.trim()) missingFields.push('friendEmail');
+    if (!jobTitle?.trim()) missingFields.push('jobTitle');
+    if (!jobSlug?.trim()) missingFields.push('jobSlug');
+    if (!companyName?.trim()) missingFields.push('companyName');
+
+    if (missingFields.length > 0) {
+      throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
     }
 
     // Rate limiting by email

@@ -126,12 +126,10 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         message: 'AF taxonomy sync completed successfully',
-        counts: {
-          occupations: occupationCodes.length,
-          municipalities: municipalityCodes.length,
-          employmentTypes: employmentTypes.length,
-          durations: durations.length
-        }
+        occupations: occupationCodes.length,
+        municipalities: municipalityCodes.length,
+        employmentTypes: employmentTypes.length,
+        durations: durations.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

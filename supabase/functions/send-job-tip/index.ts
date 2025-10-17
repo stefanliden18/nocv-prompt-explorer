@@ -135,7 +135,7 @@ const handler = async (req: Request): Promise<Response> => {
         <div class="benefit-item">✅ <strong>Inget CV behövs</strong> - Sök jobb på 2 minuter</div>
         <div class="benefit-item">✅ <strong>Snabb ansökan</strong> - Hoppa över det traditionella pappersarbetet</div>
         <div class="benefit-item">✅ <strong>Personlig matchning</strong> - Vi fokuserar på din kompetens</div>
-        <div class="benefit-item">✅ <strong>Moderna verktyg</strong> - Boka videointervjuer direkt</div>
+        <div class="benefit-item">✅ <strong>Moderna verktyg</strong> - Boka AI-intervju direkt</div>
       </div>
       
       <p style="color: #64748b; font-size: 14px; margin-top: 30px;">

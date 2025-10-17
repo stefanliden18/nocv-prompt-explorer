@@ -98,7 +98,7 @@ const getEmailContent = (
       <div class="benefits">
         <h3 style="margin-top: 0; color: #1a365d;">✨ Fördelar för dig:</h3>
         <div class="benefit-item">✅ <strong>Sök jobb på 2 minuter</strong> - Inget CV behövs</div>
-        <div class="benefit-item">✅ <strong>Boka videointervjuer direkt</strong> - Med GetKiku-teknologi</div>
+        <div class="benefit-item">✅ <strong>Boka AI-intervju direkt</strong> - Med GetKiku-teknologi</div>
         <div class="benefit-item">✅ <strong>Fokus på dina färdigheter</strong> - Inte papper</div>
         <div class="benefit-item">✅ <strong>Snabb process</strong> - Från ansökan till jobb</div>
       </div>

@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import * as DOMPurify from "npm:isomorphic-dompurify@2.14.0";
+import DOMPurify from "npm:isomorphic-dompurify@2.14.0";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 

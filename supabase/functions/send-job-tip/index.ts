@@ -157,7 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: "NOCV <onboarding@resend.dev>",
+      from: "NOCV <noreply@nocv.se>",
       to: [friendEmail],
       replyTo: senderEmail,
       subject: `${senderName} tipsar om ett jobb: ${jobTitle}`,

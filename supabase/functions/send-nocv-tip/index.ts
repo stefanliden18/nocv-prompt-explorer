@@ -274,7 +274,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, html } = getEmailContent(category, senderName, sanitizedMessage);
 
     const emailResponse = await resend.emails.send({
-      from: "NOCV <onboarding@resend.dev>",
+      from: "NOCV <noreply@nocv.se>",
       to: [friendEmail],
       replyTo: senderEmail,
       subject,

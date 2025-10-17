@@ -3,7 +3,7 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Eye, Upload } from 'lucide-react';
+import { Plus, Edit, Eye, Upload, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -59,6 +59,23 @@ export default function AdminJobs() {
     }
   };
 
+  const handleSyncTaxonomy = async () => {
+    const loadingToast = toast.loading('Synkroniserar AF-taxonomi...');
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-af-taxonomy');
+      
+      if (error) throw error;
+      
+      toast.success(
+        `Synkning klar! Yrkeskoder: ${data.occupations}, Kommunkoder: ${data.municipalities}, Anställningstyper: ${data.employmentTypes}, Varaktighet: ${data.durations}`,
+        { id: loadingToast }
+      );
+    } catch (error: any) {
+      console.error('Error syncing taxonomy:', error);
+      toast.error('Kunde inte synka taxonomi: ' + error.message, { id: loadingToast });
+    }
+  };
+
   const getStatusBadge = (job: Job) => {
     if (job.status === 'archived') {
       return <Badge variant="secondary">Arkiverad</Badge>;
@@ -85,6 +102,10 @@ export default function AdminJobs() {
             <p className="text-muted-foreground">Hantera jobbannonser</p>
           </div>
           <div className="flex gap-2">
+            <Button variant="outline" onClick={handleSyncTaxonomy}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Synka AF-taxonomi
+            </Button>
             <Button variant="outline" onClick={() => navigate('/admin/jobs/import')}>
               <Upload className="h-4 w-4 mr-2" />
               Importera CSV

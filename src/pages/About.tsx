@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { Edit } from "lucide-react";
 import { Helmet } from "react-helmet-async";
-import heroImage from "@/assets/about-hero-industrial-team.jpg";
+import heroImage from "@/assets/about-hero-team-workshop.jpg";
 
 export default function About() {
   const { isAdmin } = useAuth();
@@ -45,12 +45,17 @@ export default function About() {
 
       <Navigation />
       
-      {/* Hero section with image */}
-      <section 
-        className="relative pt-32 pb-16 px-6 bg-cover bg-center"
-        style={{ backgroundImage: `url(${heroImage})` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-background/92 via-background/94 to-background/96"></div>
+      {/* Hero section with subtle background */}
+      <section className="relative pt-32 pb-16 px-6 bg-background">
+        {/* Subtle background image - barely visible */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-5"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        ></div>
+        
+        {/* White gradient overlay for extra clarity */}
+        <div className="absolute inset-0 bg-gradient-to-b from-background/98 via-background/95 to-background/90"></div>
+        
         <div className="relative container mx-auto max-w-4xl z-10">
           {isAdmin && (
             <Button
@@ -73,7 +78,6 @@ export default function About() {
           ) : heroSection ? (
             <div 
               className="prose prose-lg max-w-none dark:prose-invert"
-              style={{ textShadow: '0 2px 6px rgba(0,0,0,0.5)' }}
               dangerouslySetInnerHTML={{ 
                 __html: DOMPurify.sanitize(heroSection.content_html) 
               }}

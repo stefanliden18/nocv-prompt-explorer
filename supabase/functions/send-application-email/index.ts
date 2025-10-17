@@ -184,6 +184,26 @@ serve(async (req) => {
       console.error('Creator not found:', creatorError);
     }
 
+    // Get default pipeline stage
+    const { data: defaultStage, error: stageError } = await supabase
+      .from('pipeline_stages')
+      .select('id')
+      .eq('is_default', true)
+      .order('display_order', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (stageError || !defaultStage) {
+      console.error('Could not find default pipeline stage:', stageError);
+      return new Response(
+        JSON.stringify({ error: 'Systemfel: kunde inte hitta standardstadium' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     // Save application to database with sanitized data
     const { data: application, error: applicationError } = await supabase
       .from('applications')
@@ -194,7 +214,8 @@ serve(async (req) => {
         message: null,
         cv_url: null,
         job_id: job_id,
-        status: 'new'
+        status: 'new',
+        pipeline_stage_id: defaultStage.id
       })
       .select()
       .single();

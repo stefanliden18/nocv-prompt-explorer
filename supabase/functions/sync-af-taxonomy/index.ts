@@ -20,29 +20,40 @@ serve(async (req) => {
     console.log('Starting AF taxonomy sync...');
     console.log('Fetching occupation codes from JobTech Taxonomy API...');
     
-    // Hämta yrkeskoder från JobTech Taxonomy API
+    // Hämta yrkeskoder från JobTech Taxonomy API (nytt endpoint)
     const occupationsResponse = await fetch(
-      'https://jobstream.api.jobtechdev.se/taxonomy/v1/occupations'
+      'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific-concept?type=occupation-name'
     );
     
     if (!occupationsResponse.ok) {
+      const errorText = await occupationsResponse.text();
+      console.error(`Failed to fetch occupations: ${occupationsResponse.status} ${occupationsResponse.statusText}`, errorText);
       throw new Error(`Failed to fetch occupations: ${occupationsResponse.statusText}`);
     }
     
-    const occupations = await occupationsResponse.json();
+    const occupationsData = await occupationsResponse.json();
+    console.log(`API Response structure for occupations:`, JSON.stringify(occupationsData).substring(0, 500));
+    
+    // Det nya API:et returnerar data i ett annat format
+    const occupations = Array.isArray(occupationsData) ? occupationsData : occupationsData.results || [];
     console.log(`Fetched ${occupations.length} occupation codes`);
     
-    // Hämta kommunkoder från JobTech Taxonomy API
+    // Hämta kommunkoder från JobTech Taxonomy API (nytt endpoint)
     console.log('Fetching municipality codes from JobTech Taxonomy API...');
     const municipalitiesResponse = await fetch(
-      'https://jobstream.api.jobtechdev.se/taxonomy/v1/geo/municipalities'
+      'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific-concept?type=municipality'
     );
     
     if (!municipalitiesResponse.ok) {
+      const errorText = await municipalitiesResponse.text();
+      console.error(`Failed to fetch municipalities: ${municipalitiesResponse.status} ${municipalitiesResponse.statusText}`, errorText);
       throw new Error(`Failed to fetch municipalities: ${municipalitiesResponse.statusText}`);
     }
     
-    const municipalities = await municipalitiesResponse.json();
+    const municipalitiesData = await municipalitiesResponse.json();
+    console.log(`API Response structure for municipalities:`, JSON.stringify(municipalitiesData).substring(0, 500));
+    
+    const municipalities = Array.isArray(municipalitiesData) ? municipalitiesData : municipalitiesData.results || [];
     console.log(`Fetched ${municipalities.length} municipality codes`);
 
     // Förbered yrkeskoder för upsert

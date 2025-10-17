@@ -50,7 +50,7 @@ export default function About() {
         className="relative pt-32 pb-16 px-6 bg-cover bg-center"
         style={{ backgroundImage: `url(${heroImage})` }}
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-background/98 via-background/95 to-background"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-background/92 via-background/85 to-background"></div>
         <div className="relative container mx-auto max-w-4xl z-10">
           {isAdmin && (
             <Button
@@ -73,6 +73,7 @@ export default function About() {
           ) : heroSection ? (
             <div 
               className="prose prose-lg max-w-none dark:prose-invert"
+              style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}
               dangerouslySetInnerHTML={{ 
                 __html: DOMPurify.sanitize(heroSection.content_html) 
               }}

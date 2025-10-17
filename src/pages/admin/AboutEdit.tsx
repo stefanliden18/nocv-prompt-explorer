@@ -10,6 +10,12 @@ import { toast } from "sonner";
 import DOMPurify from "dompurify";
 import { Save } from "lucide-react";
 
+// Helper function to clean empty content
+const cleanEmptyContent = (html: string) => {
+  const stripped = html.replace(/<[^>]*>/g, '').trim();
+  return stripped.length === 0 ? '' : html;
+};
+
 export default function AboutEdit() {
   const queryClient = useQueryClient();
   
@@ -52,10 +58,10 @@ export default function AboutEdit() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       const updates = [
-        { section_key: 'hero', content_html: heroContent },
-        { section_key: 'story', content_html: storyContent },
-        { section_key: 'vision', content_html: visionContent },
-        { section_key: 'values', content_html: valuesContent },
+        { section_key: 'hero', content_html: cleanEmptyContent(heroContent) },
+        { section_key: 'story', content_html: cleanEmptyContent(storyContent) },
+        { section_key: 'vision', content_html: cleanEmptyContent(visionContent) },
+        { section_key: 'values', content_html: cleanEmptyContent(valuesContent) },
       ];
 
       for (const update of updates) {

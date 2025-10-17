@@ -116,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <p>För att slutföra din ansökan behöver du genomföra en kort AI-intervju med Sara via Getkiku. Intervjun tar cirka <strong>5-10 minuter</strong> och du kan göra den när det passar dig bäst.</p>
                 
                 <div style="text-align: center; margin: 32px 0;">
-                  <a href="${job.kiku_interview_url}" class="cta-button">
+                  <a href="${job.kiku_interview_url}" style="display: inline-block; background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     🤖 Starta min AI-intervju
                   </a>
                 </div>

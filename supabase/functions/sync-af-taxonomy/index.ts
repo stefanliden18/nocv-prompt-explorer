@@ -369,7 +369,7 @@ serve(async (req) => {
     console.log(`Loaded ${OCCUPATIONS.length} occupation codes from constants`);
 
     // Förbered yrkeskoder för upsert (från statisk fil)
-    const occupationCodes = occupations.map((occ: any) => ({
+    const occupationCodes = OCCUPATIONS.map((occ: any) => ({
       code: occ.id,
       label_sv: occ.label,
       label_en: occ.label_en || null,
@@ -388,7 +388,7 @@ serve(async (req) => {
     console.log(`✅ Inserted ${occupationCodes.length} occupation codes`);
 
     // Förbered kommunkoder för upsert (från statisk fil)
-    const municipalityCodes = municipalities.map((mun: any) => ({
+    const municipalityCodes = MUNICIPALITIES.map((mun: any) => ({
       code: mun.id,
       label: mun.label,
       county: mun.county || null

@@ -266,6 +266,22 @@ const JobDetail = () => {
 
       console.log('Application saved successfully:', application);
 
+      // Send confirmation emails (don't block on email errors)
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-application-email', {
+          body: { applicationId: application.id }
+        });
+        
+        if (emailError) {
+          console.error('Error sending emails:', emailError);
+        } else {
+          console.log('Application emails sent successfully');
+        }
+      } catch (emailError) {
+        console.error('Failed to send application emails:', emailError);
+        // Continue anyway - application is saved
+      }
+
       setIsSubmitted(true);
       
       // Track successful application submission

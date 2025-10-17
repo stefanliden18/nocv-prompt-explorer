@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "NOCV <noreply@nocv.se>",
       to: [email],
-      subject: `Din videointervju för ${job.title} hos ${companyName}`,
+      subject: `Din AI-intervju med Sara för ${job.title} hos ${companyName}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -105,7 +105,7 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>🎥 Din videointervju väntar!</h1>
+                <h1>🤖 Din AI-intervju med Sara väntar!</h1>
               </div>
               
               <div class="content">
@@ -113,21 +113,21 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 <p>Tack för ditt intresse för tjänsten som <strong>${job.title}</strong> hos <strong>${companyName}</strong>!</p>
                 
-                <p>För att slutföra din ansökan behöver du genomföra en kort videointervju via Getkiku. Intervjun tar cirka <strong>5-10 minuter</strong> och du kan göra den när det passar dig bäst.</p>
+                <p>För att slutföra din ansökan behöver du genomföra en kort AI-intervju med Sara via Getkiku. Intervjun tar cirka <strong>5-10 minuter</strong> och du kan göra den när det passar dig bäst.</p>
                 
                 <div style="text-align: center; margin: 32px 0;">
                   <a href="${job.kiku_interview_url}" class="cta-button">
-                    🎬 Starta min intervju
+                    🤖 Starta min AI-intervju
                   </a>
                 </div>
                 
                 <div class="tips-box">
-                  <h3>📹 Tips innan du börjar:</h3>
+                  <h3>💡 Tips innan du börjar:</h3>
                   <ul>
-                    <li>Se till att du har en fungerande kamera och mikrofon</li>
-                    <li>Välj en lugn plats med bra ljus</li>
+                    <li>Se till att du har en fungerande mikrofon</li>
+                    <li>Välj en lugn plats där du kan prata ostört</li>
                     <li>Svara ärligt och var dig själv</li>
-                    <li>Du kan göra intervjun när det passar dig</li>
+                    <li>Du kan genomföra intervjun när det passar dig</li>
                   </ul>
                 </div>
                 

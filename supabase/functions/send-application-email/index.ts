@@ -73,7 +73,8 @@ serve(async (req) => {
       name, 
       email, 
       phone, 
-      job_id 
+      job_id,
+      pipeline_stage_id 
     } = await req.json();
 
     // Sanitize all user input
@@ -185,25 +186,23 @@ serve(async (req) => {
       console.error('Creator not found:', creatorError);
     }
 
-    // Get default pipeline stage
-    const { data: defaultStage, error: stageError } = await supabase
-      .from('pipeline_stages')
-      .select('id')
-      .eq('is_default', true)
-      .order('display_order', { ascending: true })
-      .limit(1)
-      .single();
+    // Validate pipeline_stage_id from request
+    const pipelineStageId = pipeline_stage_id;
 
-    if (stageError || !defaultStage) {
-      console.error('Could not find default pipeline stage:', stageError);
+    if (!pipelineStageId) {
+      console.error('Missing pipeline_stage_id in request');
       return new Response(
-        JSON.stringify({ error: 'Systemfel: kunde inte hitta standardstadium' }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        JSON.stringify({ 
+          error: 'Systemfel: Pipeline stage saknas. Kontakta support.' 
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     }
+
+    console.log('Using pipeline_stage_id from request:', pipelineStageId);
 
     // Save application to database with sanitized data
     const { data: application, error: applicationError } = await supabase
@@ -216,7 +215,7 @@ serve(async (req) => {
         cv_url: null,
         job_id: job_id,
         status: 'new',
-        pipeline_stage_id: defaultStage.id
+        pipeline_stage_id: pipelineStageId
       })
       .select()
       .single();

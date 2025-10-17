@@ -49,6 +49,7 @@ const JobDetail = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [defaultStageId, setDefaultStageId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof applicationSchema>>({
@@ -65,12 +66,38 @@ const JobDetail = () => {
     fetchJob();
   }, [slug, id]);
 
+  // Fetch default pipeline stage
+  useEffect(() => {
+    fetchDefaultStage();
+  }, []);
+
   // Track job view when job is loaded
   useEffect(() => {
     if (job) {
       analytics.trackJobView(job.id, job.title);
     }
   }, [job]);
+
+  const fetchDefaultStage = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('pipeline_stages')
+        .select('id')
+        .eq('is_default', true)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching default stage:', error);
+        return;
+      }
+      
+      if (data) {
+        setDefaultStageId(data.id);
+      }
+    } catch (error) {
+      console.error('Error in fetchDefaultStage:', error);
+    }
+  };
 
   const fetchJob = async () => {
     setLoading(true);
@@ -130,6 +157,17 @@ const JobDetail = () => {
       return;
     }
 
+    // Validate that default stage is loaded
+    if (!defaultStageId) {
+      console.error('No default stage found');
+      toast({
+        title: "Systemfel",
+        description: "Kunde inte ladda pipeline-inställningar. Kontakta support.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -139,6 +177,7 @@ const JobDetail = () => {
         email: DOMPurify.sanitize(values.email, { ALLOWED_TAGS: [] }),
         phone: DOMPurify.sanitize(values.phone, { ALLOWED_TAGS: [] }),
         job_id: job.id,
+        pipeline_stage_id: defaultStageId,
       };
 
       const { data, error } = await supabase.functions.invoke('send-application-email', {

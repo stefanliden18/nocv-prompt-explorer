@@ -14,7 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive } from 'lucide-react';
+import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive, ExternalLink } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import DOMPurify from 'dompurify';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -22,6 +23,7 @@ import { fromZonedTime } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
 import { stockholmToUTC, utcToStockholm, nowInStockholm, nowUTC } from '@/lib/timezone';
 import { useDebugMode } from '@/hooks/useDebugMode';
+import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
 
 interface Company {
   id: string;
@@ -44,12 +46,28 @@ interface Job {
   slug: string;
   publish_at: string | null;
   kiku_interview_url: string | null;
+  // AF-fält
+  af_published: boolean;
+  af_ad_id: string | null;
+  af_published_at: string | null;
+  af_error: string | null;
+  af_last_sync: string | null;
+  last_application_date: string | null;
+  total_positions: number;
+  contact_person_name: string | null;
+  contact_person_email: string | null;
+  contact_person_phone: string | null;
+  af_occupation_code: string | null;
+  af_municipality_code: string | null;
+  af_employment_type_code: string | null;
+  af_duration_code: string | null;
 }
 
 export default function JobEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isDebugEnabled } = useDebugMode();
+  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes } = useAFTaxonomy();
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobLoading, setJobLoading] = useState(true);
@@ -76,6 +94,25 @@ export default function JobEdit() {
   const [tempHour, setTempHour] = useState<string>('09');
   const [tempMinute, setTempMinute] = useState<string>('00');
   const [hasSelectedTime, setHasSelectedTime] = useState(false);
+  
+  // AF state
+  const [afPublished, setAfPublished] = useState(false);
+  const [afAdId, setAfAdId] = useState<string | null>(null);
+  const [afPublishedAt, setAfPublishedAt] = useState<string | null>(null);
+  const [afError, setAfError] = useState<string | null>(null);
+  const [afLastSync, setAfLastSync] = useState<string | null>(null);
+  const [lastApplicationDate, setLastApplicationDate] = useState('');
+  const [totalPositions, setTotalPositions] = useState(1);
+  const [contactPersonName, setContactPersonName] = useState('');
+  const [contactPersonEmail, setContactPersonEmail] = useState('');
+  const [contactPersonPhone, setContactPersonPhone] = useState('');
+  const [afOccupationCode, setAfOccupationCode] = useState('');
+  const [afMunicipalityCode, setAfMunicipalityCode] = useState('');
+  const [afEmploymentTypeCode, setAfEmploymentTypeCode] = useState('');
+  const [afDurationCode, setAfDurationCode] = useState('');
+  const [publishingToAF, setPublishingToAF] = useState(false);
+  const [updatingAF, setUpdatingAF] = useState(false);
+  const [unpublishingFromAF, setUnpublishingFromAF] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -127,6 +164,21 @@ export default function JobEdit() {
       setSlug(job.slug);
       setKikuInterviewUrl(job.kiku_interview_url || '');
       setStatus(job.status);
+      // AF-data
+      setAfPublished(job.af_published || false);
+      setAfAdId(job.af_ad_id || null);
+      setAfPublishedAt(job.af_published_at || null);
+      setAfError(job.af_error || null);
+      setAfLastSync(job.af_last_sync || null);
+      setLastApplicationDate(job.last_application_date || '');
+      setTotalPositions(job.total_positions || 1);
+      setContactPersonName(job.contact_person_name || '');
+      setContactPersonEmail(job.contact_person_email || '');
+      setContactPersonPhone(job.contact_person_phone || '');
+      setAfOccupationCode(job.af_occupation_code || '');
+      setAfMunicipalityCode(job.af_municipality_code || '');
+      setAfEmploymentTypeCode(job.af_employment_type_code || '');
+      setAfDurationCode(job.af_duration_code || '');
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
         const stockholmDate = utcToStockholm(job.publish_at);
@@ -183,6 +235,16 @@ export default function JobEdit() {
         language: language.trim() || null,
         slug: slug,
         kiku_interview_url: kikuInterviewUrl.trim() || null,
+        // AF-fält
+        last_application_date: lastApplicationDate || null,
+        total_positions: totalPositions,
+        contact_person_name: contactPersonName.trim() || null,
+        contact_person_email: contactPersonEmail.trim() || null,
+        contact_person_phone: contactPersonPhone.trim() || null,
+        af_occupation_code: afOccupationCode || null,
+        af_municipality_code: afMunicipalityCode || null,
+        af_employment_type_code: afEmploymentTypeCode || null,
+        af_duration_code: afDurationCode || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: (() => {
           if (!publishAt) return null;
@@ -245,6 +307,100 @@ export default function JobEdit() {
   const handleUnpublish = () => {
     if (window.confirm('Är du säker på att du vill avpublicera detta jobb?')) {
       updateJob('draft');
+    }
+  };
+
+  // AF Handler Functions
+  const handlePublishToAF = async () => {
+    if (!id) return;
+    
+    setPublishingToAF(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('publish-to-af', {
+        body: { job_id: id }
+      });
+
+      if (error) throw error;
+
+      toast.success("Publicerad på Arbetsförmedlingen!", {
+        description: `Annonsen finns nu på Platsbanken med ID: ${data.af_ad_id}`,
+      });
+
+      // Uppdatera lokal state
+      setAfPublished(true);
+      setAfAdId(data.af_ad_id);
+      setAfPublishedAt(new Date().toISOString());
+      setAfError(null);
+      
+    } catch (error: any) {
+      console.error('Error publishing to AF:', error);
+      toast.error("Fel vid publicering", {
+        description: error.message,
+      });
+      setAfError(error.message);
+    } finally {
+      setPublishingToAF(false);
+    }
+  };
+
+  const handleUpdateAF = async () => {
+    if (!id) return;
+    
+    setUpdatingAF(true);
+    try {
+      const { error } = await supabase.functions.invoke('update-af-ad', {
+        body: { job_id: id }
+      });
+
+      if (error) throw error;
+
+      toast.success("Uppdaterad på Arbetsförmedlingen!", {
+        description: "Annonsen har synkroniserats med Platsbanken",
+      });
+
+      setAfLastSync(new Date().toISOString());
+      setAfError(null);
+      
+    } catch (error: any) {
+      console.error('Error updating AF ad:', error);
+      toast.error("Fel vid uppdatering", {
+        description: error.message,
+      });
+      setAfError(error.message);
+    } finally {
+      setUpdatingAF(false);
+    }
+  };
+
+  const handleUnpublishFromAF = async () => {
+    if (!id || !window.confirm('Är du säker på att du vill avpublicera från Arbetsförmedlingen?')) {
+      return;
+    }
+    
+    setUnpublishingFromAF(true);
+    try {
+      const { error } = await supabase.functions.invoke('unpublish-af-ad', {
+        body: { job_id: id }
+      });
+
+      if (error) throw error;
+
+      toast.success("Avpublicerad från Arbetsförmedlingen", {
+        description: "Annonsen har tagits bort från Platsbanken",
+      });
+
+      setAfPublished(false);
+      setAfAdId(null);
+      setAfError(null);
+      
+    } catch (error: any) {
+      console.error('Error unpublishing from AF:', error);
+      toast.error("Fel vid avpublicering", {
+        description: error.message,
+      });
+      setAfError(error.message);
+    } finally {
+      setUnpublishingFromAF(false);
     }
   };
 
@@ -644,6 +800,247 @@ export default function JobEdit() {
                   )}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Arbetsförmedlingen Integration Section */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                📤 Arbetsförmedlingen
+                {afPublished && (
+                  <Badge variant="default" className="bg-green-600">Publicerad</Badge>
+                )}
+                {afError && (
+                  <Badge variant="destructive">Fel vid publicering</Badge>
+                )}
+              </CardTitle>
+              <CardDescription>Publicera jobbet på Platsbanken</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Kontaktuppgifter */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm">Kontaktuppgifter *</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="contact_person_name">Kontaktperson *</Label>
+                    <Input
+                      id="contact_person_name"
+                      value={contactPersonName}
+                      onChange={(e) => setContactPersonName(e.target.value)}
+                      placeholder="Förnamn Efternamn"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact_person_email">E-post *</Label>
+                    <Input
+                      id="contact_person_email"
+                      type="email"
+                      value={contactPersonEmail}
+                      onChange={(e) => setContactPersonEmail(e.target.value)}
+                      placeholder="kontakt@företag.se"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact_person_phone">Telefon *</Label>
+                    <Input
+                      id="contact_person_phone"
+                      value={contactPersonPhone}
+                      onChange={(e) => setContactPersonPhone(e.target.value)}
+                      placeholder="+46 70 123 45 67"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Grundläggande AF-fält */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="last_application_date">Sista ansökningsdag *</Label>
+                  <Input
+                    id="last_application_date"
+                    type="date"
+                    value={lastApplicationDate}
+                    onChange={(e) => setLastApplicationDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="total_positions">Antal platser *</Label>
+                  <Input
+                    id="total_positions"
+                    type="number"
+                    min="1"
+                    value={totalPositions}
+                    onChange={(e) => setTotalPositions(parseInt(e.target.value) || 1)}
+                  />
+                </div>
+              </div>
+
+              {/* AF Taxonomi-dropdowns */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm">Arbetsförmedlingens taxonomi *</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="af_occupation_code">Yrke *</Label>
+                    <Select
+                      value={afOccupationCode}
+                      onValueChange={setAfOccupationCode}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Välj yrke" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {occupationCodes.map((code: any) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            {code.label_sv}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="af_municipality_code">Kommun *</Label>
+                    <Select
+                      value={afMunicipalityCode}
+                      onValueChange={setAfMunicipalityCode}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Välj kommun" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {municipalityCodes.map((code: any) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
+                    <Select
+                      value={afEmploymentTypeCode}
+                      onValueChange={setAfEmploymentTypeCode}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Välj typ" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employmentTypeCodes.map((code: any) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="af_duration_code">Varaktighet *</Label>
+                    <Select
+                      value={afDurationCode}
+                      onValueChange={setAfDurationCode}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Välj varaktighet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {durationCodes.map((code: any) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Publicera-knapp */}
+              {!afPublished && status === 'published' && (
+                <Button
+                  onClick={handlePublishToAF}
+                  disabled={publishingToAF}
+                  className="w-full"
+                >
+                  {publishingToAF ? 'Publicerar...' : '📤 Publicera på Arbetsförmedlingen'}
+                </Button>
+              )}
+
+              {/* Status och länkar för publicerade annonser */}
+              {afPublished && (
+                <div className="space-y-3 bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="default" className="bg-green-600">✅ Publicerad på Arbetsförmedlingen</Badge>
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Publicerad:</strong> {afPublishedAt && new Date(afPublishedAt).toLocaleString('sv-SE')}</p>
+                    <p><strong>AF Annons-ID:</strong> {afAdId}</p>
+                    {afLastSync && (
+                      <p><strong>Senast synkad:</strong> {new Date(afLastSync).toLocaleString('sv-SE')}</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleUpdateAF}
+                      disabled={updatingAF}
+                    >
+                      {updatingAF ? 'Uppdaterar...' : 'Uppdatera på AF'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleUnpublishFromAF}
+                      disabled={unpublishingFromAF}
+                    >
+                      {unpublishingFromAF ? 'Avpublicerar...' : 'Avpublicera från AF'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <a
+                        href={`https://arbetsformedlingen.se/platsbanken/annonser/${afAdId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2"
+                      >
+                        Visa på Platsbanken
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Felmeddelande */}
+              {afError && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    <strong>Fel vid publicering till Arbetsförmedlingen:</strong>
+                    <pre className="mt-2 text-xs overflow-auto whitespace-pre-wrap">{afError}</pre>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Hjälptext */}
+              {!afPublished && (
+                <Alert>
+                  <AlertDescription className="text-sm">
+                    💡 <strong>Tips:</strong> Fyll i alla obligatoriska fält (*) innan du publicerar. 
+                    Annonsen måste vara publicerad i NOCV först.
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 

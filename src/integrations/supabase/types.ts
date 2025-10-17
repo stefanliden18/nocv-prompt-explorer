@@ -44,6 +44,99 @@ export type Database = {
         }
         Relationships: []
       }
+      af_duration_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          label: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          label: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      af_employment_type_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          label: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          label: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      af_municipality_codes: {
+        Row: {
+          code: string
+          county: string | null
+          created_at: string | null
+          id: string
+          label: string
+        }
+        Insert: {
+          code: string
+          county?: string | null
+          created_at?: string | null
+          id?: string
+          label: string
+        }
+        Update: {
+          code?: string
+          county?: string | null
+          created_at?: string | null
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
+      af_occupation_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          label_en: string | null
+          label_sv: string
+          ssyk_code: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          label_en?: string | null
+          label_sv: string
+          ssyk_code?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          label_en?: string | null
+          label_sv?: string
+          ssyk_code?: string | null
+        }
+        Relationships: []
+      }
       application_tag_relations: {
         Row: {
           application_id: string
@@ -211,9 +304,21 @@ export type Database = {
       }
       jobs: {
         Row: {
+          af_ad_id: string | null
+          af_duration_code: string | null
+          af_employment_type_code: string | null
+          af_error: string | null
+          af_last_sync: string | null
+          af_municipality_code: string | null
+          af_occupation_code: string | null
+          af_published: boolean | null
+          af_published_at: string | null
           category: string | null
           city: string | null
           company_id: string
+          contact_person_email: string | null
+          contact_person_name: string | null
+          contact_person_phone: string | null
           created_at: string
           created_by: string
           description_md: string | null
@@ -222,18 +327,32 @@ export type Database = {
           id: string
           kiku_interview_url: string | null
           language: string | null
+          last_application_date: string | null
           publish_at: string | null
           region: string | null
           requirements_md: string | null
           slug: string
           status: Database["public"]["Enums"]["job_status"]
           title: string
+          total_positions: number | null
           updated_at: string
         }
         Insert: {
+          af_ad_id?: string | null
+          af_duration_code?: string | null
+          af_employment_type_code?: string | null
+          af_error?: string | null
+          af_last_sync?: string | null
+          af_municipality_code?: string | null
+          af_occupation_code?: string | null
+          af_published?: boolean | null
+          af_published_at?: string | null
           category?: string | null
           city?: string | null
           company_id: string
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
           created_at?: string
           created_by: string
           description_md?: string | null
@@ -242,18 +361,32 @@ export type Database = {
           id?: string
           kiku_interview_url?: string | null
           language?: string | null
+          last_application_date?: string | null
           publish_at?: string | null
           region?: string | null
           requirements_md?: string | null
           slug: string
           status?: Database["public"]["Enums"]["job_status"]
           title: string
+          total_positions?: number | null
           updated_at?: string
         }
         Update: {
+          af_ad_id?: string | null
+          af_duration_code?: string | null
+          af_employment_type_code?: string | null
+          af_error?: string | null
+          af_last_sync?: string | null
+          af_municipality_code?: string | null
+          af_occupation_code?: string | null
+          af_published?: boolean | null
+          af_published_at?: string | null
           category?: string | null
           city?: string | null
           company_id?: string
+          contact_person_email?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
           created_at?: string
           created_by?: string
           description_md?: string | null
@@ -262,12 +395,14 @@ export type Database = {
           id?: string
           kiku_interview_url?: string | null
           language?: string | null
+          last_application_date?: string | null
           publish_at?: string | null
           region?: string | null
           requirements_md?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["job_status"]
           title?: string
+          total_positions?: number | null
           updated_at?: string
         }
         Relationships: [

@@ -197,6 +197,8 @@ export type Database = {
           created_at: string
           cv_url: string | null
           email: string
+          gdpr_consent: boolean
+          gdpr_consent_timestamp: string | null
           id: string
           interview_link: string | null
           interview_notes: string | null
@@ -215,6 +217,8 @@ export type Database = {
           created_at?: string
           cv_url?: string | null
           email: string
+          gdpr_consent?: boolean
+          gdpr_consent_timestamp?: string | null
           id?: string
           interview_link?: string | null
           interview_notes?: string | null
@@ -233,6 +237,8 @@ export type Database = {
           created_at?: string
           cv_url?: string | null
           email?: string
+          gdpr_consent?: boolean
+          gdpr_consent_timestamp?: string | null
           id?: string
           interview_link?: string | null
           interview_notes?: string | null
@@ -299,6 +305,30 @@ export type Database = {
           name?: string
           updated_at?: string
           website?: string | null
+        }
+        Relationships: []
+      }
+      gdpr_policies: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          policy_text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          policy_text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          policy_text?: string
+          updated_at?: string
         }
         Relationships: []
       }

@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { MapPin, Building2, Clock, ArrowLeft, Send, Share2, Check } from "lucide-react";
+import { MapPin, Building2, Clock, ArrowLeft, Send, Share2, Check, X } from "lucide-react";
 import { 
   LinkedinShareButton, 
   FacebookShareButton, 
@@ -32,11 +32,20 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { utcToStockholm } from '@/lib/timezone';
 import { TipJobDialog } from "@/components/TipJobDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
   email: z.string().trim().min(1, "Ange en e-postadress").email("Ange en giltig e-postadress").max(255, "E-postadressen kan vara max 255 tecken"),
   phone: z.string().trim().min(1, "Ange ditt telefonnummer").max(20, "Telefonnumret kan vara max 20 tecken"),
+  gdpr_consent: z.boolean().refine(val => val === true, {
+    message: "Du måste godkänna behandling av personuppgifter för att kunna ansöka"
+  }),
   // Honeypot field for bot protection
   website: z.string().max(0, "Detta fält ska vara tomt").optional(),
 });
@@ -52,6 +61,8 @@ const JobDetail = () => {
   const [linkCopied, setLinkCopied] = useState(false);
   const [defaultStageId, setDefaultStageId] = useState<string | null>(null);
   const [tipJobDialogOpen, setTipJobDialogOpen] = useState(false);
+  const [gdprPolicy, setGdprPolicy] = useState<string>("");
+  const [showGdprDialog, setShowGdprDialog] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof applicationSchema>>({
@@ -60,6 +71,7 @@ const JobDetail = () => {
       name: "",
       email: "",
       phone: "",
+      gdpr_consent: false,
       website: "", // Honeypot field
     },
   });
@@ -71,6 +83,7 @@ const JobDetail = () => {
   // Fetch default pipeline stage
   useEffect(() => {
     fetchDefaultStage();
+    fetchGdprPolicy();
   }, []);
 
   // Track job view when job is loaded
@@ -98,6 +111,27 @@ const JobDetail = () => {
       }
     } catch (error) {
       console.error('Error in fetchDefaultStage:', error);
+    }
+  };
+
+  const fetchGdprPolicy = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('gdpr_policies')
+        .select('policy_text')
+        .eq('is_active', true)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching GDPR policy:', error);
+        return;
+      }
+      
+      if (data) {
+        setGdprPolicy(data.policy_text);
+      }
+    } catch (error) {
+      console.error('Error in fetchGdprPolicy:', error);
     }
   };
 
@@ -180,6 +214,8 @@ const JobDetail = () => {
         phone: DOMPurify.sanitize(values.phone, { ALLOWED_TAGS: [] }),
         job_id: job.id,
         pipeline_stage_id: defaultStageId,
+        gdpr_consent: values.gdpr_consent,
+        gdpr_consent_timestamp: new Date().toISOString(),
       };
 
       // Save directly to database instead of using edge function
@@ -194,6 +230,8 @@ const JobDetail = () => {
           status: 'new',
           message: null,
           cv_url: null,
+          gdpr_consent: sanitizedData.gdpr_consent,
+          gdpr_consent_timestamp: sanitizedData.gdpr_consent_timestamp,
         })
         .select()
         .single();
@@ -499,6 +537,25 @@ const JobDetail = () => {
         jobId={job.id}
       />
 
+      {/* GDPR Policy Dialog */}
+      <Dialog open={showGdprDialog} onOpenChange={setShowGdprDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Behandling av personuppgifter (GDPR)</DialogTitle>
+          </DialogHeader>
+          <div 
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(gdprPolicy) }}
+          />
+          <Button
+            onClick={() => setShowGdprDialog(false)}
+            className="mt-4"
+          >
+            Stäng
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       {/* Job Details */}
       <section className="py-20">
         <div className="container mx-auto px-6">
@@ -651,6 +708,37 @@ const JobDetail = () => {
                                   {...field} 
                                 />
                               </FormControl>
+                            </FormItem>
+                          )}
+                        />
+
+                        {/* GDPR Consent */}
+                        <FormField
+                          control={form.control}
+                          name="gdpr_consent"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                              <FormControl>
+                                <input
+                                  type="checkbox"
+                                  checked={field.value}
+                                  onChange={field.onChange}
+                                  className="h-4 w-4 mt-1 cursor-pointer"
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel className="text-sm font-normal cursor-pointer">
+                                  Jag godkänner behandling av mina personuppgifter enligt GDPR.{" "}
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowGdprDialog(true)}
+                                    className="text-primary underline hover:text-primary/80"
+                                  >
+                                    Läs mer om dataskydd
+                                  </button>
+                                </FormLabel>
+                                <FormMessage />
+                              </div>
                             </FormItem>
                           )}
                         />

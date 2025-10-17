@@ -9,7 +9,8 @@ import {
   Activity,
   FileEdit,
   LogOut,
-  Kanban
+  Kanban,
+  Shield
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const menuItems = [
   { title: "Redigera Om oss", url: "/admin/about/edit", icon: FileEdit },
   { title: "Redigera Kontakt", url: "/admin/contact/edit", icon: FileEdit },
   { title: "Redigera Företag", url: "/admin/companies/edit", icon: FileEdit },
+  { title: "GDPR-policy", url: "/admin/gdpr-policy", icon: Shield },
 ];
 
 export function AdminSidebar() {

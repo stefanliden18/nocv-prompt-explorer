@@ -30,6 +30,7 @@ import About from "./pages/About";
 import AboutEdit from "./pages/admin/AboutEdit";
 import ContactEdit from "./pages/admin/ContactEdit";
 import CompaniesEdit from "./pages/admin/CompaniesEdit";
+import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
 
 const queryClient = new QueryClient();
 
@@ -174,6 +175,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <CompaniesEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/gdpr-policy" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <GDPRPolicyEdit />
                 </ProtectedRoute>
               } 
             />

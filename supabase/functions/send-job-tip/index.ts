@@ -74,7 +74,6 @@ const handler = async (req: Request): Promise<Response> => {
     if (!friendEmail?.trim()) missingFields.push('friendEmail');
     if (!jobTitle?.trim()) missingFields.push('jobTitle');
     if (!jobSlug?.trim()) missingFields.push('jobSlug');
-    if (!companyName?.trim()) missingFields.push('companyName');
 
     if (missingFields.length > 0) {
       throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
@@ -87,6 +86,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Sanitize personal message
     const sanitizedMessage = DOMPurify.sanitize(personalMessage.substring(0, 500));
+
+    // Fallback for company name if empty
+    const displayCompanyName = companyName?.trim() || 'företaget';
 
     // Construct job URL
     const jobUrl = `https://nocv.se/jobb/${jobSlug}`;
@@ -125,7 +127,7 @@ const handler = async (req: Request): Promise<Response> => {
       <div class="job-card">
         <h2 style="margin-top: 0; color: #1a365d; font-size: 22px;">${jobTitle}</h2>
         <p style="margin: 8px 0; color: #64748b;">
-          <strong>🏢 Företag:</strong> ${companyName}<br>
+          <strong>🏢 Företag:</strong> ${displayCompanyName}<br>
           <strong>📍 Plats:</strong> ${location}
         </p>
       </div>

@@ -180,34 +180,51 @@ const JobDetail = () => {
         pipeline_stage_id: defaultStageId,
       };
 
-      const { data, error } = await supabase.functions.invoke('send-application-email', {
-        body: sanitizedData,
-      });
+      // Save directly to database instead of using edge function
+      const { data: application, error: insertError } = await supabase
+        .from('applications')
+        .insert({
+          candidate_name: sanitizedData.name,
+          email: sanitizedData.email,
+          phone: sanitizedData.phone || null,
+          job_id: sanitizedData.job_id,
+          pipeline_stage_id: sanitizedData.pipeline_stage_id,
+          status: 'new',
+          message: null,
+          cv_url: null,
+        })
+        .select()
+        .single();
 
-      if (error) {
-        console.error('Supabase function error:', error);
-        throw error;
-      }
-
-      if (data?.error) {
-        // Handle specific errors
-        if (data.error.includes('rate limit')) {
+      if (insertError) {
+        console.error('Error saving application:', insertError);
+        
+        // Handle rate limiting errors specifically
+        if (insertError.message.includes('För många försök')) {
           toast({
-            title: "För många bokningar",
-            description: "Du har gjort för många bokningar. Vänligen försök igen om en timme.",
+            title: "För många försök",
+            description: "Vänta minst 10 minuter mellan ansökningar med samma e-postadress.",
             variant: "destructive",
           });
-        } else if (data.error.includes('validering')) {
+        } else if (insertError.message.includes('Daglig gräns')) {
           toast({
-            title: "Valideringsfel",
-            description: data.error,
+            title: "Daglig gräns uppnådd",
+            description: "Du kan skicka maximalt 10 ansökningar per dag.",
             variant: "destructive",
           });
         } else {
-          throw new Error(data.error);
+          toast({
+            title: "Ett fel uppstod",
+            description: "Kunde inte skicka din ansökan. Försök igen senare.",
+            variant: "destructive",
+          });
         }
+        
+        analytics.trackApplicationSubmit(job.id, job.title, false);
         return;
       }
+
+      console.log('Application saved successfully:', application);
 
       setIsSubmitted(true);
       

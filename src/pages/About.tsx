@@ -29,9 +29,17 @@ export default function About() {
     },
   });
 
+  // Helper function to check if content is empty
+  const isContentEmpty = (html: string) => {
+    const stripped = html.replace(/<[^>]*>/g, '').trim();
+    return stripped.length === 0;
+  };
+
   // Hero section
   const heroSection = sections?.find(s => s.section_key === 'hero');
-  const contentSections = sections?.filter(s => s.section_key !== 'hero');
+  const contentSections = sections?.filter(s => 
+    s.section_key !== 'hero' && !isContentEmpty(s.content_html)
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -70,7 +78,7 @@ export default function About() {
               <div className="h-4 bg-muted rounded w-full"></div>
               <div className="h-4 bg-muted rounded w-5/6"></div>
             </div>
-          ) : heroSection ? (
+          ) : (heroSection && !isContentEmpty(heroSection.content_html)) ? (
             <div 
               className="prose prose-lg max-w-none dark:prose-invert"
               dangerouslySetInnerHTML={{ 

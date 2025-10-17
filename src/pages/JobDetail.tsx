@@ -218,7 +218,7 @@ const JobDetail = () => {
         gdpr_consent_timestamp: new Date().toISOString(),
       };
 
-      // Save directly to database instead of using edge function
+      // Save application to database
       const { data: application, error: insertError } = await supabase
         .from('applications')
         .insert({
@@ -266,37 +266,63 @@ const JobDetail = () => {
 
       console.log('Application saved successfully:', application);
 
-      // Send confirmation emails (don't block on email errors)
-      try {
-        const { error: emailError } = await supabase.functions.invoke('send-application-email', {
-          body: { applicationId: application.id }
-        });
-        
-        if (emailError) {
-          console.error('Error sending emails:', emailError);
-        } else {
-          console.log('Application emails sent successfully');
-        }
-      } catch (emailError) {
-        console.error('Failed to send application emails:', emailError);
-        // Continue anyway - application is saved
-      }
-
-      setIsSubmitted(true);
-      
-      // Track successful application submission
-      analytics.trackApplicationSubmit(job.id, job.title, true);
-      
-      toast({
-        title: "Intervju bokad!",
-        description: "Vi har skickat en bekräftelse till din e-post med detaljer om din intervju.",
-      });
-
-      // Redirect to GetKiku interview if URL is set
+      // Different flow for Getkiku jobs vs regular jobs
       if (job.kiku_interview_url) {
-        setTimeout(() => {
-          window.location.href = job.kiku_interview_url;
-        }, 2000); // Wait 2 seconds so user can see the success message
+        // GETKIKU FLOW: Send Getkiku invitation email
+        try {
+          const { error: getkikuEmailError } = await supabase.functions.invoke('send-getkiku-invitation', {
+            body: { 
+              email: sanitizedData.email,
+              candidateName: sanitizedData.name,
+              phone: sanitizedData.phone,
+              jobId: job.id
+            }
+          });
+          
+          if (getkikuEmailError) {
+            console.error('Error sending Getkiku invitation:', getkikuEmailError);
+          } else {
+            console.log('Getkiku invitation email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Failed to send Getkiku invitation:', emailError);
+          // Continue anyway - application is saved
+        }
+
+        // Open Getkiku in new window immediately
+        window.open(job.kiku_interview_url, '_blank');
+
+        setIsSubmitted(true);
+        analytics.trackApplicationSubmit(job.id, job.title, true);
+        
+        toast({
+          title: "Perfekt! 🎉",
+          description: "Vi har öppnat intervjufönstret och skickat en länk till din e-post.",
+        });
+      } else {
+        // REGULAR JOB FLOW: Send standard confirmation emails
+        try {
+          const { error: emailError } = await supabase.functions.invoke('send-application-email', {
+            body: { applicationId: application.id }
+          });
+          
+          if (emailError) {
+            console.error('Error sending emails:', emailError);
+          } else {
+            console.log('Application emails sent successfully');
+          }
+        } catch (emailError) {
+          console.error('Failed to send application emails:', emailError);
+          // Continue anyway - application is saved
+        }
+
+        setIsSubmitted(true);
+        analytics.trackApplicationSubmit(job.id, job.title, true);
+        
+        toast({
+          title: "Intervju bokad!",
+          description: "Vi har skickat en bekräftelse till din e-post med detaljer om din intervju.",
+        });
       }
       
     } catch (error: any) {

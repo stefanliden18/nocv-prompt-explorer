@@ -17,46 +17,44 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Starting AF taxonomy sync...');
-    console.log('Fetching occupation codes from JobTech Taxonomy API...');
+    console.log('Starting AF taxonomy sync from static files...');
     
-    // Hämta yrkeskoder från JobTech Taxonomy API (nytt endpoint)
+    // Läs från statiska datafiler istället för API
+    console.log('Reading occupation codes from static file...');
     const occupationsResponse = await fetch(
-      'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific-concept?type=occupation-name'
+      `${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/storage/v1/object/public/static-data/af-occupations.json`
     );
     
     if (!occupationsResponse.ok) {
-      const errorText = await occupationsResponse.text();
-      console.error(`Failed to fetch occupations: ${occupationsResponse.status} ${occupationsResponse.statusText}`, errorText);
-      throw new Error(`Failed to fetch occupations: ${occupationsResponse.statusText}`);
+      console.error('Failed to read occupations file, using bundled data');
+      // Fallback: läs från lokal fil i funktionen
+      const occupationsUrl = new URL('./data/af-occupations.json', import.meta.url);
+      const occupationsText = await Deno.readTextFile(occupationsUrl.pathname);
+      var occupations = JSON.parse(occupationsText);
+    } else {
+      var occupations = await occupationsResponse.json();
     }
     
-    const occupationsData = await occupationsResponse.json();
-    console.log(`API Response structure for occupations:`, JSON.stringify(occupationsData).substring(0, 500));
+    console.log(`Loaded ${occupations.length} occupation codes`);
     
-    // Det nya API:et returnerar data i ett annat format
-    const occupations = Array.isArray(occupationsData) ? occupationsData : occupationsData.results || [];
-    console.log(`Fetched ${occupations.length} occupation codes`);
-    
-    // Hämta kommunkoder från JobTech Taxonomy API (nytt endpoint)
-    console.log('Fetching municipality codes from JobTech Taxonomy API...');
+    // Läs kommunkoder från statisk fil
+    console.log('Reading municipality codes from static file...');
     const municipalitiesResponse = await fetch(
-      'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific-concept?type=municipality'
+      `${Deno.env.get('SUPABASE_URL')?.replace('/rest/v1', '')}/storage/v1/object/public/static-data/af-municipalities.json`
     );
     
     if (!municipalitiesResponse.ok) {
-      const errorText = await municipalitiesResponse.text();
-      console.error(`Failed to fetch municipalities: ${municipalitiesResponse.status} ${municipalitiesResponse.statusText}`, errorText);
-      throw new Error(`Failed to fetch municipalities: ${municipalitiesResponse.statusText}`);
+      console.error('Failed to read municipalities file, using bundled data');
+      const municipalitiesUrl = new URL('./data/af-municipalities.json', import.meta.url);
+      const municipalitiesText = await Deno.readTextFile(municipalitiesUrl.pathname);
+      var municipalities = JSON.parse(municipalitiesText);
+    } else {
+      var municipalities = await municipalitiesResponse.json();
     }
     
-    const municipalitiesData = await municipalitiesResponse.json();
-    console.log(`API Response structure for municipalities:`, JSON.stringify(municipalitiesData).substring(0, 500));
-    
-    const municipalities = Array.isArray(municipalitiesData) ? municipalitiesData : municipalitiesData.results || [];
-    console.log(`Fetched ${municipalities.length} municipality codes`);
+    console.log(`Loaded ${municipalities.length} municipality codes`);
 
-    // Förbered yrkeskoder för upsert
+    // Förbered yrkeskoder för upsert (från statisk fil)
     const occupationCodes = occupations.map((occ: any) => ({
       code: occ.id,
       label_sv: occ.label,
@@ -75,7 +73,7 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${occupationCodes.length} occupation codes`);
 
-    // Förbered kommunkoder för upsert
+    // Förbered kommunkoder för upsert (från statisk fil)
     const municipalityCodes = municipalities.map((mun: any) => ({
       code: mun.id,
       label: mun.label,

@@ -78,7 +78,10 @@ export function RichTextEditor({ content, onChange, placeholder = 'Skriv här...
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      // Only update if editor is not focused (user is not actively typing)
+      if (!editor.isFocused) {
+        editor.commands.setContent(content);
+      }
     }
   }, [content, editor]);
 

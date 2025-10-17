@@ -5,13 +5,16 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { AdminStatusButton } from "./AdminStatusButton";
+import { TipNOCVDialog } from "./TipNOCVDialog";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [tipNOCVDialogOpen, setTipNOCVDialogOpen] = useState(false);
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   return (
+    <>
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
@@ -41,6 +44,12 @@ const Navigation = () => {
             <a href="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
               Kontakt
             </a>
+            <button 
+              onClick={() => setTipNOCVDialogOpen(true)}
+              className="text-foreground hover:text-primary transition-colors font-medium"
+            >
+              💡 Tipsa om NOCV
+            </button>
             {isAdmin && (
               <a href="/admin" className="text-foreground hover:text-primary transition-colors font-medium">
                 Admin
@@ -104,6 +113,15 @@ const Navigation = () => {
                   >
                     Kontakt
                   </a>
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setTipNOCVDialogOpen(true);
+                    }}
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors text-left"
+                  >
+                    💡 Tipsa om NOCV
+                  </button>
                   {isAdmin && (
                     <a 
                       href="/admin" 
@@ -123,6 +141,12 @@ const Navigation = () => {
         </div>
       </div>
     </nav>
+
+    <TipNOCVDialog 
+      open={tipNOCVDialogOpen} 
+      onOpenChange={setTipNOCVDialogOpen}
+    />
+    </>
   );
 };
 

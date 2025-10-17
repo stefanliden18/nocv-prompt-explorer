@@ -1,5 +1,11 @@
+import { useState } from "react";
+import { TipNOCVDialog } from "./TipNOCVDialog";
+
 const Footer = () => {
+  const [tipNOCVDialogOpen, setTipNOCVDialogOpen] = useState(false);
+
   return (
+    <>
     <footer className="bg-nocv-dark-blue text-white py-12">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
@@ -52,6 +58,12 @@ const Footer = () => {
                 >
                   Kontakt
                 </a>
+                <button
+                  onClick={() => setTipNOCVDialogOpen(true)}
+                  className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium text-left"
+                >
+                  💡 Tipsa om NOCV
+                </button>
               </nav>
             </div>
           </div>
@@ -65,6 +77,12 @@ const Footer = () => {
         </div>
       </div>
     </footer>
+
+    <TipNOCVDialog 
+      open={tipNOCVDialogOpen} 
+      onOpenChange={setTipNOCVDialogOpen}
+    />
+    </>
   );
 };
 

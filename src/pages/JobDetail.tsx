@@ -31,6 +31,7 @@ import { analytics } from "@/lib/analytics";
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { utcToStockholm } from '@/lib/timezone';
+import { TipJobDialog } from "@/components/TipJobDialog";
 
 const applicationSchema = z.object({
   name: z.string().trim().min(1, "Ange ditt namn").max(100, "Namnet kan vara max 100 tecken"),
@@ -50,6 +51,7 @@ const JobDetail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [defaultStageId, setDefaultStageId] = useState<string | null>(null);
+  const [tipJobDialogOpen, setTipJobDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof applicationSchema>>({
@@ -471,11 +473,31 @@ const JobDetail = () => {
                     </>
                   )}
                 </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-10 border-white/50 bg-white text-primary hover:bg-white/90 hover:border-white"
+                  onClick={() => setTipJobDialogOpen(true)}
+                >
+                  💡 Tipsa en vän
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Tip Job Dialog */}
+      <TipJobDialog
+        open={tipJobDialogOpen}
+        onOpenChange={setTipJobDialogOpen}
+        jobTitle={job.title}
+        jobSlug={job.slug}
+        companyName={job.companies?.name || ''}
+        location={job.city || ''}
+        jobId={job.id}
+      />
 
       {/* Job Details */}
       <section className="py-20">

@@ -137,6 +137,19 @@ class Analytics {
       success: success,
     });
   }
+
+  trackJobTipSent(jobId: string, jobTitle: string) {
+    this.track('job_tip_sent', {
+      job_id: jobId,
+      job_title: jobTitle,
+    });
+  }
+
+  trackNOCVTipSent(category: string) {
+    this.track('nocv_tip_sent', {
+      tip_category: category,
+    });
+  }
 }
 
 // Export singleton instance

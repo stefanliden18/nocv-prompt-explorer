@@ -23,3 +23,9 @@ verify_jwt = true
 
 [functions.get-users]
 verify_jwt = true
+
+[functions.send-job-tip]
+verify_jwt = false
+
+[functions.send-nocv-tip]
+verify_jwt = false

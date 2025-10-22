@@ -102,6 +102,42 @@ export function RichTextEditor({ content, onChange, placeholder = 'Skriv här...
     editor.chain().focus().insertContent(emoji).run();
   };
 
+  const convertSelectionToBulletList = () => {
+    const { from, to } = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(from, to, '\n');
+    
+    // Om inget är markerat eller redan är lista, använd vanlig toggle
+    if (from === to || editor.isActive('bulletList')) {
+      editor.chain().focus().toggleBulletList().run();
+      return;
+    }
+    
+    // Splitta text på radbrytningar
+    const lines = selectedText.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length <= 1) {
+      // Om bara en rad, använd vanlig toggle
+      editor.chain().focus().toggleBulletList().run();
+      return;
+    }
+    
+    // Skapa lista med flera punkter
+    editor.chain()
+      .focus()
+      .deleteSelection() // Ta bort markerad text
+      .insertContent({
+        type: 'bulletList',
+        content: lines.map(line => ({
+          type: 'listItem',
+          content: [{
+            type: 'paragraph',
+            content: [{ type: 'text', text: line.trim() }]
+          }]
+        }))
+      })
+      .run();
+  };
+
   return (
     <div className="border rounded-md bg-background">
       {/* Toolbar */}
@@ -183,9 +219,9 @@ export function RichTextEditor({ content, onChange, placeholder = 'Skriv här...
           type="button"
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onClick={convertSelectionToBulletList}
           className={cn(editor.isActive('bulletList') && 'bg-muted')}
-          title="Punktlista"
+          title="Punktlista - Markera flera rader för att skapa separata punkter"
         >
           <List className="h-4 w-4" />
         </Button>

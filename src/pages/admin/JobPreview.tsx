@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Helmet } from 'react-helmet-async';
-import ReactMarkdown from 'react-markdown';
 import { MapPin, Briefcase, Car } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { PreviewHeader } from '@/components/PreviewHeader';
@@ -150,9 +150,12 @@ export default function JobPreview() {
             {job.description_md && (
               <div className="mb-12">
                 <h2 className="text-2xl font-bold mb-6">Om tjänsten</h2>
-                <div className="prose prose-lg max-w-none dark:prose-invert">
-                  <ReactMarkdown>{job.description_md}</ReactMarkdown>
-                </div>
+                <div 
+                  className="prose prose-lg max-w-none dark:prose-invert"
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(job.description_md) 
+                  }}
+                />
               </div>
             )}
 
@@ -160,9 +163,12 @@ export default function JobPreview() {
             {job.requirements_md && (
               <div className="mb-12">
                 <h2 className="text-2xl font-bold mb-6">Vi söker dig som</h2>
-                <div className="prose prose-lg max-w-none dark:prose-invert">
-                  <ReactMarkdown>{job.requirements_md}</ReactMarkdown>
-                </div>
+                <div 
+                  className="prose prose-lg max-w-none dark:prose-invert"
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(job.requirements_md) 
+                  }}
+                />
               </div>
             )}
 

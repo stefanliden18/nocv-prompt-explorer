@@ -72,6 +72,7 @@ export function RichTextEditor({ content, onChange, placeholder = 'Skriv här...
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[200px] px-3 py-2',
+        style: 'list-style-position: outside;',
       },
     },
   });

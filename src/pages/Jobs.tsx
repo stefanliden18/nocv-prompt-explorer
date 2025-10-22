@@ -170,7 +170,24 @@ const Jobs = () => {
   // Get intro text (first 120 chars of description)
   const getIntroText = (description: string) => {
     if (!description) return "";
-    const text = description.replace(/[#*_\[\]]/g, '').trim();
+    
+    // Ta bort alla HTML-taggar
+    let text = description.replace(/<[^>]*>/g, '');
+    
+    // Ta bort markdown-tecken
+    text = text.replace(/[#*_\[\]]/g, '');
+    
+    // Konvertera vanliga HTML entities
+    text = text
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"');
+    
+    // Ta bort extra mellanslag och trimma
+    text = text.replace(/\s+/g, ' ').trim();
+    
     return text.length > 120 ? text.substring(0, 120) + '...' : text;
   };
 

@@ -617,19 +617,6 @@ const JobDetail = () => {
                 </Card>
               )}
 
-              {/* Requirements */}
-              {job.requirements_md && (
-                <Card className="bg-white border border-border">
-                  <CardContent className="p-8">
-                    <h2 className="text-2xl font-heading mb-4">Vad vi söker</h2>
-                    <div 
-                      className="prose prose-sm max-w-none text-foreground"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.requirements_md) }}
-                    />
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Additional Info */}
               {(job.language || job.driver_license) && (
                 <Card className="bg-white border border-border">

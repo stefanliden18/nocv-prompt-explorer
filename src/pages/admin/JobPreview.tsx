@@ -159,19 +159,6 @@ export default function JobPreview() {
               </div>
             )}
 
-            {/* Requirements */}
-            {job.requirements_md && (
-              <div className="mb-12">
-                <h2 className="text-2xl font-bold mb-6">Vi söker dig som</h2>
-                <div 
-                  className="prose prose-lg max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(job.requirements_md) 
-                  }}
-                />
-              </div>
-            )}
-
             {/* Application CTA */}
             <div className="mt-12 p-8 bg-primary/5 rounded-lg border">
               <h3 className="text-2xl font-bold mb-4">Intresserad?</h3>

@@ -602,22 +602,12 @@ export default function JobEdit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Beskrivning *</Label>
+                <Label htmlFor="description">Jobbeskrivning *</Label>
                 <RichTextEditor
                   content={descriptionHtml}
                   onChange={setDescriptionHtml}
-                  placeholder="Beskriv jobbet..."
+                  placeholder="Beskriv jobbet och vad ni söker..."
                   minHeight="200px"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="requirements">Krav</Label>
-                <RichTextEditor
-                  content={requirementsHtml}
-                  onChange={setRequirementsHtml}
-                  placeholder="Lista krav för jobbet..."
-                  minHeight="150px"
                 />
               </div>
 

@@ -104,8 +104,7 @@ serve(async (req) => {
       .from('jobs')
       .select(`
         *,
-        companies (*),
-        municipality:af_municipality_codes!jobs_af_municipality_code_fkey(concept_id)
+        companies (*)
       `)
       .eq('id', job_id)
       .single();

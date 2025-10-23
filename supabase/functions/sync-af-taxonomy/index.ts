@@ -8,6 +8,30 @@ const corsHeaders = {
 
 const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific/concepts';
 
+// Statiska fallback-data för anställningstyper
+const EMPLOYMENT_TYPES_FALLBACK = [
+  { code: '6a5G_Jy3_5qG', label: 'Vanlig anställning' },
+  { code: '8qLN_bEY_bhk', label: 'Vikariat' },
+  { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
+  { code: 'kcfG_GDe_Fum', label: 'Behovsanställning' },
+  { code: 'bYfG_jXa_zik', label: 'Frilans' },
+  { code: 'h4fe_E7e_UqV', label: 'Extratjänst' }
+];
+
+// Statiska fallback-data för varaktighet
+const DURATIONS_FALLBACK = [
+  { code: 'nDg4_eBE_ueQ', label: 'Tillsvidare' },
+  { code: '9uK9_HfZ_uGj', label: 'Visstid mer än 6 månader' },
+  { code: 'roiG_Mii_fiZ', label: 'Visstid 3-6 månader' },
+  { code: 'fPhi_RmE_iUg', label: 'Visstid mindre än 3 månader' }
+];
+
+// Statiska fallback-data för arbetstidsomfattning
+const WORKTIME_EXTENTS_FALLBACK = [
+  { code: 'wYi8_aFg_R1m', label: 'Heltid' },
+  { code: 'aUF9_eHe_iUe', label: 'Deltid' }
+];
+
 // Statiska yrkeskoder (50 vanligaste)
 const OCCUPATIONS = [
   { id: "apaJ_2YB_LuF", label: "Lastbilsförare", label_en: "Truck driver", ssyk: "8332" },
@@ -407,15 +431,29 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${municipalityCodes.length} municipality codes`);
 
-    // Hämta anställningstyper från Jobtech Taxonomy API
-    console.log('Fetching employment types from Jobtech Taxonomy API...');
-    const employmentTypesResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-type`);
-    const employmentTypesData = await employmentTypesResponse.json();
-    
-    const employmentTypes = employmentTypesData.map((item: any) => ({
-      code: item.id,
-      label: item.term
-    }));
+    // Hämta anställningstyper från Jobtech Taxonomy API med fallback
+    let employmentTypes = EMPLOYMENT_TYPES_FALLBACK;
+    try {
+      console.log('Fetching employment types from Jobtech Taxonomy API...');
+      const employmentTypesResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-type`);
+      
+      if (!employmentTypesResponse.ok) {
+        console.error(`⚠️ API error: ${employmentTypesResponse.status} ${employmentTypesResponse.statusText}`);
+        const errorText = await employmentTypesResponse.text();
+        console.error(`Response body: ${errorText.substring(0, 200)}`);
+        console.log('⚠️ Using fallback employment types data');
+      } else {
+        const employmentTypesData = await employmentTypesResponse.json();
+        employmentTypes = employmentTypesData.map((item: any) => ({
+          code: item.id,
+          label: item.term
+        }));
+        console.log(`✅ Fetched ${employmentTypes.length} employment types from API`);
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching employment types from API:', error);
+      console.log('⚠️ Using fallback employment types data');
+    }
 
     // Rensa befintliga och lägg till nya
     const { error: deleteEmpError } = await supabase
@@ -434,17 +472,31 @@ serve(async (req) => {
       console.error('Error inserting employment types:', empError);
       throw empError;
     }
-    console.log(`✅ Inserted ${employmentTypes.length} employment types from API`);
+    console.log(`✅ Inserted ${employmentTypes.length} employment types`);
 
-    // Hämta varaktighet från Jobtech Taxonomy API
-    console.log('Fetching duration codes from Jobtech Taxonomy API...');
-    const durationsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-duration`);
-    const durationsData = await durationsResponse.json();
-    
-    const durations = durationsData.map((item: any) => ({
-      code: item.id,
-      label: item.term
-    }));
+    // Hämta varaktighet från Jobtech Taxonomy API med fallback
+    let durations = DURATIONS_FALLBACK;
+    try {
+      console.log('Fetching duration codes from Jobtech Taxonomy API...');
+      const durationsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-duration`);
+      
+      if (!durationsResponse.ok) {
+        console.error(`⚠️ API error: ${durationsResponse.status} ${durationsResponse.statusText}`);
+        const errorText = await durationsResponse.text();
+        console.error(`Response body: ${errorText.substring(0, 200)}`);
+        console.log('⚠️ Using fallback duration data');
+      } else {
+        const durationsData = await durationsResponse.json();
+        durations = durationsData.map((item: any) => ({
+          code: item.id,
+          label: item.term
+        }));
+        console.log(`✅ Fetched ${durations.length} duration codes from API`);
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching durations from API:', error);
+      console.log('⚠️ Using fallback duration data');
+    }
 
     // Rensa befintliga och lägg till nya
     const { error: deleteDurError } = await supabase
@@ -463,17 +515,31 @@ serve(async (req) => {
       console.error('Error inserting durations:', durError);
       throw durError;
     }
-    console.log(`✅ Inserted ${durations.length} duration codes from API`);
+    console.log(`✅ Inserted ${durations.length} duration codes`);
 
-    // Hämta arbetstidsomfattning från Jobtech Taxonomy API
-    console.log('Fetching worktime extent codes from Jobtech Taxonomy API...');
-    const worktimeExtentsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=worktime-extent`);
-    const worktimeExtentsData = await worktimeExtentsResponse.json();
-    
-    const worktimeExtents = worktimeExtentsData.map((item: any) => ({
-      code: item.id,
-      label: item.term
-    }));
+    // Hämta arbetstidsomfattning från Jobtech Taxonomy API med fallback
+    let worktimeExtents = WORKTIME_EXTENTS_FALLBACK;
+    try {
+      console.log('Fetching worktime extent codes from Jobtech Taxonomy API...');
+      const worktimeExtentsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=worktime-extent`);
+      
+      if (!worktimeExtentsResponse.ok) {
+        console.error(`⚠️ API error: ${worktimeExtentsResponse.status} ${worktimeExtentsResponse.statusText}`);
+        const errorText = await worktimeExtentsResponse.text();
+        console.error(`Response body: ${errorText.substring(0, 200)}`);
+        console.log('⚠️ Using fallback worktime extent data');
+      } else {
+        const worktimeExtentsData = await worktimeExtentsResponse.json();
+        worktimeExtents = worktimeExtentsData.map((item: any) => ({
+          code: item.id,
+          label: item.term
+        }));
+        console.log(`✅ Fetched ${worktimeExtents.length} worktime extent codes from API`);
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching worktime extents from API:', error);
+      console.log('⚠️ Using fallback worktime extent data');
+    }
 
     // Rensa befintliga och lägg till nya
     const { error: deleteWtError } = await supabase
@@ -492,7 +558,7 @@ serve(async (req) => {
       console.error('Error inserting worktime extents:', wtError);
       throw wtError;
     }
-    console.log(`✅ Inserted ${worktimeExtents.length} worktime extent codes from API`);
+    console.log(`✅ Inserted ${worktimeExtents.length} worktime extent codes`);
 
     console.log('✅ Taxonomy sync completed successfully!');
 

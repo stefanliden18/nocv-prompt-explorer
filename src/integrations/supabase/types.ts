@@ -279,6 +279,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          org_number: string | null
           updated_at: string
           website: string | null
         }
@@ -291,6 +292,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          org_number?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -303,6 +305,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          org_number?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -562,10 +565,7 @@ export type Database = {
         Args: { _application_id: string; _user_id: string }
         Returns: boolean
       }
-      count_active_admins: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      count_active_admins: { Args: never; Returns: number }
       enforce_application_limits: {
         Args: { p_email: string }
         Returns: undefined
@@ -585,10 +585,7 @@ export type Database = {
         Args: { job: Database["public"]["Tables"]["jobs"]["Row"] }
         Returns: boolean
       }
-      is_recruiter_or_admin: {
-        Args: { _user_id: string }
-        Returns: boolean
-      }
+      is_recruiter_or_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

@@ -33,6 +33,7 @@ interface Company {
   website: string | null;
   logo_url: string | null;
   description: string | null;
+  org_number: string | null;
   contact_person: string;
   contact_email: string;
   contact_phone: string;

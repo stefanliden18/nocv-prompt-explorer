@@ -36,40 +36,47 @@ serve(async (req) => {
 
     console.log('✅ Job found, AF Ad ID:', job.af_ad_id);
 
-    // Samma body-struktur som publish
+    // Format phone number to Swedish format
+    const formatPhoneNumber = (phone: string) => {
+      let cleaned = phone.replace(/[\s-]/g, '');
+      if (cleaned.startsWith('07')) {
+        cleaned = '+46' + cleaned.substring(1);
+      }
+      return cleaned;
+    };
+
+    // Prepare payload according to AF API specs
     const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
     const description = stripHtml(job.description_md || '');
-    const nameParts = job.contact_person_name.split(' ');
 
     const afRequestBody = {
-      jobAdResponsibleEmail: "admin@nocv.se",
-      employerWebAddress: job.companies.website || "https://nocv.se",
-      contacts: [{
-        email: job.contact_person_email,
-        firstname: nameParts[0],
-        surname: nameParts.slice(1).join(' ') || nameParts[0],
-        phoneNumber: job.contact_person_phone,
-        title: "Kontaktperson"
-      }],
-      duration: job.af_duration_code,
-      employmentType: job.af_employment_type_code,
-      eures: false,
       title: job.title,
       description: description,
-      keywords: ["OPEN_TO_ALL"],
-      lastPublishDate: job.last_application_date,
-      totalJobOpenings: job.total_positions || 1,
-      occupation: job.af_occupation_code,
-      application: {
-        method: {
-          code: "OtherApplication",
-          url: `https://nocv.se/jobb/${job.slug}`
-        }
+      applicationDeadline: job.last_application_date,
+      positions: job.total_positions || 1,
+      employmentType: job.af_employment_type_code,
+      duration: job.af_duration_code,
+      occupation: {
+        id: job.af_occupation_code
       },
-      workLocation: {
-        municipality: job.af_municipality_code,
+      workplace: {
+        municipalityId: job.af_municipality_code,
         country: "199"
-      }
+      },
+      employer: {
+        name: job.companies.name,
+        organizationNumber: job.companies.org_number || "",
+        website: job.companies.website || "https://nocv.se"
+      },
+      applyUrl: `https://nocv.se/jobb/${job.slug}`,
+      contact: {
+        name: job.contact_person_name,
+        email: job.contact_person_email,
+        phone: formatPhoneNumber(job.contact_person_phone)
+      },
+      eures: false,
+      keywords: ["OPEN_TO_ALL"],
+      jobAdResponsibleEmail: "admin@nocv.se"
     };
 
     console.log('📨 Sending PUT request to AF API...');
@@ -89,18 +96,33 @@ serve(async (req) => {
     });
 
     if (!afResponse.ok) {
-      const errorData = await afResponse.json();
-      console.error('❌ AF API update error:', errorData);
+      const afResponseData = await afResponse.json();
+      
+      // Detailed error logging
+      console.error('❌ AF API Error Details:');
+      console.error('Status:', afResponse.status, afResponse.statusText);
+      console.error('Response Headers:', Object.fromEntries(afResponse.headers.entries()));
+      console.error('Response Body:', JSON.stringify(afResponseData, null, 2));
+      
+      if (afResponseData.errors) {
+        console.error('🔍 Validation Errors:', JSON.stringify(afResponseData.errors, null, 2));
+      }
+      if (afResponseData.message) {
+        console.error('🔍 Error Message:', afResponseData.message);
+      }
+      if (afResponseData.error) {
+        console.error('🔍 Error:', afResponseData.error);
+      }
       
       await supabase
         .from('jobs')
         .update({ 
-          af_error: JSON.stringify(errorData),
+          af_error: JSON.stringify(afResponseData),
           af_last_sync: new Date().toISOString()
         })
         .eq('id', job_id);
 
-      throw new Error(`AF API error (${afResponse.status}): ${JSON.stringify(errorData)}`);
+      throw new Error(`AF API error (${afResponse.status}): ${JSON.stringify(afResponseData)}`);
     }
 
     console.log('✅ Successfully updated AF ad');

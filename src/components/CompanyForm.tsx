@@ -31,6 +31,7 @@ const companySchema = z.object({
   name: z.string().min(1, 'Företagsnamn är obligatoriskt').max(255),
   description: z.string().max(500, 'Beskrivningen får max vara 500 tecken').optional().or(z.literal('')),
   website: z.string().url('Ogiltig URL').optional().or(z.literal('')),
+  org_number: z.string().regex(/^\d{10}$/, 'Organisationsnummer måste vara 10 siffror').optional().or(z.literal('')),
   contact_person: z.string().min(1, 'Kontaktperson är obligatoriskt').max(255),
   contact_email: z.string().min(1, 'E-post är obligatoriskt').email('Ogiltig e-postadress'),
   contact_phone: z.string().min(1, 'Mobiltelefon är obligatoriskt').regex(/^[\d\s\-+()]+$/, 'Ogiltigt telefonnummer'),
@@ -44,6 +45,7 @@ interface Company {
   description: string | null;
   website: string | null;
   logo_url: string | null;
+  org_number: string | null;
   contact_person: string;
   contact_email: string;
   contact_phone: string;
@@ -68,6 +70,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
       name: company?.name || '',
       description: company?.description || '',
       website: company?.website || '',
+      org_number: company?.org_number || '',
       contact_person: company?.contact_person || '',
       contact_email: company?.contact_email || '',
       contact_phone: company?.contact_phone || '',
@@ -81,6 +84,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
         name: company.name,
         description: company.description || '',
         website: company.website || '',
+        org_number: company.org_number || '',
         contact_person: company.contact_person,
         contact_email: company.contact_email,
         contact_phone: company.contact_phone,
@@ -92,6 +96,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
         name: '',
         description: '',
         website: '',
+        org_number: '',
         contact_person: '',
         contact_email: '',
         contact_phone: '',
@@ -145,6 +150,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
             name: data.name,
             description: data.description || null,
             website: data.website || null,
+            org_number: data.org_number || null,
             logo_url: logoUrl,
             contact_person: data.contact_person,
             contact_email: data.contact_email,
@@ -174,6 +180,7 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
             name: data.name,
             description: data.description || null,
             website: data.website || null,
+            org_number: data.org_number || null,
             logo_url: logoUrl,
             contact_person: data.contact_person,
             contact_email: data.contact_email,
@@ -287,6 +294,25 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
                       placeholder="https://exempel.se" 
                       {...field}
                       disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="org_number"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Organisationsnummer</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="5569012345" 
+                      {...field}
+                      disabled={isSubmitting}
+                      maxLength={10}
                     />
                   </FormControl>
                   <FormMessage />

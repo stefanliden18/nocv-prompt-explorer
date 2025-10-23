@@ -35,6 +35,9 @@ const companySchema = z.object({
   contact_person: z.string().min(1, 'Kontaktperson är obligatoriskt').max(255),
   contact_email: z.string().min(1, 'E-post är obligatoriskt').email('Ogiltig e-postadress'),
   contact_phone: z.string().min(1, 'Mobiltelefon är obligatoriskt').regex(/^[\d\s\-+()]+$/, 'Ogiltigt telefonnummer'),
+  address: z.string().optional().or(z.literal('')),
+  postal_code: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -49,6 +52,9 @@ interface Company {
   contact_person: string;
   contact_email: string;
   contact_phone: string;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
 }
 
 interface CompanyFormProps {
@@ -74,6 +80,9 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
       contact_person: company?.contact_person || '',
       contact_email: company?.contact_email || '',
       contact_phone: company?.contact_phone || '',
+      address: company?.address || '',
+      postal_code: company?.postal_code || '',
+      city: company?.city || '',
     },
   });
 
@@ -88,6 +97,9 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
         contact_person: company.contact_person,
         contact_email: company.contact_email,
         contact_phone: company.contact_phone,
+        address: company.address || '',
+        postal_code: company.postal_code || '',
+        city: company.city || '',
       });
       setCurrentLogoUrl(company.logo_url || null);
       setLogoFile(null);
@@ -100,6 +112,9 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
         contact_person: '',
         contact_email: '',
         contact_phone: '',
+        address: '',
+        postal_code: '',
+        city: '',
       });
       setCurrentLogoUrl(null);
       setLogoFile(null);
@@ -155,6 +170,9 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
             contact_person: data.contact_person,
             contact_email: data.contact_email,
             contact_phone: data.contact_phone,
+            address: data.address || null,
+            postal_code: data.postal_code || null,
+            city: data.city || null,
           })
           .eq('id', company.id);
 
@@ -185,6 +203,9 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
             contact_person: data.contact_person,
             contact_email: data.contact_email,
             contact_phone: data.contact_phone,
+            address: data.address || null,
+            postal_code: data.postal_code || null,
+            city: data.city || null,
           });
 
         if (error) {
@@ -389,6 +410,71 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
                     </FormItem>
                   )}
                 />
+              </div>
+            </div>
+
+            <div className="border-t pt-4 mt-4">
+              <h3 className="font-semibold mb-4">Adressinformation</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Krävs för publicering till Arbetsförmedlingen
+              </p>
+              
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gatuadress</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Exempelgatan 123" 
+                          {...field}
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="postal_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Postnummer</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="123 45" 
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stad</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Stockholm" 
+                            {...field}
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </div>
 

@@ -75,49 +75,75 @@ serve(async (req) => {
     const stripHtml = (html: string) => html.replace(/<[^>]*>/g, '').trim();
     const description = stripHtml(job.description_md || '');
 
+    // Split contact name into firstname and surname
+    const nameParts = (job.contact_person_name || '').split(' ');
+    const firstname = nameParts[0] || '';
+    const surname = nameParts.slice(1).join(' ') || '';
+
     const afRequestBody = {
+      // Obligatoriska administrativa fält
+      jobAdResponsibleEmail: "admin@nocv.se",
+      employerWebAddress: job.companies.website || "https://nocv.se",
+      
+      // Grundläggande info
       title: job.title,
       description: description,
-      applicationDeadline: job.last_application_date,
-      positions: job.total_positions || 1,
+      lastPublishDate: job.last_application_date,
+      totalJobOpenings: job.total_positions || 1,
+      
+      // Kategorisering (direkta strängar enligt AF API)
+      occupation: job.af_occupation_code,
       employmentType: job.af_employment_type_code,
       duration: job.af_duration_code,
-      occupation: {
-        id: job.af_occupation_code
+      wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
+      
+      // Arbetsplats (obligatoriskt enligt AF API)
+      workplaces: [
+        {
+          name: job.companies.name,
+          municipality: job.af_municipality_code,
+          postalAddress: {
+            street: job.companies.address || "",
+            postalCode: job.companies.postal_code || "",
+            city: job.companies.city || ""
+          }
+        }
+      ],
+      
+      // Kontakter (array enligt AF API)
+      contacts: [
+        {
+          firstname: firstname,
+          surname: surname,
+          email: job.contact_person_email,
+          phoneNumber: formatPhoneNumber(job.contact_person_phone),
+          title: "Kontaktperson"
+        }
+      ],
+      
+      // Ansökan
+      application: {
+        method: {
+          webAddress: `https://nocv.se/jobb/${job.slug}`
+        }
       },
-      workplace: {
-        municipalityId: job.af_municipality_code,
-        country: "199"
-      },
-      employer: {
-        name: job.companies.name,
-        organizationNumber: job.companies.org_number || "",
-        website: job.companies.website || "https://nocv.se"
-      },
-      applyUrl: `https://nocv.se/jobb/${job.slug}`,
-      contact: {
-        name: job.contact_person_name,
-        email: job.contact_person_email,
-        phone: formatPhoneNumber(job.contact_person_phone)
-      },
+      
+      // Övrigt
       eures: false,
-      keywords: ["OPEN_TO_ALL"],
-      jobAdResponsibleEmail: "admin@nocv.se"
+      keywords: ["OPEN_TO_ALL"]
     };
 
     console.log('📨 Sending POST request to AF API...');
-    console.log('Request body:', JSON.stringify(afRequestBody, null, 2));
+    console.log('Request payload:', JSON.stringify(afRequestBody, null, 2));
 
-    // Create Basic Auth header
-    const basicAuth = btoa(`${Deno.env.get('AF_CLIENT_ID')}:${Deno.env.get('AF_CLIENT_SECRET')}`);
-
-    // Skicka POST till AF API
+    // Skicka POST till AF API med separata auth headers
     const afResponse = await fetch(`${AF_API_BASE}${AF_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Basic ${basicAuth}`,
-        'Employer-Id': Deno.env.get('NOCV_AF_EMPLOYER_ID') ?? ''
+        'Employer-Id': Deno.env.get('NOCV_AF_EMPLOYER_ID') ?? '',
+        'client_id': Deno.env.get('AF_CLIENT_ID') ?? '',
+        'client_secret': Deno.env.get('AF_CLIENT_SECRET') ?? ''
       },
       body: JSON.stringify(afRequestBody)
     });
@@ -131,6 +157,13 @@ serve(async (req) => {
       console.error('Response Headers:', Object.fromEntries(afResponse.headers.entries()));
       console.error('Response Body:', JSON.stringify(afResponseData, null, 2));
       
+      // AF-specifik error struktur
+      if (afResponseData.trackingId) {
+        console.error('🔍 Tracking ID:', afResponseData.trackingId);
+      }
+      if (afResponseData.cause?.message?.errors) {
+        console.error('🔍 Field Errors:', JSON.stringify(afResponseData.cause.message.errors, null, 2));
+      }
       if (afResponseData.errors) {
         console.error('🔍 Validation Errors:', JSON.stringify(afResponseData.errors, null, 2));
       }
@@ -140,6 +173,34 @@ serve(async (req) => {
       if (afResponseData.error) {
         console.error('🔍 Error:', afResponseData.error);
       }
+      
+      // Tolkningar baserat på statuskod
+      let errorHint = '';
+      switch (afResponse.status) {
+        case 400:
+        case 422:
+          errorHint = 'Validation error - check payload fields';
+          break;
+        case 401:
+        case 403:
+          errorHint = 'Authentication error - check client_id/client_secret';
+          break;
+        case 404:
+          errorHint = 'Endpoint not found - check URL';
+          break;
+        case 405:
+          errorHint = 'Method not allowed - check HTTP method';
+          break;
+        case 409:
+          errorHint = 'Duplicate - this job might already be published';
+          break;
+        case 415:
+          errorHint = 'Wrong Content-Type header';
+          break;
+        default:
+          errorHint = afResponse.status >= 500 ? 'Server error at AF' : 'Unknown error';
+      }
+      console.error('💡 Hint:', errorHint);
       
       // Spara felmeddelande i databasen
       await supabase

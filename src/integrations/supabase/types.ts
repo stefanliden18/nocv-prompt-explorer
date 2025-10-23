@@ -271,6 +271,8 @@ export type Database = {
       }
       companies: {
         Row: {
+          address: string | null
+          city: string | null
           contact_email: string
           contact_person: string
           contact_phone: string
@@ -280,10 +282,13 @@ export type Database = {
           logo_url: string | null
           name: string
           org_number: string | null
+          postal_code: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
           contact_email: string
           contact_person: string
           contact_phone: string
@@ -293,10 +298,13 @@ export type Database = {
           logo_url?: string | null
           name: string
           org_number?: string | null
+          postal_code?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
           contact_email?: string
           contact_person?: string
           contact_phone?: string
@@ -306,6 +314,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           org_number?: string | null
+          postal_code?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -346,6 +355,7 @@ export type Database = {
           af_occupation_code: string | null
           af_published: boolean | null
           af_published_at: string | null
+          af_wage_type_code: string | null
           category: string | null
           city: string | null
           company_id: string
@@ -380,6 +390,7 @@ export type Database = {
           af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
+          af_wage_type_code?: string | null
           category?: string | null
           city?: string | null
           company_id: string
@@ -414,6 +425,7 @@ export type Database = {
           af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
+          af_wage_type_code?: string | null
           category?: string | null
           city?: string | null
           company_id?: string

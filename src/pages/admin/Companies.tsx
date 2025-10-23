@@ -37,6 +37,9 @@ interface Company {
   contact_person: string;
   contact_email: string;
   contact_phone: string;
+  address: string | null;
+  postal_code: string | null;
+  city: string | null;
   created_at: string;
 }
 

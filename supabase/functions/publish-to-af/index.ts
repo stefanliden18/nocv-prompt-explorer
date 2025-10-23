@@ -6,71 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Mappa JobTech Taxonomy concept IDs till AF JobAd API enum-värden
-const mapEmploymentType = (conceptId: string): string => {
-  const mapping: Record<string, string> = {
-    '6a5G_Jy3_5qG': 'PERMANENT',      // Vanlig anställning
-    '8qLN_bEY_bhk': 'TEMPORARY',      // Vikariat
-    'nuKG_MXb_Yua': 'SEASONAL',       // Säsongsarbete
-    'kcfG_GDe_Fum': 'TEMPORARY',      // Behovsanställning
-    'bYfG_jXa_zik': 'TEMPORARY',      // Frilans
-    'h4fe_E7e_UqV': 'TEMPORARY'       // Extratjänst
-  };
-  const result = mapping[conceptId] || 'PERMANENT';
-  console.log(`🔄 Mapping employmentType: ${conceptId} → ${result}`);
-  return result;
-};
-
-const mapWorktimeExtent = (conceptId: string): string => {
-  const mapping: Record<string, string> = {
-    'wYi8_aFg_R1m': 'FULL_TIME',      // Heltid
-    'aUF9_eHe_iUe': 'PART_TIME'       // Deltid
-  };
-  const result = mapping[conceptId] || 'FULL_TIME';
-  console.log(`🔄 Mapping worktimeExtent: ${conceptId} → ${result}`);
-  return result;
-};
-
-const mapDuration = (conceptId: string): string => {
-  const mapping: Record<string, string> = {
-    'nDg4_eBE_ueQ': 'TILLSVIDARE',      // Tillsvidare
-    'k4MG_eqN_aqh': 'VIKARIAT',         // Vikariat
-    'aUdG_VuE_fCe': 'BEGRÄNSAD_TID',    // Tidsbegränsad anställning
-    '9uK9_HfZ_uGj': 'BEGRÄNSAD_TID',    // Visstid mer än 6 månader
-    'roiG_Mii_fiZ': 'BEGRÄNSAD_TID',    // Visstid 3-6 månader
-    'fPhi_RmE_iUg': 'BEGRÄNSAD_TID'     // Visstid mindre än 3 månader
-  };
-  const result = mapping[conceptId] || 'TILLSVIDARE';
-  console.log(`🔄 Mapping duration: ${conceptId} → ${result}`);
-  return result;
-};
-
-const validateAfCombinations = (employmentType: string, worktimeExtent: string, duration: string): void => {
-  console.log('🔍 Validating AF combinations:', { employmentType, worktimeExtent, duration });
-  
-  // Regel 1: PERMANENT kräver TILLSVIDARE
-  if (employmentType === 'PERMANENT' && duration !== 'TILLSVIDARE') {
-    throw new Error(`Invalid combination: PERMANENT requires duration TILLSVIDARE (got: ${duration})`);
-  }
-  
-  // Regel 2: TEMPORARY kan inte vara TILLSVIDARE
-  if (employmentType === 'TEMPORARY' && duration === 'TILLSVIDARE') {
-    throw new Error('Invalid combination: TEMPORARY cannot have duration TILLSVIDARE');
-  }
-  
-  // Regel 3: worktimeExtent måste vara FULL_TIME eller PART_TIME
-  if (!['FULL_TIME', 'PART_TIME'].includes(worktimeExtent)) {
-    throw new Error(`Invalid worktimeExtent: Must be FULL_TIME or PART_TIME (got: ${worktimeExtent})`);
-  }
-  
-  // Regel 4: SEASONAL kan inte vara TILLSVIDARE
-  if (employmentType === 'SEASONAL' && duration === 'TILLSVIDARE') {
-    throw new Error('Invalid combination: SEASONAL cannot have duration TILLSVIDARE');
-  }
-  
-  console.log('✅ AF combinations validated successfully');
-};
-
 const AF_API_BASE = 'https://apier.arbetsformedlingen.se';
 const AF_ENDPOINT = '/direct-transferred-job-posting/v1/prod/jobads';
 
@@ -148,15 +83,13 @@ serve(async (req) => {
     const firstname = nameParts[0] || '';
     const surname = nameParts.slice(1).join(' ') || '';
 
-    // Mappa värden
-    const mappedEmploymentType = mapEmploymentType(job.af_employment_type_code);
-    const mappedWorktimeExtent = mapWorktimeExtent(job.af_worktime_extent_code);
-    const mappedDuration = mapDuration(job.af_duration_code);
-
-    console.log(`🔄 Using municipality code directly from DB: "${job.af_municipality_code}"`);
-
-    // Validera kombinationer INNAN vi bygger payload
-    validateAfCombinations(mappedEmploymentType, mappedWorktimeExtent, mappedDuration);
+    console.log('🔍 AF payload taxonomy codes:', {
+      occupation: job.af_occupation_code,
+      employmentType: job.af_employment_type_code,
+      worktimeExtent: job.af_worktime_extent_code,
+      duration: job.af_duration_code,
+      municipality: job.af_municipality_code
+    });
 
     const afRequestBody = {
       // Obligatoriska administrativa fält
@@ -169,11 +102,11 @@ serve(async (req) => {
       lastPublishDate: job.last_application_date,
       totalJobOpenings: job.total_positions || 1,
       
-      // Kategorisering (direkta strängar enligt AF API)
+      // Kategorisering (JobTech Taxonomy concept IDs)
       occupation: job.af_occupation_code,
-      employmentType: mappedEmploymentType,
-      worktimeExtent: mappedWorktimeExtent,
-      duration: mappedDuration,
+      employmentType: job.af_employment_type_code,
+      worktimeExtent: job.af_worktime_extent_code,
+      duration: job.af_duration_code,
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
       
       // Arbetsplats (obligatoriskt enligt AF API)
@@ -212,13 +145,13 @@ serve(async (req) => {
       keywords: ["OPEN_TO_ALL"]
     };
 
-    // Debug: Visa mappade värden
-    console.log("🔍 AF payload preview:", {
+    // Debug: Visa concept IDs
+    console.log("🔍 Final AF payload taxonomy:", {
+      occupation: afRequestBody.occupation,
       employmentType: afRequestBody.employmentType,
       worktimeExtent: afRequestBody.worktimeExtent,
       duration: afRequestBody.duration,
-      occupation: afRequestBody.occupation,
-      municipality: job.af_municipality_code,
+      municipality: afRequestBody.workplaces[0].municipality
     });
 
     // Validera att alla kritiska fält är strängar

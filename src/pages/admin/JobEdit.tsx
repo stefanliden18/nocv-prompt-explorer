@@ -326,20 +326,58 @@ export default function JobEdit() {
 
       if (error) throw error;
 
-      toast.success("Publicerad på Arbetsförmedlingen!", {
-        description: `Annonsen finns nu på Platsbanken med ID: ${data.af_ad_id}`,
-      });
+      // Kolla om det är ett edge function-fel (validering eller krasch)
+      if (data?.error === 'EDGE_CRASH') {
+        // Kolla om det är ett validerings-fel
+        if (data.message?.includes('Invalid combination') || data.message?.includes('Invalid worktime')) {
+          toast.error("🚫 Ogiltig kombination", {
+            description: data.message,
+            duration: 10000,
+          });
+        } else {
+          toast.error("💥 Fel i edge function", {
+            description: data.message || 'Okänt fel uppstod',
+          });
+        }
+        setAfError(data.message);
+        return;
+      }
 
-      // Uppdatera lokal state
-      setAfPublished(true);
-      setAfAdId(data.af_ad_id);
-      setAfPublishedAt(new Date().toISOString());
-      setAfError(null);
+      // Kolla om det är ett AF API-fel (från AF:s servrar)
+      if (data?.trackingId || data?.cause) {
+        const errorMessage = data.cause?.message?.message || 'AF API returnerade ett fel';
+        const fieldErrors = data.cause?.message?.errors || [];
+        const errorDetails = fieldErrors
+          .map((e: any) => `• ${e.field}: ${e.message}`)
+          .join('\n');
+
+        toast.error("❌ AF API-fel", {
+          description: `${errorMessage}\n\n${errorDetails}\n\n🔍 Tracking ID: ${data.trackingId}`,
+          duration: 15000,
+        });
+        
+        setAfError(JSON.stringify(data, null, 2));
+        return;
+      }
+
+      // Success - kolla om data.id finns
+      if (data?.id) {
+        toast.success("✅ Publicerad på Arbetsförmedlingen!", {
+          description: `Annonsen finns nu på Platsbanken med ID: ${data.id}`,
+        });
+
+        setAfPublished(true);
+        setAfAdId(data.id);
+        setAfPublishedAt(new Date().toISOString());
+        setAfError(null);
+      } else {
+        throw new Error('Oväntat svar från AF API: ' + JSON.stringify(data));
+      }
       
     } catch (error: any) {
       console.error('Error publishing to AF:', error);
-      toast.error("Fel vid publicering", {
-        description: error.message,
+      toast.error("💥 Fel vid publicering", {
+        description: error.message || 'Okänt fel uppstod',
       });
       setAfError(error.message);
     } finally {
@@ -352,13 +390,46 @@ export default function JobEdit() {
     
     setUpdatingAF(true);
     try {
-      const { error } = await supabase.functions.invoke('update-af-ad', {
+      const { data, error } = await supabase.functions.invoke('update-af-ad', {
         body: { job_id: id }
       });
 
       if (error) throw error;
 
-      toast.success("Uppdaterad på Arbetsförmedlingen!", {
+      // Kolla om det är ett edge function-fel (validering eller krasch)
+      if (data?.error === 'EDGE_CRASH') {
+        if (data.message?.includes('Invalid combination') || data.message?.includes('Invalid worktime')) {
+          toast.error("🚫 Ogiltig kombination", {
+            description: data.message,
+            duration: 10000,
+          });
+        } else {
+          toast.error("💥 Fel i edge function", {
+            description: data.message || 'Okänt fel uppstod',
+          });
+        }
+        setAfError(data.message);
+        return;
+      }
+
+      // Kolla om det är ett AF API-fel
+      if (data?.trackingId || data?.cause) {
+        const errorMessage = data.cause?.message?.message || 'AF API returnerade ett fel';
+        const fieldErrors = data.cause?.message?.errors || [];
+        const errorDetails = fieldErrors
+          .map((e: any) => `• ${e.field}: ${e.message}`)
+          .join('\n');
+
+        toast.error("❌ AF API-fel", {
+          description: `${errorMessage}\n\n${errorDetails}\n\n🔍 Tracking ID: ${data.trackingId}`,
+          duration: 15000,
+        });
+        
+        setAfError(JSON.stringify(data, null, 2));
+        return;
+      }
+
+      toast.success("✅ Uppdaterad på Arbetsförmedlingen!", {
         description: "Annonsen har synkroniserats med Platsbanken",
       });
 
@@ -367,8 +438,8 @@ export default function JobEdit() {
       
     } catch (error: any) {
       console.error('Error updating AF ad:', error);
-      toast.error("Fel vid uppdatering", {
-        description: error.message,
+      toast.error("💥 Fel vid uppdatering", {
+        description: error.message || 'Okänt fel uppstod',
       });
       setAfError(error.message);
     } finally {

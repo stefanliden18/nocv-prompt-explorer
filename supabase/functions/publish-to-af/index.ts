@@ -50,6 +50,32 @@ const formatMunicipalityCode = (code: string): string => {
   return formatted;
 };
 
+const validateAfCombinations = (employmentType: string, worktimeExtent: string, duration: string): void => {
+  console.log('🔍 Validating AF combinations:', { employmentType, worktimeExtent, duration });
+  
+  // Regel 1: PERMANENT kräver CONTINUOUS (Tillsvidare)
+  if (employmentType === 'PERMANENT' && duration !== 'CONTINUOUS') {
+    throw new Error(`Invalid combination: PERMANENT requires duration CONTINUOUS (got: ${duration})`);
+  }
+  
+  // Regel 2: TEMPORARY kan inte vara CONTINUOUS
+  if (employmentType === 'TEMPORARY' && duration === 'CONTINUOUS') {
+    throw new Error('Invalid combination: TEMPORARY cannot have duration CONTINUOUS');
+  }
+  
+  // Regel 3: worktimeExtent måste vara FULL_TIME eller PART_TIME
+  if (!['FULL_TIME', 'PART_TIME'].includes(worktimeExtent)) {
+    throw new Error(`Invalid worktimeExtent: Must be FULL_TIME or PART_TIME (got: ${worktimeExtent})`);
+  }
+  
+  // Regel 4: SEASONAL kan inte vara CONTINUOUS
+  if (employmentType === 'SEASONAL' && duration === 'CONTINUOUS') {
+    throw new Error('Invalid combination: SEASONAL cannot have duration CONTINUOUS');
+  }
+  
+  console.log('✅ AF combinations validated successfully');
+};
+
 const AF_API_BASE = 'https://apier.arbetsformedlingen.se';
 const AF_ENDPOINT = '/direct-transferred-job-posting/v1/prod/jobads';
 
@@ -125,6 +151,14 @@ serve(async (req) => {
     const firstname = nameParts[0] || '';
     const surname = nameParts.slice(1).join(' ') || '';
 
+    // Mappa värden
+    const mappedEmploymentType = mapEmploymentType(job.af_employment_type_code);
+    const mappedWorktimeExtent = mapWorktimeExtent(job.af_worktime_extent_code);
+    const mappedDuration = mapDuration(job.af_duration_code);
+
+    // Validera kombinationer INNAN vi bygger payload
+    validateAfCombinations(mappedEmploymentType, mappedWorktimeExtent, mappedDuration);
+
     const afRequestBody = {
       // Obligatoriska administrativa fält
       jobAdResponsibleEmail: "admin@nocv.se",
@@ -138,9 +172,9 @@ serve(async (req) => {
       
       // Kategorisering (direkta strängar enligt AF API)
       occupation: job.af_occupation_code,
-      employmentType: mapEmploymentType(job.af_employment_type_code),
-      worktimeExtent: mapWorktimeExtent(job.af_worktime_extent_code),
-      duration: mapDuration(job.af_duration_code),
+      employmentType: mappedEmploymentType,
+      worktimeExtent: mappedWorktimeExtent,
+      duration: mappedDuration,
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
       
       // Arbetsplats (obligatoriskt enligt AF API)

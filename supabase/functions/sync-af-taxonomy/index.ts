@@ -10,13 +10,13 @@ const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonom
 
 // ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation
 const EMPLOYMENT_TYPES_FALLBACK = [
-  { code: '6a5G_Jy3_5qG', label: 'Vanlig anställning' },
+  { code: 'PFZr_Syz_cUq', label: 'Vanlig anställning' },  // ✅ CORRECTED från dokumentation
   { code: '8qLN_bEY_bhk', label: 'Vikariat' },
   { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
-  { code: '1paU_aCR_nGn', label: 'Behovsanställning' },  // ✅ Uppdaterad
+  { code: '1paU_aCR_nGn', label: 'Behovsanställning' },
   { code: 'bYfG_jXa_zik', label: 'Frilans' },
   { code: 'h4fe_E7e_UqV', label: 'Extratjänst' },
-  { code: 'Jh8f_q9J_pbJ', label: 'Sommarjobb/Feriejobb' }  // ✅ Tillagd
+  { code: 'Jh8f_q9J_pbJ', label: 'Sommarjobb/Feriejobb' }
 ];
 
 // Statiska fallback-data för varaktighet

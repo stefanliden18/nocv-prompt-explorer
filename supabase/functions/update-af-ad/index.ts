@@ -41,7 +41,7 @@ serve(async (req) => {
 
     // Validera conditional fields enligt AF dokumentation
     const validateConditionalFields = (job: any) => {
-      const requiresWorktimeAndDuration = ['6a5G_Jy3_5qG', 'Jh8f_q9J_pbJ']; // Vanlig anställning, Sommarjobb
+      const requiresWorktimeAndDuration = ['PFZr_Syz_cUq', 'Jh8f_q9J_pbJ']; // ✅ Vanlig anställning (CORRECTED), Sommarjobb
       const forbidsWorktime = ['1paU_aCR_nGn']; // Behovsanställning
 
       if (requiresWorktimeAndDuration.includes(job.af_employment_type_code)) {
@@ -55,6 +55,19 @@ serve(async (req) => {
 
       if (forbidsWorktime.includes(job.af_employment_type_code) && job.af_worktime_extent_code) {
         throw new Error(`worktimeExtent cannot be used with employmentType ${job.af_employment_type_code}`);
+      }
+    };
+
+    // ✅ Validera förbjudna employment types och kombinationer
+    const validateEmploymentType = (job: any) => {
+      // Forbidden: Arbete utomlands
+      if (job.af_employment_type_code === '9Wuo_2Yb_36E') {
+        throw new Error('employmentType "Arbete utomlands" (9Wuo_2Yb_36E) is not allowed by AF');
+      }
+      
+      // Forbidden combination: Sommarjobb + Tillsvidare
+      if (job.af_employment_type_code === 'Jh8f_q9J_pbJ' && job.af_duration_code === 'a7uU_j21_mkL') {
+        throw new Error('Sommarjobb cannot be combined with duration Tillsvidare');
       }
     };
 
@@ -78,20 +91,105 @@ serve(async (req) => {
       }
     };
 
-    // Kör conditional validering
+    // ✅ Validera alla fältlängder och format enligt AF dokumentation
+    const validateFieldLengths = (job: any) => {
+      // Title: 1-75 chars
+      if (!job.title || job.title.length < 1) throw new Error('Title is required');
+      if (job.title.length > 75) throw new Error(`Title max 75 chars, got ${job.title.length}`);
+
+      // Description: 100-6500 chars (strippad HTML)
+      const description = job.description_md?.replace(/<[^>]*>/g, '').trim() || '';
+      if (description.length < 100) throw new Error(`Description min 100 chars, got ${description.length}`);
+      if (description.length > 6500) throw new Error(`Description max 6500 chars, got ${description.length}`);
+
+      // Contact person name: firstname & surname 1-50 chars each
+      const nameParts = (job.contact_person_name || '').split(' ');
+      const firstname = nameParts[0] || '';
+      const surname = nameParts.slice(1).join(' ') || '';
+      if (!firstname || firstname.length < 1 || firstname.length > 50) {
+        throw new Error(`Contact firstname must be 1-50 chars, got ${firstname.length}: "${firstname}"`);
+      }
+      if (!surname || surname.length < 1 || surname.length > 50) {
+        throw new Error(`Contact surname must be 1-50 chars, got ${surname.length}: "${surname}"`);
+      }
+
+      // Contact: must have email AND/OR phone
+      if (!job.contact_person_email && !job.contact_person_phone) {
+        throw new Error('Contact must have email and/or phone');
+      }
+
+      // Email: 5-100 chars
+      if (job.contact_person_email) {
+        if (job.contact_person_email.length < 5 || job.contact_person_email.length > 100) {
+          throw new Error(`Contact email must be 5-100 chars, got ${job.contact_person_email.length}`);
+        }
+      }
+
+      // Employer web address: 11-200 chars
+      const webAddress = job.companies?.website || "https://nocv.se";
+      if (webAddress.length < 11 || webAddress.length > 200) {
+        throw new Error(`Employer web address must be 11-200 chars, got ${webAddress.length}`);
+      }
+
+      // Workplace name: 1-100 chars
+      const workplaceName = String(job.companies?.name || "");
+      if (workplaceName.length < 1 || workplaceName.length > 100) {
+        throw new Error(`Workplace name must be 1-100 chars, got ${workplaceName.length}`);
+      }
+
+      // Postal code: exactly 5 chars for Sweden
+      const postalCode = String(job.companies?.postal_code || "");
+      if (postalCode.length !== 5) {
+        throw new Error(`Postal code must be exactly 5 chars for Sweden, got ${postalCode.length}: "${postalCode}"`);
+      }
+
+      // City: 1-50 chars
+      const city = String(job.companies?.city || "");
+      if (city.length < 1 || city.length > 50) {
+        throw new Error(`City must be 1-50 chars, got ${city.length}`);
+      }
+
+      // Street: 1-100 chars (if provided)
+      const street = String(job.companies?.address || "");
+      if (street && (street.length < 1 || street.length > 100)) {
+        throw new Error(`Street must be 1-100 chars, got ${street.length}`);
+      }
+
+      // Total positions: 1-499
+      const totalPositions = job.total_positions || 1;
+      if (totalPositions < 1 || totalPositions > 499) {
+        throw new Error(`totalJobOpenings must be 1-499, got ${totalPositions}`);
+      }
+
+      // Application URL: 11-200 chars
+      const applicationUrl = `https://nocv.se/jobb/${job.slug}`;
+      if (applicationUrl.length < 11 || applicationUrl.length > 200) {
+        throw new Error(`Application URL must be 11-200 chars, got ${applicationUrl.length}`);
+      }
+    };
+
+    // ✅ Kör alla valideringar
+    validateFieldLengths(job);
+    validateEmploymentType(job);
     validateConditionalFields(job);
     validateLastPublishDate(job.last_application_date);
 
     console.log('✅ All validation passed');
 
-    // Format phone number to Swedish format
+    // ✅ Format phone number to Swedish format with length validation
     const formatPhoneNumber = (phone: string | null | undefined): string => {
-      if (!phone) return '';  // Returnera tom sträng istället för undefined
+      if (!phone) return '';
       
       let cleaned = phone.replace(/[\s-]/g, '');
       if (cleaned.startsWith('07')) {
         cleaned = '+46' + cleaned.substring(1);
       }
+      
+      // Phone: 7-20 chars
+      if (cleaned.length < 7 || cleaned.length > 20) {
+        throw new Error(`Phone number must be 7-20 chars, got ${cleaned.length}: "${cleaned}"`);
+      }
+      
       return cleaned;
     };
 
@@ -130,15 +228,15 @@ serve(async (req) => {
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
     };
 
-    // Lägg till conditional fields endast om employmentType kräver dem
-    const requiresWorktimeAndDuration = ['6a5G_Jy3_5qG', 'Jh8f_q9J_pbJ'];
+    // ✅ Lägg till conditional fields endast om employmentType kräver dem (CORRECTED concept ID)
+    const requiresWorktimeAndDuration = ['PFZr_Syz_cUq', 'Jh8f_q9J_pbJ']; // Vanlig anställning, Sommarjobb
     if (requiresWorktimeAndDuration.includes(job.af_employment_type_code)) {
       afRequestBody.worktimeExtent = job.af_worktime_extent_code;
       afRequestBody.duration = job.af_duration_code;
       console.log('✅ Added conditional fields worktimeExtent & duration');
     }
     
-    // Fortsätt med workplaces
+    // ✅ Fortsätt med workplaces (inkl. country för Sverige)
     afRequestBody.workplaces = [
       {
         name: String(job.companies.name || ""),
@@ -146,7 +244,8 @@ serve(async (req) => {
         postalAddress: {
           street: String(job.companies.address || ""),
           postalCode: String(job.companies.postal_code || ""),
-          city: String(job.companies.city || "")
+          city: String(job.companies.city || ""),
+          country: "i46j_HmG_v64" // ✅ Sverige (required per AF documentation)
         }
       }
     ];

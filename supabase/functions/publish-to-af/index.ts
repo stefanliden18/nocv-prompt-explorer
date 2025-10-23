@@ -33,12 +33,14 @@ const mapWorktimeExtent = (conceptId: string): string => {
 
 const mapDuration = (conceptId: string): string => {
   const mapping: Record<string, string> = {
-    'nDg4_eBE_ueQ': 'CONTINUOUS',     // Tillsvidare
-    '9uK9_HfZ_uGj': 'FIXED_TERM',     // Visstid mer än 6 månader
-    'roiG_Mii_fiZ': 'FIXED_TERM',     // Visstid 3-6 månader
-    'fPhi_RmE_iUg': 'FIXED_TERM'      // Visstid mindre än 3 månader
+    'nDg4_eBE_ueQ': 'TILLSVIDARE',      // Tillsvidare
+    'k4MG_eqN_aqh': 'VIKARIAT',         // Vikariat
+    'aUdG_VuE_fCe': 'BEGRÄNSAD_TID',    // Tidsbegränsad anställning
+    '9uK9_HfZ_uGj': 'BEGRÄNSAD_TID',    // Visstid mer än 6 månader
+    'roiG_Mii_fiZ': 'BEGRÄNSAD_TID',    // Visstid 3-6 månader
+    'fPhi_RmE_iUg': 'BEGRÄNSAD_TID'     // Visstid mindre än 3 månader
   };
-  const result = mapping[conceptId] || 'CONTINUOUS';
+  const result = mapping[conceptId] || 'TILLSVIDARE';
   console.log(`🔄 Mapping duration: ${conceptId} → ${result}`);
   return result;
 };
@@ -53,14 +55,14 @@ const formatMunicipalityCode = (code: string): string => {
 const validateAfCombinations = (employmentType: string, worktimeExtent: string, duration: string): void => {
   console.log('🔍 Validating AF combinations:', { employmentType, worktimeExtent, duration });
   
-  // Regel 1: PERMANENT kräver CONTINUOUS (Tillsvidare)
-  if (employmentType === 'PERMANENT' && duration !== 'CONTINUOUS') {
-    throw new Error(`Invalid combination: PERMANENT requires duration CONTINUOUS (got: ${duration})`);
+  // Regel 1: PERMANENT kräver TILLSVIDARE
+  if (employmentType === 'PERMANENT' && duration !== 'TILLSVIDARE') {
+    throw new Error(`Invalid combination: PERMANENT requires duration TILLSVIDARE (got: ${duration})`);
   }
   
-  // Regel 2: TEMPORARY kan inte vara CONTINUOUS
-  if (employmentType === 'TEMPORARY' && duration === 'CONTINUOUS') {
-    throw new Error('Invalid combination: TEMPORARY cannot have duration CONTINUOUS');
+  // Regel 2: TEMPORARY kan inte vara TILLSVIDARE
+  if (employmentType === 'TEMPORARY' && duration === 'TILLSVIDARE') {
+    throw new Error('Invalid combination: TEMPORARY cannot have duration TILLSVIDARE');
   }
   
   // Regel 3: worktimeExtent måste vara FULL_TIME eller PART_TIME
@@ -68,9 +70,9 @@ const validateAfCombinations = (employmentType: string, worktimeExtent: string, 
     throw new Error(`Invalid worktimeExtent: Must be FULL_TIME or PART_TIME (got: ${worktimeExtent})`);
   }
   
-  // Regel 4: SEASONAL kan inte vara CONTINUOUS
-  if (employmentType === 'SEASONAL' && duration === 'CONTINUOUS') {
-    throw new Error('Invalid combination: SEASONAL cannot have duration CONTINUOUS');
+  // Regel 4: SEASONAL kan inte vara TILLSVIDARE
+  if (employmentType === 'SEASONAL' && duration === 'TILLSVIDARE') {
+    throw new Error('Invalid combination: SEASONAL cannot have duration TILLSVIDARE');
   }
   
   console.log('✅ AF combinations validated successfully');

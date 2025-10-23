@@ -129,7 +129,9 @@ serve(async (req) => {
     console.log('✅ All required fields present');
 
     // Format phone number to Swedish format
-    const formatPhoneNumber = (phone: string) => {
+    const formatPhoneNumber = (phone: string | null | undefined): string => {
+      if (!phone) return '';  // Returnera tom sträng istället för undefined
+      
       let cleaned = phone.replace(/[\s-]/g, '');
       if (cleaned.startsWith('07')) {
         cleaned = '+46' + cleaned.substring(1);
@@ -177,12 +179,12 @@ serve(async (req) => {
       // Arbetsplats (obligatoriskt enligt AF API)
       workplaces: [
         {
-          name: job.companies.name,
+          name: String(job.companies.name || ""),
           municipality: job.af_municipality_code,
           postalAddress: {
-            street: job.companies.address || "",
-            postalCode: job.companies.postal_code || "",
-            city: job.companies.city || ""
+            street: String(job.companies.address || ""),
+            postalCode: String(job.companies.postal_code || ""),
+            city: String(job.companies.city || "")
           }
         }
       ],
@@ -218,6 +220,24 @@ serve(async (req) => {
       occupation: afRequestBody.occupation,
       municipality: job.af_municipality_code,
     });
+
+    // Validera att alla kritiska fält är strängar
+    console.log("🔍 AF payload field types:", {
+      municipality: `${typeof afRequestBody.workplaces[0].municipality} = "${afRequestBody.workplaces[0].municipality}"`,
+      postalCode: `${typeof afRequestBody.workplaces[0].postalAddress.postalCode} = "${afRequestBody.workplaces[0].postalAddress.postalCode}"`,
+      phoneNumber: `${typeof afRequestBody.contacts[0].phoneNumber} = "${afRequestBody.contacts[0].phoneNumber}"`,
+      occupation: `${typeof afRequestBody.occupation} = "${afRequestBody.occupation}"`
+    });
+
+    if (typeof afRequestBody.workplaces[0].municipality !== 'string') {
+      throw new Error(`municipality must be string, got ${typeof afRequestBody.workplaces[0].municipality}`);
+    }
+    if (typeof afRequestBody.workplaces[0].postalAddress.postalCode !== 'string') {
+      throw new Error(`postalCode must be string, got ${typeof afRequestBody.workplaces[0].postalAddress.postalCode}`);
+    }
+    if (typeof afRequestBody.contacts[0].phoneNumber !== 'string') {
+      throw new Error(`phoneNumber must be string, got ${typeof afRequestBody.contacts[0].phoneNumber}`);
+    }
 
     console.log('📨 Sending POST request to AF API...');
     console.log('Request payload:', JSON.stringify(afRequestBody, null, 2));

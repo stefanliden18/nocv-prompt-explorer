@@ -235,6 +235,12 @@ serve(async (req) => {
       afRequestBody.duration = job.af_duration_code;
       console.log('✅ Added conditional fields worktimeExtent & duration');
     }
+
+    // ✅ Behovsanställning får ALDRIG ha worktimeExtent enligt AF
+    if (job.af_employment_type_code === '1paU_aCR_nGn') {
+      delete afRequestBody.worktimeExtent;
+      console.log('✅ Removed worktimeExtent for behovsanställning');
+    }
     
     // ✅ Fortsätt med workplaces (inkl. country för Sverige)
     afRequestBody.workplaces = [

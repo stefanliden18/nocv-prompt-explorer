@@ -6,7 +6,44 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific/concepts';
+const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts';
+const TAXONOMY_VERSION = '16';
+
+// Helper function to fetch taxonomy from JobTech API with fallback
+async function fetchTaxonomy(type: string, fallbackData: any[]) {
+  try {
+    console.log(`Fetching taxonomy for type: ${type} version ${TAXONOMY_VERSION}...`);
+    const response = await fetch(
+      `${JOBTECH_TAXONOMY_BASE_URL}?type=${type}&version=${TAXONOMY_VERSION}`
+    );
+    
+    if (!response.ok) {
+      console.warn(`⚠️ JobTech API returned status ${response.status} for ${type}, using fallback`);
+      const errorText = await response.text();
+      console.warn(`Response body: ${errorText.substring(0, 200)}`);
+      return fallbackData;
+    }
+    
+    const data = await response.json();
+    
+    if (!data.concepts || !Array.isArray(data.concepts)) {
+      console.warn(`⚠️ Invalid response format from JobTech API for ${type}, using fallback`);
+      return fallbackData;
+    }
+    
+    const mapped = data.concepts.map((c: any) => ({
+      code: c['concept-id'],
+      label: c.term
+    }));
+    
+    console.log(`✅ Fetched ${mapped.length} items for ${type} from JobTech API`);
+    return mapped;
+  } catch (error) {
+    console.warn(`⚠️ Error fetching ${type} from JobTech API:`, error);
+    console.warn(`Using fallback data for ${type}`);
+    return fallbackData;
+  }
+}
 
 // ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation
 const EMPLOYMENT_TYPES_FALLBACK = [
@@ -458,29 +495,9 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${municipalities.length} municipality codes`);
 
-    // Hämta anställningstyper från Jobtech Taxonomy API med fallback
-    let employmentTypes = EMPLOYMENT_TYPES_FALLBACK;
-    try {
-      console.log('Fetching employment types from Jobtech Taxonomy API...');
-      const employmentTypesResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-type`);
-      
-      if (!employmentTypesResponse.ok) {
-        console.error(`⚠️ API error: ${employmentTypesResponse.status} ${employmentTypesResponse.statusText}`);
-        const errorText = await employmentTypesResponse.text();
-        console.error(`Response body: ${errorText.substring(0, 200)}`);
-        console.log('⚠️ Using fallback employment types data');
-      } else {
-        const employmentTypesData = await employmentTypesResponse.json();
-        employmentTypes = employmentTypesData.map((item: any) => ({
-          code: item.id,
-          label: item.term
-        }));
-        console.log(`✅ Fetched ${employmentTypes.length} employment types from API`);
-      }
-    } catch (error) {
-      console.error('⚠️ Error fetching employment types from API:', error);
-      console.log('⚠️ Using fallback employment types data');
-    }
+    // 3. Sync employment type codes (dynamically from API with fallback)
+    console.log('3. Syncing employment type codes...');
+    const employmentTypes = await fetchTaxonomy('employment-type', EMPLOYMENT_TYPES_FALLBACK);
 
     // Rensa befintliga och lägg till nya
     const { error: deleteEmpError } = await supabase
@@ -501,29 +518,9 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${employmentTypes.length} employment types`);
 
-    // Hämta varaktighet från Jobtech Taxonomy API med fallback
-    let durations = DURATIONS_FALLBACK;
-    try {
-      console.log('Fetching duration codes from Jobtech Taxonomy API...');
-      const durationsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-duration`);
-      
-      if (!durationsResponse.ok) {
-        console.error(`⚠️ API error: ${durationsResponse.status} ${durationsResponse.statusText}`);
-        const errorText = await durationsResponse.text();
-        console.error(`Response body: ${errorText.substring(0, 200)}`);
-        console.log('⚠️ Using fallback duration data');
-      } else {
-        const durationsData = await durationsResponse.json();
-        durations = durationsData.map((item: any) => ({
-          code: item.id,
-          label: item.term
-        }));
-        console.log(`✅ Fetched ${durations.length} duration codes from API`);
-      }
-    } catch (error) {
-      console.error('⚠️ Error fetching durations from API:', error);
-      console.log('⚠️ Using fallback duration data');
-    }
+    // 4. Sync duration codes (dynamically from API with fallback)
+    console.log('4. Syncing duration codes...');
+    const durations = await fetchTaxonomy('employment-duration', DURATIONS_FALLBACK);
 
     // Rensa befintliga och lägg till nya
     const { error: deleteDurError } = await supabase
@@ -544,29 +541,9 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${durations.length} duration codes`);
 
-    // Hämta arbetstidsomfattning från Jobtech Taxonomy API med fallback
-    let worktimeExtents = WORKTIME_EXTENTS_FALLBACK;
-    try {
-      console.log('Fetching worktime extent codes from Jobtech Taxonomy API...');
-      const worktimeExtentsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=worktime-extent`);
-      
-      if (!worktimeExtentsResponse.ok) {
-        console.error(`⚠️ API error: ${worktimeExtentsResponse.status} ${worktimeExtentsResponse.statusText}`);
-        const errorText = await worktimeExtentsResponse.text();
-        console.error(`Response body: ${errorText.substring(0, 200)}`);
-        console.log('⚠️ Using fallback worktime extent data');
-      } else {
-        const worktimeExtentsData = await worktimeExtentsResponse.json();
-        worktimeExtents = worktimeExtentsData.map((item: any) => ({
-          code: item.id,
-          label: item.term
-        }));
-        console.log(`✅ Fetched ${worktimeExtents.length} worktime extent codes from API`);
-      }
-    } catch (error) {
-      console.error('⚠️ Error fetching worktime extents from API:', error);
-      console.log('⚠️ Using fallback worktime extent data');
-    }
+    // 5. Sync worktime extent codes (dynamically from API with fallback)
+    console.log('5. Syncing worktime extent codes...');
+    const worktimeExtents = await fetchTaxonomy('worktime-extent', WORKTIME_EXTENTS_FALLBACK);
 
     // Rensa befintliga och lägg till nya
     const { error: deleteWtError } = await supabase

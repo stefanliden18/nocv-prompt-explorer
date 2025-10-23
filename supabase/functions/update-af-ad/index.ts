@@ -45,7 +45,17 @@ const mapDuration = (conceptId: string): string => {
   return result;
 };
 
-// formatMunicipalityCode removed - now using concept_id directly from database
+// Normalisera kommunkod till heltal utan ledande nollor
+const normalizeMunicipality = (input: string | number | null | undefined): number | null => {
+  if (input == null) return null;
+  
+  // Extrahera alla siffror från input
+  const digits = String(input).match(/\d+/)?.[0] ?? "";
+  if (!digits) return null;
+  
+  // Ta bort ledande nollor och konvertera till Number
+  return Number(digits.replace(/^0+/, ""));
+};
 
 const validateAfCombinations = (employmentType: string, worktimeExtent: string, duration: string): void => {
   console.log('🔍 Validating AF combinations:', { employmentType, worktimeExtent, duration });
@@ -130,6 +140,16 @@ serve(async (req) => {
     const mappedWorktimeExtent = mapWorktimeExtent(job.af_worktime_extent_code);
     const mappedDuration = mapDuration(job.af_duration_code);
 
+    // Normalisera kommunkod
+    const rawMunicipality = job.af_municipality_code;
+    const normalizedMunicipality = normalizeMunicipality(rawMunicipality);
+
+    console.log(`🔄 Municipality normalization: "${rawMunicipality}" → ${normalizedMunicipality}`);
+
+    if (!normalizedMunicipality || Number.isNaN(normalizedMunicipality)) {
+      throw new Error(`Invalid municipality code: ${rawMunicipality}`);
+    }
+
     // Validera kombinationer INNAN vi bygger payload
     validateAfCombinations(mappedEmploymentType, mappedWorktimeExtent, mappedDuration);
 
@@ -155,7 +175,7 @@ serve(async (req) => {
       workplaces: [
         {
           name: job.companies.name,
-          municipality: job.municipality?.[0]?.concept_id || job.af_municipality_code,
+          municipality: normalizedMunicipality,
           postalAddress: {
             street: job.companies.address || "",
             postalCode: job.companies.postal_code || "",
@@ -193,7 +213,7 @@ serve(async (req) => {
       worktimeExtent: afRequestBody.worktimeExtent,
       duration: afRequestBody.duration,
       occupation: afRequestBody.occupation,
-      municipality: job.municipality?.[0]?.concept_id || job.af_municipality_code,
+      municipality: normalizedMunicipality,
     });
 
     console.log('📨 Sending PUT request to AF API...');

@@ -75,13 +75,15 @@ serve(async (req) => {
     console.log('📨 Sending PUT request to AF API...');
     console.log('Updating AF ad:', job.af_ad_id);
 
+    // Create Basic Auth header
+    const basicAuth = btoa(`${Deno.env.get('AF_CLIENT_ID')}:${Deno.env.get('AF_CLIENT_SECRET')}`);
+
     const afResponse = await fetch(`${AF_API_BASE}${AF_ENDPOINT}/${job.af_ad_id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'Employer-Id': Deno.env.get('NOCV_AF_EMPLOYER_ID') ?? '',
-        'client_id': Deno.env.get('AF_CLIENT_ID') ?? '',
-        'client_secret': Deno.env.get('AF_CLIENT_SECRET') ?? ''
+        'Authorization': `Basic ${basicAuth}`,
+        'Employer-Id': Deno.env.get('NOCV_AF_EMPLOYER_ID') ?? ''
       },
       body: JSON.stringify(afRequestBody)
     });

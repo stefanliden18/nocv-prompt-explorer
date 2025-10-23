@@ -106,14 +106,16 @@ serve(async (req) => {
     console.log('📨 Sending POST request to AF API...');
     console.log('Request body:', JSON.stringify(afRequestBody, null, 2));
 
+    // Create Basic Auth header
+    const basicAuth = btoa(`${Deno.env.get('AF_CLIENT_ID')}:${Deno.env.get('AF_CLIENT_SECRET')}`);
+
     // Skicka POST till AF API
     const afResponse = await fetch(`${AF_API_BASE}${AF_ENDPOINT}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Employer-Id': Deno.env.get('NOCV_AF_EMPLOYER_ID') ?? '',
-        'client_id': Deno.env.get('AF_CLIENT_ID') ?? '',
-        'client_secret': Deno.env.get('AF_CLIENT_SECRET') ?? ''
+        'Authorization': `Basic ${basicAuth}`,
+        'Employer-Id': Deno.env.get('NOCV_AF_EMPLOYER_ID') ?? ''
       },
       body: JSON.stringify(afRequestBody)
     });

@@ -171,15 +171,13 @@ serve(async (req) => {
     };
 
     // Validera obligatoriska fält
-    const requiredFields = [
-      'contact_person_name',
-      'contact_person_email',
-      'contact_person_phone',
-      'last_application_date',
-      'af_occupation_code',
-      'af_municipality_code',
-      'af_employment_type_code'
-    ];
+  const requiredFields = [
+    'contact_person_name',
+    'last_application_date',
+    'af_occupation_code',
+    'af_municipality_code',
+    'af_employment_type_code'
+  ];
 
     const missingFields = requiredFields.filter(field => !job[field]);
     if (missingFields.length > 0) {

@@ -413,23 +413,49 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${occupationCodes.length} occupation codes`);
 
-    // Förbered kommunkoder för upsert (från statisk fil)
-    const municipalityCodes = MUNICIPALITIES.map((mun: any) => ({
+    // Hämta kommunkoder från Jobtech Taxonomy API med fallback
+    let municipalities = MUNICIPALITIES.map((mun: any) => ({
       code: mun.id,
       label: mun.label,
       county: mun.county || null
     }));
+    
+    try {
+      console.log('Fetching municipality codes from Jobtech Taxonomy API...');
+      const municipalitiesResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=municipality`);
+      
+      if (!municipalitiesResponse.ok) {
+        console.error(`⚠️ API error: ${municipalitiesResponse.status} ${municipalitiesResponse.statusText}`);
+        const errorText = await municipalitiesResponse.text();
+        console.error(`Response body: ${errorText.substring(0, 200)}`);
+        console.log('⚠️ Using fallback municipality data');
+      } else {
+        const municipalitiesData = await municipalitiesResponse.json();
+        console.log(`✅ Fetched ${municipalitiesData.length} municipalities from API`);
+        
+        // Mappa API-data till vårt format
+        municipalities = municipalitiesData.map((item: any) => ({
+          code: item.id,  // Detta är concept ID (t.ex. "aYA7_PpG_BqP")
+          label: item.term,  // Kommunnamn (t.ex. "Stockholm")
+          county: null  // API:t ger inte län, men vi kan behålla detta för framtida användning
+        }));
+        console.log(`✅ Mapped ${municipalities.length} municipality codes with concept IDs`);
+      }
+    } catch (error) {
+      console.error('⚠️ Error fetching municipalities from API:', error);
+      console.log('⚠️ Using fallback municipality data');
+    }
 
     console.log('Inserting municipality codes into database...');
     const { error: munError } = await supabase
       .from('af_municipality_codes')
-      .upsert(municipalityCodes, { onConflict: 'code' });
+      .upsert(municipalities, { onConflict: 'code' });
 
     if (munError) {
       console.error('Error inserting municipality codes:', munError);
       throw munError;
     }
-    console.log(`✅ Inserted ${municipalityCodes.length} municipality codes`);
+    console.log(`✅ Inserted ${municipalities.length} municipality codes`);
 
     // Hämta anställningstyper från Jobtech Taxonomy API med fallback
     let employmentTypes = EMPLOYMENT_TYPES_FALLBACK;
@@ -567,7 +593,7 @@ serve(async (req) => {
         success: true,
         message: 'AF taxonomy sync completed successfully',
         occupations: occupationCodes.length,
-        municipalities: municipalityCodes.length,
+        municipalities: municipalities.length,
         employmentTypes: employmentTypes.length,
         durations: durations.length,
         worktimeExtents: worktimeExtents.length

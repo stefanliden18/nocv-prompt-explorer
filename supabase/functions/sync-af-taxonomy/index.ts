@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific/concepts';
+
 // Statiska yrkeskoder (50 vanligaste)
 const OCCUPATIONS = [
   { id: "apaJ_2YB_LuF", label: "Lastbilsförare", label_en: "Truck driver", ssyk: "8332" },
@@ -405,43 +407,92 @@ serve(async (req) => {
     }
     console.log(`✅ Inserted ${municipalityCodes.length} municipality codes`);
 
-    // Infoga anställningstyper (hårdkodade enligt AF-standard)
-    const employmentTypes = [
-      { code: 'HEL', label: 'Heltid' },
-      { code: 'DEL', label: 'Deltid' },
-      { code: 'TILF', label: 'Timanställning' },
-      { code: 'SASR', label: 'Säsongsarbete' }
-    ];
+    // Hämta anställningstyper från Jobtech Taxonomy API
+    console.log('Fetching employment types from Jobtech Taxonomy API...');
+    const employmentTypesResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-type`);
+    const employmentTypesData = await employmentTypesResponse.json();
+    
+    const employmentTypes = employmentTypesData.map((item: any) => ({
+      code: item.id,
+      label: item.term
+    }));
+
+    // Rensa befintliga och lägg till nya
+    const { error: deleteEmpError } = await supabase
+      .from('af_employment_type_codes')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+
+    if (deleteEmpError) console.error('Error clearing employment types:', deleteEmpError);
 
     console.log('Inserting employment type codes into database...');
     const { error: empError } = await supabase
       .from('af_employment_type_codes')
-      .upsert(employmentTypes, { onConflict: 'code' });
+      .insert(employmentTypes);
 
     if (empError) {
       console.error('Error inserting employment types:', empError);
       throw empError;
     }
-    console.log(`✅ Inserted ${employmentTypes.length} employment types`);
+    console.log(`✅ Inserted ${employmentTypes.length} employment types from API`);
 
-    // Infoga varaktighet (hårdkodade enligt AF-standard)
-    const durations = [
-      { code: 'TIL', label: 'Tillsvidare' },
-      { code: 'TID', label: 'Tidsbegränsad anställning' },
-      { code: 'VIK', label: 'Vikariat' },
-      { code: 'PROJ', label: 'Projektanställning' }
-    ];
+    // Hämta varaktighet från Jobtech Taxonomy API
+    console.log('Fetching duration codes from Jobtech Taxonomy API...');
+    const durationsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=employment-duration`);
+    const durationsData = await durationsResponse.json();
+    
+    const durations = durationsData.map((item: any) => ({
+      code: item.id,
+      label: item.term
+    }));
+
+    // Rensa befintliga och lägg till nya
+    const { error: deleteDurError } = await supabase
+      .from('af_duration_codes')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+
+    if (deleteDurError) console.error('Error clearing durations:', deleteDurError);
 
     console.log('Inserting duration codes into database...');
     const { error: durError } = await supabase
       .from('af_duration_codes')
-      .upsert(durations, { onConflict: 'code' });
+      .insert(durations);
 
     if (durError) {
       console.error('Error inserting durations:', durError);
       throw durError;
     }
-    console.log(`✅ Inserted ${durations.length} duration codes`);
+    console.log(`✅ Inserted ${durations.length} duration codes from API`);
+
+    // Hämta arbetstidsomfattning från Jobtech Taxonomy API
+    console.log('Fetching worktime extent codes from Jobtech Taxonomy API...');
+    const worktimeExtentsResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=worktime-extent`);
+    const worktimeExtentsData = await worktimeExtentsResponse.json();
+    
+    const worktimeExtents = worktimeExtentsData.map((item: any) => ({
+      code: item.id,
+      label: item.term
+    }));
+
+    // Rensa befintliga och lägg till nya
+    const { error: deleteWtError } = await supabase
+      .from('af_worktime_extent_codes')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000');
+
+    if (deleteWtError) console.error('Error clearing worktime extents:', deleteWtError);
+
+    console.log('Inserting worktime extent codes into database...');
+    const { error: wtError } = await supabase
+      .from('af_worktime_extent_codes')
+      .insert(worktimeExtents);
+
+    if (wtError) {
+      console.error('Error inserting worktime extents:', wtError);
+      throw wtError;
+    }
+    console.log(`✅ Inserted ${worktimeExtents.length} worktime extent codes from API`);
 
     console.log('✅ Taxonomy sync completed successfully!');
 
@@ -452,7 +503,8 @@ serve(async (req) => {
         occupations: occupationCodes.length,
         municipalities: municipalityCodes.length,
         employmentTypes: employmentTypes.length,
-        durations: durations.length
+        durations: durations.length,
+        worktimeExtents: worktimeExtents.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

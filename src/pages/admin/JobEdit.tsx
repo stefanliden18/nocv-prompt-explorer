@@ -376,6 +376,28 @@ export default function JobEdit() {
       
     } catch (error: any) {
       console.error('Error publishing to AF:', error);
+      
+      // Kolla om det är ett FunctionsHttpError med faktiskt svar från edge function
+      if (error.context) {
+        try {
+          const errorResponse = await error.context.json();
+          console.log('AF API error response:', errorResponse);
+          
+          // Om edge functionen returnerade AF API-fel
+          if (errorResponse.trackingId || errorResponse.cause) {
+            const errorMessage = errorResponse.cause?.message || 'AF API returnerade ett fel';
+            toast.error("❌ AF API-fel", {
+              description: `${errorMessage}\n\n🔍 Tracking ID: ${errorResponse.trackingId}`,
+              duration: 15000,
+            });
+            setAfError(JSON.stringify(errorResponse, null, 2));
+            return;
+          }
+        } catch (jsonError) {
+          console.error('Could not parse error response:', jsonError);
+        }
+      }
+      
       toast.error("💥 Fel vid publicering", {
         description: error.message || 'Okänt fel uppstod',
       });
@@ -438,6 +460,28 @@ export default function JobEdit() {
       
     } catch (error: any) {
       console.error('Error updating AF ad:', error);
+      
+      // Kolla om det är ett FunctionsHttpError med faktiskt svar från edge function
+      if (error.context) {
+        try {
+          const errorResponse = await error.context.json();
+          console.log('AF API error response:', errorResponse);
+          
+          // Om edge functionen returnerade AF API-fel
+          if (errorResponse.trackingId || errorResponse.cause) {
+            const errorMessage = errorResponse.cause?.message || 'AF API returnerade ett fel';
+            toast.error("❌ AF API-fel", {
+              description: `${errorMessage}\n\n🔍 Tracking ID: ${errorResponse.trackingId}`,
+              duration: 15000,
+            });
+            setAfError(JSON.stringify(errorResponse, null, 2));
+            return;
+          }
+        } catch (jsonError) {
+          console.error('Could not parse error response:', jsonError);
+        }
+      }
+      
       toast.error("💥 Fel vid uppdatering", {
         description: error.message || 'Okänt fel uppstod',
       });
@@ -470,6 +514,28 @@ export default function JobEdit() {
       
     } catch (error: any) {
       console.error('Error unpublishing from AF:', error);
+      
+      // Kolla om det är ett FunctionsHttpError med faktiskt svar från edge function
+      if (error.context) {
+        try {
+          const errorResponse = await error.context.json();
+          console.log('AF API error response:', errorResponse);
+          
+          // Om edge functionen returnerade AF API-fel
+          if (errorResponse.trackingId || errorResponse.cause) {
+            const errorMessage = errorResponse.cause?.message || 'AF API returnerade ett fel';
+            toast.error("❌ AF API-fel", {
+              description: `${errorMessage}\n\n🔍 Tracking ID: ${errorResponse.trackingId}`,
+              duration: 15000,
+            });
+            setAfError(JSON.stringify(errorResponse, null, 2));
+            return;
+          }
+        } catch (jsonError) {
+          console.error('Could not parse error response:', jsonError);
+        }
+      }
+      
       toast.error("Fel vid avpublicering", {
         description: error.message,
       });

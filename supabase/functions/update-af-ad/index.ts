@@ -39,6 +39,51 @@ serve(async (req) => {
 
     console.log('✅ Job found, AF Ad ID:', job.af_ad_id);
 
+    // Validera conditional fields enligt AF dokumentation
+    const validateConditionalFields = (job: any) => {
+      const requiresWorktimeAndDuration = ['6a5G_Jy3_5qG', 'Jh8f_q9J_pbJ']; // Vanlig anställning, Sommarjobb
+      const forbidsWorktime = ['1paU_aCR_nGn']; // Behovsanställning
+
+      if (requiresWorktimeAndDuration.includes(job.af_employment_type_code)) {
+        if (!job.af_worktime_extent_code) {
+          throw new Error(`worktimeExtent is mandatory for employmentType ${job.af_employment_type_code}`);
+        }
+        if (!job.af_duration_code) {
+          throw new Error(`duration is mandatory for employmentType ${job.af_employment_type_code}`);
+        }
+      }
+
+      if (forbidsWorktime.includes(job.af_employment_type_code) && job.af_worktime_extent_code) {
+        throw new Error(`worktimeExtent cannot be used with employmentType ${job.af_employment_type_code}`);
+      }
+    };
+
+    // Validera lastPublishDate (1-180 dagar framåt)
+    const validateLastPublishDate = (date: string | null) => {
+      if (!date) throw new Error('lastPublishDate is required');
+      
+      const publishDate = new Date(date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const maxDate = new Date(today);
+      maxDate.setDate(maxDate.getDate() + 180);
+      
+      const daysDiff = Math.ceil((publishDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff < 1) {
+        throw new Error(`lastPublishDate must be at least 1 day in the future, got ${date}`);
+      }
+      if (daysDiff > 180) {
+        throw new Error(`lastPublishDate cannot be more than 180 days in the future, got ${date}`);
+      }
+    };
+
+    // Kör conditional validering
+    validateConditionalFields(job);
+    validateLastPublishDate(job.last_application_date);
+
+    console.log('✅ All validation passed');
+
     // Format phone number to Swedish format
     const formatPhoneNumber = (phone: string | null | undefined): string => {
       if (!phone) return '';  // Returnera tom sträng istället för undefined
@@ -67,7 +112,8 @@ serve(async (req) => {
       municipality: job.af_municipality_code
     });
 
-    const afRequestBody = {
+    // Bygg payload baserat på conditional rules
+    const afRequestBody: any = {
       // Obligatoriska administrativa fält
       jobAdResponsibleEmail: "admin@nocv.se",
       employerWebAddress: job.companies.website || "https://nocv.se",
@@ -81,45 +127,51 @@ serve(async (req) => {
       // Kategorisering (JobTech Taxonomy concept IDs)
       occupation: job.af_occupation_code,
       employmentType: job.af_employment_type_code,
-      worktimeExtent: job.af_worktime_extent_code,
-      duration: job.af_duration_code,
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
-      
-      // Arbetsplats (obligatoriskt enligt AF API)
-      workplaces: [
-        {
-          name: String(job.companies.name || ""),
-          municipality: job.af_municipality_code,
-          postalAddress: {
-            street: String(job.companies.address || ""),
-            postalCode: String(job.companies.postal_code || ""),
-            city: String(job.companies.city || "")
-          }
-        }
-      ],
-      
-      // Kontakter (array enligt AF API)
-      contacts: [
-        {
-          firstname: firstname,
-          surname: surname,
-          email: job.contact_person_email,
-          phoneNumber: formatPhoneNumber(job.contact_person_phone),
-          title: "Kontaktperson"
-        }
-      ],
-      
-      // Ansökan
-      application: {
-        method: {
-          webAddress: `https://nocv.se/jobb/${job.slug}`
-        }
-      },
-      
-      // Övrigt
-      eures: false,
-      keywords: ["OPEN_TO_ALL"]
     };
+
+    // Lägg till conditional fields endast om employmentType kräver dem
+    const requiresWorktimeAndDuration = ['6a5G_Jy3_5qG', 'Jh8f_q9J_pbJ'];
+    if (requiresWorktimeAndDuration.includes(job.af_employment_type_code)) {
+      afRequestBody.worktimeExtent = job.af_worktime_extent_code;
+      afRequestBody.duration = job.af_duration_code;
+      console.log('✅ Added conditional fields worktimeExtent & duration');
+    }
+    
+    // Fortsätt med workplaces
+    afRequestBody.workplaces = [
+      {
+        name: String(job.companies.name || ""),
+        municipality: job.af_municipality_code,
+        postalAddress: {
+          street: String(job.companies.address || ""),
+          postalCode: String(job.companies.postal_code || ""),
+          city: String(job.companies.city || "")
+        }
+      }
+    ];
+    
+    // Kontakter (array enligt AF API)
+    afRequestBody.contacts = [
+      {
+        firstname: firstname,
+        surname: surname,
+        email: job.contact_person_email,
+        phoneNumber: formatPhoneNumber(job.contact_person_phone),
+        title: "Kontaktperson"
+      }
+    ];
+    
+    // Ansökan
+    afRequestBody.application = {
+      method: {
+        webAddress: `https://nocv.se/jobb/${job.slug}`
+      }
+    };
+    
+    // Övrigt
+    afRequestBody.eures = false;
+    afRequestBody.keywords = ["OPEN_TO_ALL"];
 
     // Debug: Visa concept IDs
     console.log("🔍 Final AF payload taxonomy:", {

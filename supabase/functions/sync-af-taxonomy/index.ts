@@ -8,19 +8,20 @@ const corsHeaders = {
 
 const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific/concepts';
 
-// Statiska fallback-data för anställningstyper
+// ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation
 const EMPLOYMENT_TYPES_FALLBACK = [
   { code: '6a5G_Jy3_5qG', label: 'Vanlig anställning' },
   { code: '8qLN_bEY_bhk', label: 'Vikariat' },
   { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
-  { code: 'kcfG_GDe_Fum', label: 'Behovsanställning' },
+  { code: '1paU_aCR_nGn', label: 'Behovsanställning' },  // ✅ Uppdaterad
   { code: 'bYfG_jXa_zik', label: 'Frilans' },
-  { code: 'h4fe_E7e_UqV', label: 'Extratjänst' }
+  { code: 'h4fe_E7e_UqV', label: 'Extratjänst' },
+  { code: 'Jh8f_q9J_pbJ', label: 'Sommarjobb/Feriejobb' }  // ✅ Tillagd
 ];
 
 // Statiska fallback-data för varaktighet
 const DURATIONS_FALLBACK = [
-  { code: 'nDg4_eBE_ueQ', label: 'Tillsvidare' },
+  { code: 'a7uU_j21_mkL', label: 'Tillsvidare' },  // ✅ Uppdaterad från AF dokumentation
   { code: '9uK9_HfZ_uGj', label: 'Visstid mer än 6 månader' },
   { code: 'roiG_Mii_fiZ', label: 'Visstid 3-6 månader' },
   { code: 'fPhi_RmE_iUg', label: 'Visstid mindre än 3 månader' }
@@ -28,7 +29,7 @@ const DURATIONS_FALLBACK = [
 
 // Statiska fallback-data för arbetstidsomfattning
 const WORKTIME_EXTENTS_FALLBACK = [
-  { code: 'wYi8_aFg_R1m', label: 'Heltid' },
+  { code: '6YE1_gAC_R2G', label: 'Heltid' },  // ✅ Uppdaterad från AF dokumentation
   { code: 'aUF9_eHe_iUe', label: 'Deltid' }
 ];
 

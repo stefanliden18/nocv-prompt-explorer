@@ -6,6 +6,43 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Mappa JobTech Taxonomy concept IDs till AF JobAd API enum-värden
+const mapEmploymentType = (conceptId: string): string => {
+  const mapping: Record<string, string> = {
+    '6a5G_Jy3_5qG': 'PERMANENT',      // Vanlig anställning
+    '8qLN_bEY_bhk': 'TEMPORARY',      // Vikariat
+    'nuKG_MXb_Yua': 'SEASONAL',       // Säsongsarbete
+    'kcfG_GDe_Fum': 'TEMPORARY',      // Behovsanställning
+    'bYfG_jXa_zik': 'TEMPORARY',      // Frilans
+    'h4fe_E7e_UqV': 'TEMPORARY'       // Extratjänst
+  };
+  const result = mapping[conceptId] || 'PERMANENT';
+  console.log(`🔄 Mapping employmentType: ${conceptId} → ${result}`);
+  return result;
+};
+
+const mapWorktimeExtent = (conceptId: string): string => {
+  const mapping: Record<string, string> = {
+    'wYi8_aFg_R1m': 'FULL_TIME',      // Heltid
+    'aUF9_eHe_iUe': 'PART_TIME'       // Deltid
+  };
+  const result = mapping[conceptId] || 'FULL_TIME';
+  console.log(`🔄 Mapping worktimeExtent: ${conceptId} → ${result}`);
+  return result;
+};
+
+const mapDuration = (conceptId: string): string => {
+  const mapping: Record<string, string> = {
+    'nDg4_eBE_ueQ': 'CONTINUOUS',     // Tillsvidare
+    '9uK9_HfZ_uGj': 'FIXED_TERM',     // Visstid mer än 6 månader
+    'roiG_Mii_fiZ': 'FIXED_TERM',     // Visstid 3-6 månader
+    'fPhi_RmE_iUg': 'FIXED_TERM'      // Visstid mindre än 3 månader
+  };
+  const result = mapping[conceptId] || 'CONTINUOUS';
+  console.log(`🔄 Mapping duration: ${conceptId} → ${result}`);
+  return result;
+};
+
 const AF_API_BASE = 'https://apier.arbetsformedlingen.se';
 const AF_ENDPOINT = '/direct-transferred-job-posting/v1/prod/jobads';
 
@@ -67,9 +104,9 @@ serve(async (req) => {
       
       // Kategorisering (direkta strängar enligt AF API)
       occupation: job.af_occupation_code,
-      employmentType: job.af_employment_type_code,
-      worktimeExtent: job.af_worktime_extent_code,
-      duration: job.af_duration_code,
+      employmentType: mapEmploymentType(job.af_employment_type_code),
+      worktimeExtent: mapWorktimeExtent(job.af_worktime_extent_code),
+      duration: mapDuration(job.af_duration_code),
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
       
       // Arbetsplats (obligatoriskt enligt AF API)
@@ -107,6 +144,15 @@ serve(async (req) => {
       eures: false,
       keywords: ["OPEN_TO_ALL"]
     };
+
+    // Debug: Visa mappade värden
+    console.log("🔍 AF payload preview:", {
+      employmentType: afRequestBody.employmentType,
+      worktimeExtent: afRequestBody.worktimeExtent,
+      duration: afRequestBody.duration,
+      occupation: afRequestBody.occupation,
+      municipality: afRequestBody.workplaces[0].municipality
+    });
 
     console.log('📨 Sending PUT request to AF API...');
     console.log('Updating AF ad:', job.af_ad_id);

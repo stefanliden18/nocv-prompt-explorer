@@ -43,6 +43,13 @@ const mapDuration = (conceptId: string): string => {
   return result;
 };
 
+const formatMunicipalityCode = (code: string): string => {
+  // Ta bort inledande nolla från SCB-kommunkoder
+  const formatted = code.replace(/^0+/, '');
+  console.log(`🔄 Formatting municipality: ${code} → ${formatted}`);
+  return formatted;
+};
+
 const AF_API_BASE = 'https://apier.arbetsformedlingen.se';
 const AF_ENDPOINT = '/direct-transferred-job-posting/v1/prod/jobads';
 
@@ -140,7 +147,7 @@ serve(async (req) => {
       workplaces: [
         {
           name: job.companies.name,
-          municipality: job.af_municipality_code,
+          municipality: formatMunicipalityCode(job.af_municipality_code),
           postalAddress: {
             street: job.companies.address || "",
             postalCode: job.companies.postal_code || "",
@@ -196,16 +203,23 @@ serve(async (req) => {
       body: JSON.stringify(afRequestBody)
     });
 
-    const afResponseData = await afResponse.json();
+    // Hämta AF:s svar (både status och body)
+    const afResponseText = await afResponse.text();
+    let afResponseData;
+    try {
+      afResponseData = JSON.parse(afResponseText);
+    } catch {
+      afResponseData = { rawResponse: afResponseText };
+    }
 
+    console.log('📥 AF Response Status:', afResponse.status);
+    console.log('📥 AF Response Body:', JSON.stringify(afResponseData, null, 2));
+
+    // Vid AF-fel: logga, spara i DB, men returnera AF:s faktiska svar
     if (!afResponse.ok) {
-      // Detailed error logging
-      console.error('❌ AF API Error Details:');
-      console.error('Status:', afResponse.status, afResponse.statusText);
-      console.error('Response Headers:', Object.fromEntries(afResponse.headers.entries()));
-      console.error('Response Body:', JSON.stringify(afResponseData, null, 2));
+      console.error('❌ AF API returned error status:', afResponse.status);
       
-      // AF-specifik error struktur
+      // Detaljerad loggning
       if (afResponseData.trackingId) {
         console.error('🔍 Tracking ID:', afResponseData.trackingId);
       }
@@ -214,12 +228,6 @@ serve(async (req) => {
       }
       if (afResponseData.errors) {
         console.error('🔍 Validation Errors:', JSON.stringify(afResponseData.errors, null, 2));
-      }
-      if (afResponseData.message) {
-        console.error('🔍 Error Message:', afResponseData.message);
-      }
-      if (afResponseData.error) {
-        console.error('🔍 Error:', afResponseData.error);
       }
       
       // Tolkningar baserat på statuskod
@@ -250,7 +258,7 @@ serve(async (req) => {
       }
       console.error('💡 Hint:', errorHint);
       
-      // Spara felmeddelande i databasen
+      // Spara felet i databasen
       await supabase
         .from('jobs')
         .update({ 
@@ -258,8 +266,15 @@ serve(async (req) => {
           af_last_sync: new Date().toISOString()
         })
         .eq('id', job_id);
-
-      throw new Error(`AF API error (${afResponse.status}): ${JSON.stringify(afResponseData)}`);
+      
+      // VIKTIGT: Returnera AF:s faktiska status och body till frontend
+      return new Response(afResponseText || '{}', {
+        status: afResponse.status,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': afResponse.headers.get('content-type') || 'application/json'
+        }
+      });
     }
 
     // Lyckat svar - spara AF Ad ID
@@ -279,21 +294,23 @@ serve(async (req) => {
 
     console.log('✅ Database updated with AF publication status');
 
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        af_ad_id: afAdId,
-        platsbanken_url: `https://arbetsformedlingen.se/platsbanken/annonser/${afAdId}`
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // VIKTIGT: Returnera AF:s faktiska svar till frontend
+    return new Response(afResponseText, {
+      status: afResponse.status,
+      headers: { 
+        ...corsHeaders,
+        'Content-Type': afResponse.headers.get('content-type') || 'application/json'
+      }
+    });
 
   } catch (error) {
-    console.error('❌ Error in publish-to-af:', error);
+    console.error('❌ EDGE FUNCTION CRASHED:', error);
+    
+    // Detta är en krasch i edge functionen själv, inte ett AF API-fel
     return new Response(
       JSON.stringify({ 
-        success: false,
-        error: error.message 
+        error: 'EDGE_CRASH',
+        message: String(error?.message || error)
       }),
       { 
         status: 500,

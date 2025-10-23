@@ -89,6 +89,7 @@ export type Database = {
       af_municipality_codes: {
         Row: {
           code: string
+          concept_id: string | null
           county: string | null
           created_at: string | null
           id: string
@@ -96,6 +97,7 @@ export type Database = {
         }
         Insert: {
           code: string
+          concept_id?: string | null
           county?: string | null
           created_at?: string | null
           id?: string
@@ -103,6 +105,7 @@ export type Database = {
         }
         Update: {
           code?: string
+          concept_id?: string | null
           county?: string | null
           created_at?: string | null
           id?: string

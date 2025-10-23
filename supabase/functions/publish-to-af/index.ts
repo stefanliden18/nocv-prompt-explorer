@@ -45,12 +45,7 @@ const mapDuration = (conceptId: string): string => {
   return result;
 };
 
-const formatMunicipalityCode = (code: string): string => {
-  // Ta bort inledande nolla från SCB-kommunkoder
-  const formatted = code.replace(/^0+/, '');
-  console.log(`🔄 Formatting municipality: ${code} → ${formatted}`);
-  return formatted;
-};
+// formatMunicipalityCode removed - now using concept_id directly from database
 
 const validateAfCombinations = (employmentType: string, worktimeExtent: string, duration: string): void => {
   console.log('🔍 Validating AF combinations:', { employmentType, worktimeExtent, duration });
@@ -101,7 +96,8 @@ serve(async (req) => {
       .from('jobs')
       .select(`
         *,
-        companies (*)
+        companies (*),
+        municipality:af_municipality_codes!jobs_af_municipality_code_fkey(concept_id)
       `)
       .eq('id', job_id)
       .single();
@@ -183,7 +179,7 @@ serve(async (req) => {
       workplaces: [
         {
           name: job.companies.name,
-          municipality: formatMunicipalityCode(job.af_municipality_code),
+          municipality: job.municipality?.[0]?.concept_id || job.af_municipality_code,
           postalAddress: {
             street: job.companies.address || "",
             postalCode: job.companies.postal_code || "",
@@ -221,7 +217,7 @@ serve(async (req) => {
       worktimeExtent: afRequestBody.worktimeExtent,
       duration: afRequestBody.duration,
       occupation: afRequestBody.occupation,
-      municipality: afRequestBody.workplaces[0].municipality
+      municipality: job.municipality?.[0]?.concept_id || job.af_municipality_code,
     });
 
     console.log('📨 Sending POST request to AF API...');

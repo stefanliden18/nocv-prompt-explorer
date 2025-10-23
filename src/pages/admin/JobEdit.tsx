@@ -61,13 +61,14 @@ interface Job {
   af_municipality_code: string | null;
   af_employment_type_code: string | null;
   af_duration_code: string | null;
+  af_worktime_extent_code: string | null;
 }
 
 export default function JobEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isDebugEnabled } = useDebugMode();
-  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes } = useAFTaxonomy();
+  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes } = useAFTaxonomy();
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobLoading, setJobLoading] = useState(true);
@@ -110,6 +111,7 @@ export default function JobEdit() {
   const [afMunicipalityCode, setAfMunicipalityCode] = useState('');
   const [afEmploymentTypeCode, setAfEmploymentTypeCode] = useState('');
   const [afDurationCode, setAfDurationCode] = useState('');
+  const [afWorktimeExtentCode, setAfWorktimeExtentCode] = useState('');
   const [publishingToAF, setPublishingToAF] = useState(false);
   const [updatingAF, setUpdatingAF] = useState(false);
   const [unpublishingFromAF, setUnpublishingFromAF] = useState(false);
@@ -179,6 +181,7 @@ export default function JobEdit() {
       setAfMunicipalityCode(job.af_municipality_code || '');
       setAfEmploymentTypeCode(job.af_employment_type_code || '');
       setAfDurationCode(job.af_duration_code || '');
+      setAfWorktimeExtentCode(job.af_worktime_extent_code || '');
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
         const stockholmDate = utcToStockholm(job.publish_at);
@@ -245,6 +248,7 @@ export default function JobEdit() {
         af_municipality_code: afMunicipalityCode || null,
         af_employment_type_code: afEmploymentTypeCode || null,
         af_duration_code: afDurationCode || null,
+        af_worktime_extent_code: afWorktimeExtentCode || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: (() => {
           if (!publishAt) return null;
@@ -929,6 +933,27 @@ export default function JobEdit() {
                     </Select>
                   </div>
 
+                  <div>
+                    <Label htmlFor="af_worktime_extent_code">Arbetstidsomfattning *</Label>
+                    <Select
+                      value={afWorktimeExtentCode}
+                      onValueChange={setAfWorktimeExtentCode}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Välj omfattning" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {worktimeExtentCodes.map((code: any) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="af_duration_code">Varaktighet *</Label>
                     <Select

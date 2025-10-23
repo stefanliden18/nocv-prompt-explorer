@@ -54,12 +54,26 @@ export const useAFTaxonomy = () => {
     }
   });
 
+  const { data: worktimeExtentCodes = [], isLoading: worktimeExtentsLoading } = useQuery({
+    queryKey: ['af-worktime-extent-codes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('af_worktime_extent_codes')
+        .select('*')
+        .order('label');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return {
     occupationCodes,
     municipalityCodes,
     employmentTypeCodes,
     durationCodes,
+    worktimeExtentCodes,
     isLoading: occupationsLoading || municipalitiesLoading || 
-               employmentTypesLoading || durationsLoading
+               employmentTypesLoading || durationsLoading || worktimeExtentsLoading
   };
 };

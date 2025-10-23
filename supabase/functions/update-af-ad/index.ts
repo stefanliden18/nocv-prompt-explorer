@@ -68,6 +68,7 @@ serve(async (req) => {
       // Kategorisering (direkta strängar enligt AF API)
       occupation: job.af_occupation_code,
       employmentType: job.af_employment_type_code,
+      worktimeExtent: job.af_worktime_extent_code,
       duration: job.af_duration_code,
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
       

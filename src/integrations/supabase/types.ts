@@ -137,6 +137,27 @@ export type Database = {
         }
         Relationships: []
       }
+      af_worktime_extent_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          id: string
+          label: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          id?: string
+          label: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          id?: string
+          label?: string
+        }
+        Relationships: []
+      }
       application_tag_relations: {
         Row: {
           application_id: string
@@ -356,6 +377,7 @@ export type Database = {
           af_published: boolean | null
           af_published_at: string | null
           af_wage_type_code: string | null
+          af_worktime_extent_code: string | null
           category: string | null
           city: string | null
           company_id: string
@@ -391,6 +413,7 @@ export type Database = {
           af_published?: boolean | null
           af_published_at?: string | null
           af_wage_type_code?: string | null
+          af_worktime_extent_code?: string | null
           category?: string | null
           city?: string | null
           company_id: string
@@ -426,6 +449,7 @@ export type Database = {
           af_published?: boolean | null
           af_published_at?: string | null
           af_wage_type_code?: string | null
+          af_worktime_extent_code?: string | null
           category?: string | null
           city?: string | null
           company_id?: string

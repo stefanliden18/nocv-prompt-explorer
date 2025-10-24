@@ -376,6 +376,7 @@ export type Database = {
           af_error: string | null
           af_last_sync: string | null
           af_municipality_code: string | null
+          af_municipality_concept_id: string | null
           af_occupation_code: string | null
           af_published: boolean | null
           af_published_at: string | null
@@ -412,6 +413,7 @@ export type Database = {
           af_error?: string | null
           af_last_sync?: string | null
           af_municipality_code?: string | null
+          af_municipality_concept_id?: string | null
           af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
@@ -448,6 +450,7 @@ export type Database = {
           af_error?: string | null
           af_last_sync?: string | null
           af_municipality_code?: string | null
+          af_municipality_concept_id?: string | null
           af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null

@@ -281,6 +281,11 @@ export default function JobEdit() {
 
     setLoading(true);
     try {
+      // Hitta vald municipality för att få concept_id
+      const selectedMunicipality = municipalityCodes?.find(
+        m => m.code === afMunicipalityCode
+      );
+
       const updateData: any = {
         title: title.trim(),
         company_id: companyId,
@@ -302,6 +307,7 @@ export default function JobEdit() {
         contact_person_phone: contactPersonPhone.trim() || null,
         af_occupation_code: afOccupationCode || null,
         af_municipality_code: afMunicipalityCode || null,
+        af_municipality_concept_id: selectedMunicipality?.concept_id || null,
         af_employment_type_code: afEmploymentTypeCode || null,
         af_duration_code: afDurationCode || null,
         af_worktime_extent_code: afWorktimeExtentCode || null,

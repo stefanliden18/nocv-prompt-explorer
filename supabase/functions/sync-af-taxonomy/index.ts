@@ -460,41 +460,44 @@ serve(async (req) => {
       county: mun.county || null
     }));
     
-    try {
-      console.log('Fetching municipality codes from Jobtech Taxonomy API...');
-      const municipalitiesResponse = await fetch(`${JOBTECH_TAXONOMY_BASE_URL}?type=municipality`);
-      
-      if (!municipalitiesResponse.ok) {
-        console.error(`⚠️ API error: ${municipalitiesResponse.status} ${municipalitiesResponse.statusText}`);
-        const errorText = await municipalitiesResponse.text();
-        console.error(`Response body: ${errorText.substring(0, 200)}`);
-        console.log('⚠️ Using fallback municipality data');
-      } else {
-        const municipalitiesData = await municipalitiesResponse.json();
-        console.log(`✅ Fetched ${municipalitiesData.length} municipalities from API`);
-        
-        // Mappa API-data till vårt format
-        municipalities = municipalitiesData
-          .filter((item: any) => item.id != null) // ✅ Filtrera bort null/undefined ID
-          .map((item: any) => ({
-            code: item.id,  // Detta är concept ID (t.ex. "aYA7_PpG_BqP")
-            label: item.term,  // Kommunnamn (t.ex. "Stockholm")
-            county: null  // API:t ger inte län, men vi kan behålla detta för framtida användning
-          }));
-        console.log(`✅ Mapped ${municipalities.length} municipality codes with concept IDs (filtered invalid entries)`);
+    console.log('Fetching municipality codes from Jobtech Taxonomy API...');
+    municipalities = await fetchTaxonomy('municipality', MUNICIPALITIES.map(mun => ({
+      code: mun.id,
+      label: mun.label,
+      county: mun.county || null
+    })));
+    console.log(`✅ Fetched ${municipalities.length} municipality codes`);
+
+    // Lägg till county från fallback-data om det saknas
+    const municipalitiesWithCounty = municipalities.map((mun: any) => {
+      const fallbackMun = MUNICIPALITIES.find(fb => fb.id === mun.code);
+      return {
+        ...mun,
+        county: mun.county || (fallbackMun ? fallbackMun.county : null)
+      };
+    });
+
+    // Validera att alla poster har giltiga codes
+    const validMunicipalities = municipalitiesWithCounty.filter((m: any) => {
+      if (!m.code || m.code === null || m.code === 'null') {
+        console.warn(`⚠️ Skipping invalid municipality:`, m);
+        return false;
       }
-    } catch (error) {
-      console.error('⚠️ Error fetching municipalities from API:', error);
-      console.log('⚠️ Using fallback municipality data');
+      return true;
+    });
+
+    if (validMunicipalities.length === 0) {
+      throw new Error('No valid municipality codes to insert');
     }
 
-    console.log('Inserting municipality codes into database...');
+    console.log(`Inserting ${validMunicipalities.length} validated municipality codes into database...`);
     const { error: munError } = await supabase
       .from('af_municipality_codes')
-      .upsert(municipalities, { onConflict: 'code' });
+      .upsert(validMunicipalities, { onConflict: 'code' });
 
     if (munError) {
-      console.error('Error inserting municipality codes:', munError);
+      console.error('❌ Error inserting municipality codes:', munError);
+      console.error('Sample of data attempted:', JSON.stringify(validMunicipalities.slice(0, 3), null, 2));
       throw munError;
     }
     console.log(`✅ Inserted ${municipalities.length} municipality codes`);

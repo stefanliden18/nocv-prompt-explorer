@@ -31,12 +31,14 @@ async function fetchTaxonomy(type: string, fallbackData: any[]) {
       return fallbackData;
     }
     
-    const mapped = data.concepts.map((c: any) => ({
-      code: c['concept-id'],
-      label: c.term
-    }));
+    const mapped = data.concepts
+      .filter((c: any) => c['concept-id'] != null) // ✅ Filtrera bort null/undefined ID
+      .map((c: any) => ({
+        code: c['concept-id'],
+        label: c.term
+      }));
     
-    console.log(`✅ Fetched ${mapped.length} items for ${type} from JobTech API`);
+    console.log(`✅ Fetched ${mapped.length} items for ${type} from JobTech API (filtered invalid entries)`);
     return mapped;
   } catch (error) {
     console.warn(`⚠️ Error fetching ${type} from JobTech API:`, error);
@@ -472,12 +474,14 @@ serve(async (req) => {
         console.log(`✅ Fetched ${municipalitiesData.length} municipalities from API`);
         
         // Mappa API-data till vårt format
-        municipalities = municipalitiesData.map((item: any) => ({
-          code: item.id,  // Detta är concept ID (t.ex. "aYA7_PpG_BqP")
-          label: item.term,  // Kommunnamn (t.ex. "Stockholm")
-          county: null  // API:t ger inte län, men vi kan behålla detta för framtida användning
-        }));
-        console.log(`✅ Mapped ${municipalities.length} municipality codes with concept IDs`);
+        municipalities = municipalitiesData
+          .filter((item: any) => item.id != null) // ✅ Filtrera bort null/undefined ID
+          .map((item: any) => ({
+            code: item.id,  // Detta är concept ID (t.ex. "aYA7_PpG_BqP")
+            label: item.term,  // Kommunnamn (t.ex. "Stockholm")
+            county: null  // API:t ger inte län, men vi kan behålla detta för framtida användning
+          }));
+        console.log(`✅ Mapped ${municipalities.length} municipality codes with concept IDs (filtered invalid entries)`);
       }
     } catch (error) {
       console.error('⚠️ Error fetching municipalities from API:', error);

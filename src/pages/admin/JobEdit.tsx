@@ -123,6 +123,16 @@ export default function JobEdit() {
     }
   }, [id]);
 
+  // Auto-sätt "Tillsvidare" för Vanlig anställning
+  useEffect(() => {
+    if (afEmploymentTypeCode === 'PFZr_Syz_cUq') {
+      if (afDurationCode !== 'a7uU_j21_mkL') {
+        setAfDurationCode('a7uU_j21_mkL');
+        toast.info('Varaktighet automatiskt satt till "Tillsvidare" för vanlig anställning');
+      }
+    }
+  }, [afEmploymentTypeCode]);
+
   const fetchCompanies = async () => {
     try {
       const { data, error } = await supabase
@@ -1130,37 +1140,37 @@ export default function JobEdit() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Varaktighet - Dölj för vanlig anställning */}
-                  {afEmploymentTypeCode !== 'PFZr_Syz_cUq' && (
-                    <div>
-                      <Label htmlFor="af_duration_code">
-                        Varaktighet *
-                      </Label>
-                      <Select
-                        value={afDurationCode}
-                        onValueChange={setAfDurationCode}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj varaktighet" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {durationCodes.map((code: any) => (
-                            <SelectItem key={code.code} value={code.code}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  {/* Varaktighet - Visa alltid men disabled för vanlig anställning */}
+                  <div>
+                    <Label htmlFor="af_duration_code">
+                      Varaktighet *
+                    </Label>
+                    <Select
+                      value={afDurationCode}
+                      onValueChange={setAfDurationCode}
+                      disabled={afEmploymentTypeCode === 'PFZr_Syz_cUq'}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Välj varaktighet" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {durationCodes.map((code: any) => (
+                          <SelectItem key={code.code} value={code.code}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? (
+                      <p className="text-xs text-blue-600 mt-1">
+                        ℹ️ Vanlig anställning är automatiskt tillsvidareanställning
+                      </p>
+                    ) : (
                       <p className="text-xs text-muted-foreground mt-1">
                         Obligatoriskt för tidsbegränsad anställning
                       </p>
-                    </div>
-                  )}
-                  {afEmploymentTypeCode === 'PFZr_Syz_cUq' && (
-                    <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
-                      ℹ️ Varaktighet anges inte för vanlig anställning (gäller automatiskt tillsvidare)
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
 

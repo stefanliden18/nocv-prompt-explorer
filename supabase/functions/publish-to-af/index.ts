@@ -43,8 +43,8 @@ serve(async (req) => {
 
     // ✅ AF API kombinationsregler (baserat på officiell dokumentation)
     const AF_RULES = {
-      // Dessa anställningstyper FÖRBJUDER duration (de är redan permanenta)
-      forbidsDuration: ['PFZr_Syz_cUq'], // Vanlig anställning = Tillsvidare
+      // Dessa anställningstyper KRÄVER automatiskt "Tillsvidare" som duration
+      autoSetTillsvidare: ['PFZr_Syz_cUq'], // Vanlig anställning
       
       // Dessa anställningstyper KRÄVER duration (tidsbegränsade)
       requiresDuration: [
@@ -67,12 +67,15 @@ serve(async (req) => {
 
     const validateConditionalFields = (job: any) => {
       const employmentType = job.af_employment_type_code;
-      const duration = job.af_duration_code;
+      let duration = job.af_duration_code;
       const worktimeExtent = job.af_worktime_extent_code;
       
-      // ❌ FÖRBJUD duration för permanenta anställningar
-      if (AF_RULES.forbidsDuration.includes(employmentType) && duration) {
-        console.warn(`⚠️ Duration will be excluded for employment type: ${employmentType}`);
+      // ✅ Auto-sätt "Tillsvidare" för permanenta anställningar
+      if (AF_RULES.autoSetTillsvidare.includes(employmentType)) {
+        if (!duration || duration !== 'a7uU_j21_mkL') {
+          console.log(`✅ Auto-setting duration to Tillsvidare for ${employmentType}`);
+          duration = 'a7uU_j21_mkL';
+        }
       }
       
       // ✅ KRÄV duration för tidsbegränsade anställningar
@@ -91,6 +94,8 @@ serve(async (req) => {
           throw new Error(`Invalid combination: employmentType "${employmentType}" cannot be combined with duration "${duration}"`);
         }
       }
+      
+      return duration; // Returnera den validerade/uppdaterade duration
     };
 
     // ✅ Validera förbjudna employment types och kombinationer
@@ -219,10 +224,10 @@ serve(async (req) => {
       throw new Error(errorMsg);
     }
 
-    // ✅ Kör alla valideringar
+    // ✅ Kör alla valideringar och få validerad duration
     validateFieldLengths(job);
     validateEmploymentType(job);
-    validateConditionalFields(job);
+    const validatedDuration = validateConditionalFields(job);
     validateLastPublishDate(job.last_application_date);
 
     console.log('✅ All validation passed');
@@ -277,15 +282,10 @@ serve(async (req) => {
       occupation: job.af_occupation_code,
       employmentType: job.af_employment_type_code,
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
+      duration: validatedDuration, // ✅ Använd validerad duration (kan vara auto-satt)
     };
 
-    // ✅ Conditional: Lägg ENDAST till duration för tidsbegränsade anställningar
-    if (AF_RULES.requiresDuration.includes(job.af_employment_type_code) && job.af_duration_code) {
-      afRequestBody.duration = job.af_duration_code;
-      console.log('✅ Added duration (required for temporary employment)');
-    } else if (AF_RULES.forbidsDuration.includes(job.af_employment_type_code)) {
-      console.log('⚠️ Duration excluded (permanent employment type)');
-    }
+    console.log('✅ Duration set:', validatedDuration);
 
     // ✅ Conditional: Lägg till worktimeExtent om tillåtet och angivet
     if (!AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_code) && job.af_worktime_extent_code) {

@@ -195,11 +195,11 @@ export default function JobEdit() {
       setContactPersonName(job.contact_person_name || '');
       setContactPersonEmail(job.contact_person_email || '');
       setContactPersonPhone(job.contact_person_phone || '');
-      setAfOccupationCode(job.af_occupation_code || '');
-      setAfMunicipalityCode(job.af_municipality_code || '');
-      setAfEmploymentTypeCode(job.af_employment_type_code || '');
-      setAfDurationCode(job.af_duration_code || '');
-      setAfWorktimeExtentCode(job.af_worktime_extent_code || '');
+      setAfOccupationCode(job.af_occupation_cid || '');
+      setAfMunicipalityCode(job.af_municipality_cid || '');
+      setAfEmploymentTypeCode(job.af_employment_type_cid || '');
+      setAfDurationCode(job.af_duration_cid || '');
+      setAfWorktimeExtentCode(job.af_worktime_extent_cid || '');
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
         const stockholmDate = utcToStockholm(job.publish_at);
@@ -281,16 +281,17 @@ export default function JobEdit() {
 
     setLoading(true);
     try {
-      // Hitta vald municipality för att få concept_id
-      const selectedMunicipality = municipalityCodes?.find(
-        m => m.code === afMunicipalityCode
-      );
+      // Hitta valda items för att få concept_ids
+      const selectedOccupation = occupationCodes?.find(o => o.concept_id === afOccupationCode);
+      const selectedMunicipality = municipalityCodes?.find(m => m.concept_id === afMunicipalityCode);
+      const selectedEmploymentType = employmentTypeCodes?.find(e => e.concept_id === afEmploymentTypeCode);
+      const selectedDuration = durationCodes?.find(d => d.concept_id === afDurationCode);
+      const selectedWorktimeExtent = worktimeExtentCodes?.find(w => w.concept_id === afWorktimeExtentCode);
 
-      // Auto-set worktime extent if employment type requires it
-      let finalAfWorktimeExtentCode = afWorktimeExtentCode;
+      let finalAfWorktimeExtentCid = afWorktimeExtentCode;
       if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
-        finalAfWorktimeExtentCode = 'xvJr_Zge_hcZ'; // Default: Heltid
-        toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid' för vanlig anställning");
+        finalAfWorktimeExtentCid = worktimeExtentCodes.find(w => w.label === 'Heltid')?.concept_id || null;
+        if (finalAfWorktimeExtentCid) toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid'");
       }
 
       const updateData: any = {
@@ -306,18 +307,17 @@ export default function JobEdit() {
         language: language.trim() || null,
         slug: slug,
         kiku_interview_url: kikuInterviewUrl.trim() || null,
-        // AF-fält
+        // AF-fält - use concept_ids
         last_application_date: lastApplicationDate || null,
         total_positions: totalPositions,
         contact_person_name: contactPersonName.trim() || null,
         contact_person_email: contactPersonEmail.trim() || null,
         contact_person_phone: contactPersonPhone.trim() || null,
-        af_occupation_code: afOccupationCode || null,
-        af_municipality_code: afMunicipalityCode || null,
-        af_municipality_concept_id: selectedMunicipality?.concept_id || null,
-        af_employment_type_code: afEmploymentTypeCode || null,
-        af_duration_code: afDurationCode || null,
-        af_worktime_extent_code: finalAfWorktimeExtentCode || null,
+        af_occupation_cid: selectedOccupation?.concept_id || null,
+        af_municipality_cid: selectedMunicipality?.concept_id || null,
+        af_employment_type_cid: selectedEmploymentType?.concept_id || null,
+        af_duration_cid: selectedDuration?.concept_id || null,
+        af_worktime_extent_cid: finalAfWorktimeExtentCid || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: (() => {
           if (!publishAt) return null;
@@ -1134,8 +1134,8 @@ export default function JobEdit() {
                       </SelectTrigger>
                       <SelectContent>
                         {occupationCodes.map((code: any) => (
-                          <SelectItem key={code.code} value={code.code}>
-                            {code.label_sv}
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
+                            {code.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -1153,7 +1153,7 @@ export default function JobEdit() {
                       </SelectTrigger>
                       <SelectContent>
                         {municipalityCodes.map((code: any) => (
-                          <SelectItem key={code.code} value={code.code}>
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
                             {code.label}
                           </SelectItem>
                         ))}
@@ -1186,7 +1186,7 @@ export default function JobEdit() {
                       </SelectTrigger>
                       <SelectContent>
                         {employmentTypeCodes.map((code: any) => (
-                          <SelectItem key={code.code} value={code.code}>
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
                             {code.label}
                           </SelectItem>
                         ))}
@@ -1209,7 +1209,7 @@ export default function JobEdit() {
                         </SelectTrigger>
                         <SelectContent>
                           {worktimeExtentCodes.map((code: any) => (
-                            <SelectItem key={code.code} value={code.code}>
+                            <SelectItem key={code.concept_id} value={code.concept_id}>
                               {code.label}
                             </SelectItem>
                           ))}
@@ -1245,7 +1245,7 @@ export default function JobEdit() {
                       </SelectTrigger>
                       <SelectContent>
                         {durationCodes.map((code: any) => (
-                          <SelectItem key={code.code} value={code.code}>
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
                             {code.label}
                           </SelectItem>
                         ))}

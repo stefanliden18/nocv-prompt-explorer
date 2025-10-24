@@ -140,6 +140,30 @@ export type Database = {
         }
         Relationships: []
       }
+      af_taxonomy: {
+        Row: {
+          code: string | null
+          concept_id: string
+          label: string
+          type: string
+          version: number
+        }
+        Insert: {
+          code?: string | null
+          concept_id: string
+          label: string
+          type: string
+          version: number
+        }
+        Update: {
+          code?: string | null
+          concept_id?: string
+          label?: string
+          type?: string
+          version?: number
+        }
+        Relationships: []
+      }
       af_worktime_extent_codes: {
         Row: {
           code: string
@@ -371,16 +395,21 @@ export type Database = {
       jobs: {
         Row: {
           af_ad_id: string | null
+          af_duration_cid: string | null
           af_duration_code: string | null
+          af_employment_type_cid: string | null
           af_employment_type_code: string | null
           af_error: string | null
           af_last_sync: string | null
+          af_municipality_cid: string | null
           af_municipality_code: string | null
           af_municipality_concept_id: string | null
+          af_occupation_cid: string | null
           af_occupation_code: string | null
           af_published: boolean | null
           af_published_at: string | null
           af_wage_type_code: string | null
+          af_worktime_extent_cid: string | null
           af_worktime_extent_code: string | null
           category: string | null
           city: string | null
@@ -408,16 +437,21 @@ export type Database = {
         }
         Insert: {
           af_ad_id?: string | null
+          af_duration_cid?: string | null
           af_duration_code?: string | null
+          af_employment_type_cid?: string | null
           af_employment_type_code?: string | null
           af_error?: string | null
           af_last_sync?: string | null
+          af_municipality_cid?: string | null
           af_municipality_code?: string | null
           af_municipality_concept_id?: string | null
+          af_occupation_cid?: string | null
           af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
           af_wage_type_code?: string | null
+          af_worktime_extent_cid?: string | null
           af_worktime_extent_code?: string | null
           category?: string | null
           city?: string | null
@@ -445,16 +479,21 @@ export type Database = {
         }
         Update: {
           af_ad_id?: string | null
+          af_duration_cid?: string | null
           af_duration_code?: string | null
+          af_employment_type_cid?: string | null
           af_employment_type_code?: string | null
           af_error?: string | null
           af_last_sync?: string | null
+          af_municipality_cid?: string | null
           af_municipality_code?: string | null
           af_municipality_concept_id?: string | null
+          af_occupation_cid?: string | null
           af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
           af_wage_type_code?: string | null
+          af_worktime_extent_cid?: string | null
           af_worktime_extent_code?: string | null
           category?: string | null
           city?: string | null

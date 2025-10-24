@@ -240,12 +240,12 @@ serve(async (req) => {
     const firstname = nameParts[0] || '';
     const surname = nameParts.slice(1).join(' ') || '';
 
-    console.log('🔍 AF payload taxonomy codes:', {
-      occupation: job.af_occupation_code,
-      employmentType: job.af_employment_type_code,
-      worktimeExtent: job.af_worktime_extent_code,
-      duration: job.af_duration_code,
-      municipality: job.af_municipality_code
+    console.log('🔍 AF payload taxonomy concept_ids:', {
+      occupation: job.af_occupation_cid,
+      employmentType: job.af_employment_type_cid,
+      worktimeExtent: job.af_worktime_extent_cid,
+      duration: job.af_duration_cid,
+      municipality: job.af_municipality_cid
     });
 
     // Bygg payload baserat på conditional rules
@@ -260,20 +260,20 @@ serve(async (req) => {
       lastPublishDate: job.last_application_date,
       totalJobOpenings: job.total_positions || 1,
       
-      // Kategorisering (JobTech Taxonomy concept IDs)
-      occupation: job.af_occupation_code,
-      employmentType: job.af_employment_type_code,
+      // Kategorisering (JobTech Taxonomy concept IDs) - använd direkt concept_ids
+      occupation: job.af_occupation_cid,
+      employmentType: job.af_employment_type_cid,
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
-      duration: validatedDuration, // ✅ Använd validerad duration (kan vara auto-satt)
+      duration: job.af_duration_cid || validatedDuration,
     };
 
-    console.log('✅ Duration set:', validatedDuration);
+    console.log('✅ Duration set:', afRequestBody.duration);
 
     // ✅ Conditional: Lägg till worktimeExtent om tillåtet och angivet
-    if (!AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_code) && job.af_worktime_extent_code) {
-      afRequestBody.worktimeExtent = job.af_worktime_extent_code;
+    if (!AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_cid) && job.af_worktime_extent_cid) {
+      afRequestBody.worktimeExtent = job.af_worktime_extent_cid;
       console.log('✅ Added worktimeExtent');
-    } else if (AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_code)) {
+    } else if (AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_cid)) {
       console.log('⚠️ WorktimeExtent excluded (forbidden for this employment type)');
     }
     
@@ -281,7 +281,7 @@ serve(async (req) => {
     afRequestBody.workplaces = [
       {
         name: String(job.companies?.name || ""),
-        municipality: job.af_municipality_concept_id || "", // ✅ Direkt från kolumnen
+        municipality: job.af_municipality_cid, // ✅ Använd concept_id direkt
         country: "i46j_HmG_v64", // ✅ Sverige (required enligt AF docs)
         postalAddress: {
           street: String(job.companies?.address || ""),
@@ -313,13 +313,13 @@ serve(async (req) => {
     afRequestBody.eures = false;
     afRequestBody.keywords = ["OPEN_TO_ALL"];
 
-    // Debug: Visa concept IDs (SÄKER version som inte kraschar)
-    console.log("🔍 Final AF payload taxonomy:", {
+    // Debug: Visa concept IDs
+    console.log("🔍 Final AF payload taxonomy (concept_ids):", {
       occupation: afRequestBody.occupation,
       employmentType: afRequestBody.employmentType,
       worktimeExtent: afRequestBody.worktimeExtent || 'not set',
       duration: afRequestBody.duration,
-      municipality: job.af_municipality_concept_id || 'not set'
+      municipality: afRequestBody.workplaces[0].municipality
     });
 
     // 🔥 VALIDERA ATT ALLA KRITISKA FÄLT ÄR STRÄNGAR (inte objekt)

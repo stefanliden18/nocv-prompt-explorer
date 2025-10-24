@@ -1,71 +1,34 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface TaxonomyItem {
+  concept_id: string;
+  type: string;
+  version: number;
+  code: string | null;
+  label: string;
+}
+
 export const useAFTaxonomy = () => {
-  const { data: occupationCodes = [], isLoading: occupationsLoading } = useQuery({
-    queryKey: ['af-occupation-codes'],
+  const { data: taxonomyData = [], isLoading } = useQuery({
+    queryKey: ['af-taxonomy'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('af_occupation_codes')
+        .from('af_taxonomy')
         .select('*')
-        .order('label_sv');
+        .order('type, label');
       
       if (error) throw error;
-      return data;
+      return data as TaxonomyItem[];
     }
   });
 
-  const { data: municipalityCodes = [], isLoading: municipalitiesLoading } = useQuery({
-    queryKey: ['af-municipality-codes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('af_municipality_codes')
-        .select('*')
-        .order('label');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: employmentTypeCodes = [], isLoading: employmentTypesLoading } = useQuery({
-    queryKey: ['af-employment-type-codes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('af_employment_type_codes')
-        .select('*')
-        .order('label');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: durationCodes = [], isLoading: durationsLoading } = useQuery({
-    queryKey: ['af-duration-codes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('af_duration_codes')
-        .select('*')
-        .order('label');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const { data: worktimeExtentCodes = [], isLoading: worktimeExtentsLoading } = useQuery({
-    queryKey: ['af-worktime-extent-codes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('af_worktime_extent_codes')
-        .select('*')
-        .order('label');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
+  // Gruppera per typ
+  const occupationCodes = taxonomyData.filter(t => t.type === 'occupation-name');
+  const municipalityCodes = taxonomyData.filter(t => t.type === 'municipality');
+  const employmentTypeCodes = taxonomyData.filter(t => t.type === 'employment-type');
+  const durationCodes = taxonomyData.filter(t => t.type === 'duration');
+  const worktimeExtentCodes = taxonomyData.filter(t => t.type === 'worktime-extent');
 
   return {
     occupationCodes,
@@ -73,7 +36,6 @@ export const useAFTaxonomy = () => {
     employmentTypeCodes,
     durationCodes,
     worktimeExtentCodes,
-    isLoading: occupationsLoading || municipalitiesLoading || 
-               employmentTypesLoading || durationsLoading || worktimeExtentsLoading
+    isLoading
   };
 };

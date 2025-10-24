@@ -6,44 +6,54 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts';
-const TAXONOMY_VERSION = '16';
+const JOBTECH_TAXONOMY_BASE_URL = 'https://jobtech-taxonomy.api.jobtechdev.se';
 
-// Helper function to fetch taxonomy from JobTech API with fallback
-async function fetchTaxonomy(type: string, fallbackData: any[]) {
+interface TaxonomyEndpoint {
+  type: string;
+  version: number;
+}
+
+const TAXONOMY_ENDPOINTS: TaxonomyEndpoint[] = [
+  { type: 'occupation-name', version: 16 },
+  { type: 'worktime-extent', version: 16 },
+  { type: 'municipality', version: 1 },
+  { type: 'employment-type', version: 16 },
+  { type: 'duration', version: 16 }
+];
+
+async function fetchTaxonomy(type: string, version: number) {
+  console.log(`Fetching taxonomy: ${type} version ${version}`);
+  
   try {
-    console.log(`Fetching taxonomy for type: ${type} version ${TAXONOMY_VERSION}...`);
-    const response = await fetch(
-      `${JOBTECH_TAXONOMY_BASE_URL}?type=${type}&version=${TAXONOMY_VERSION}`
-    );
+    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
+    console.log(`Fetching from: ${url}`);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      console.warn(`⚠️ JobTech API returned status ${response.status} for ${type}, using fallback`);
-      const errorText = await response.text();
-      console.warn(`Response body: ${errorText.substring(0, 200)}`);
-      return fallbackData;
+      console.error(`Failed to fetch ${type}: ${response.status} ${response.statusText}`);
+      return [];
     }
     
     const data = await response.json();
     
-    if (!data.concepts || !Array.isArray(data.concepts)) {
-      console.warn(`⚠️ Invalid response format from JobTech API for ${type}, using fallback`);
-      return fallbackData;
+    if (!data || !data.concepts || !Array.isArray(data.concepts)) {
+      console.error(`Invalid response format for ${type}:`, data);
+      return [];
     }
     
-    const mapped = data.concepts
-      .filter((c: any) => c['concept-id'] != null) // ✅ Filtrera bort null/undefined ID
-      .map((c: any) => ({
-        code: c['concept-id'],
-        label: c.term
-      }));
+    console.log(`Successfully fetched ${data.concepts.length} items for ${type}`);
     
-    console.log(`✅ Fetched ${mapped.length} items for ${type} from JobTech API (filtered invalid entries)`);
-    return mapped;
+    return data.concepts.map((concept: any) => ({
+      concept_id: concept['concept-id'] || concept.id,
+      type: type,
+      version: version,
+      code: concept['legacy-ams-taxonomy-id'] || null,
+      label: concept.term || concept.label || 'Unknown'
+    }));
   } catch (error) {
-    console.warn(`⚠️ Error fetching ${type} from JobTech API:`, error);
-    console.warn(`Using fallback data for ${type}`);
-    return fallbackData;
+    console.error(`Error fetching ${type}:`, error);
+    return [];
   }
 }
 
@@ -426,176 +436,67 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    console.log('Starting AF taxonomy sync with hardcoded data...');
-    console.log(`Loaded ${OCCUPATIONS.length} occupation codes from constants`);
-
-    // Förbered yrkeskoder för upsert (från statisk fil)
-    const occupationCodes = OCCUPATIONS.map((occ: any) => ({
-      code: occ.id,
-      label_sv: occ.label,
-      label_en: occ.label_en || null,
-      ssyk_code: occ.ssyk || null
-    }));
-
-    console.log('Inserting occupation codes into database...');
-    const { error: occError } = await supabase
-      .from('af_occupation_codes')
-      .upsert(occupationCodes, { onConflict: 'code' });
-
-    if (occError) {
-      console.error('Error inserting occupation codes:', occError);
-      throw occError;
-    }
-    console.log(`✅ Inserted ${occupationCodes.length} occupation codes`);
-
-    // Hämta kommunkoder från Jobtech Taxonomy API med fallback
-    let municipalities = MUNICIPALITIES.map((mun: any) => ({
-      code: mun.id,
-      label: mun.label,
-      county: mun.county || null
-    }));
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    console.log('Fetching municipality codes from Jobtech Taxonomy API...');
-    municipalities = await fetchTaxonomy('municipality', MUNICIPALITIES.map(mun => ({
-      code: mun.id,
-      label: mun.label,
-      county: mun.county || null
-    })));
-    console.log(`✅ Fetched ${municipalities.length} municipality codes`);
+    const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    // Lägg till county från fallback-data om det saknas
-    const municipalitiesWithCounty = municipalities.map((mun: any) => {
-      const fallbackMun = MUNICIPALITIES.find(fb => fb.id === mun.code);
-      return {
-        ...mun,
-        county: mun.county || (fallbackMun ? fallbackMun.county : null)
-      };
-    });
+    console.log('Starting AF taxonomy sync...');
+    
+    let totalInserted = 0;
+    const errors: string[] = [];
 
-    // Validera att alla poster har giltiga codes
-    const validMunicipalities = municipalitiesWithCounty.filter((m: any) => {
-      if (!m.code || m.code === null || m.code === 'null') {
-        console.warn(`⚠️ Skipping invalid municipality:`, m);
-        return false;
+    // Fetch and upsert each taxonomy type
+    for (const endpoint of TAXONOMY_ENDPOINTS) {
+      const taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);
+      
+      if (taxonomyData.length === 0) {
+        errors.push(`No data fetched for ${endpoint.type}`);
+        continue;
       }
-      return true;
+
+      console.log(`Upserting ${taxonomyData.length} items for ${endpoint.type}...`);
+      
+      const { error: upsertError } = await supabase
+        .from('af_taxonomy')
+        .upsert(taxonomyData, { onConflict: 'concept_id' });
+
+      if (upsertError) {
+        console.error(`Error upserting ${endpoint.type}:`, upsertError);
+        errors.push(`${endpoint.type}: ${upsertError.message}`);
+      } else {
+        totalInserted += taxonomyData.length;
+        console.log(`✓ Successfully upserted ${taxonomyData.length} items for ${endpoint.type}`);
+      }
+    }
+
+    const response = {
+      success: errors.length === 0,
+      message: `Synced ${totalInserted} taxonomy items`,
+      details: {
+        totalInserted,
+        endpoints: TAXONOMY_ENDPOINTS.map(e => `${e.type} (v${e.version})`),
+        errors: errors.length > 0 ? errors : undefined
+      }
+    };
+
+    console.log('Sync complete:', response);
+
+    return new Response(JSON.stringify(response), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: errors.length > 0 ? 207 : 200
     });
-
-    if (validMunicipalities.length === 0) {
-      throw new Error('No valid municipality codes to insert');
-    }
-
-    console.log(`Inserting ${validMunicipalities.length} validated municipality codes into database...`);
-    const { error: munError } = await supabase
-      .from('af_municipality_codes')
-      .upsert(validMunicipalities, { onConflict: 'code' });
-
-    if (munError) {
-      console.error('❌ Error inserting municipality codes:', munError);
-      console.error('Sample of data attempted:', JSON.stringify(validMunicipalities.slice(0, 3), null, 2));
-      throw munError;
-    }
-    console.log(`✅ Inserted ${municipalities.length} municipality codes`);
-
-    // 3. Sync employment type codes (dynamically from API with fallback)
-    console.log('3. Syncing employment type codes...');
-    const employmentTypes = await fetchTaxonomy('employment-type', EMPLOYMENT_TYPES_FALLBACK);
-
-    // Rensa befintliga och lägg till nya
-    const { error: deleteEmpError } = await supabase
-      .from('af_employment_type_codes')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-
-    if (deleteEmpError) console.error('Error clearing employment types:', deleteEmpError);
-
-    console.log('Inserting employment type codes into database...');
-    const { error: empError } = await supabase
-      .from('af_employment_type_codes')
-      .insert(employmentTypes);
-
-    if (empError) {
-      console.error('Error inserting employment types:', empError);
-      throw empError;
-    }
-    console.log(`✅ Inserted ${employmentTypes.length} employment types`);
-
-    // 4. Sync duration codes (dynamically from API with fallback)
-    console.log('4. Syncing duration codes...');
-    const durations = await fetchTaxonomy('employment-duration', DURATIONS_FALLBACK);
-
-    // Rensa befintliga och lägg till nya
-    const { error: deleteDurError } = await supabase
-      .from('af_duration_codes')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-
-    if (deleteDurError) console.error('Error clearing durations:', deleteDurError);
-
-    console.log('Inserting duration codes into database...');
-    const { error: durError } = await supabase
-      .from('af_duration_codes')
-      .insert(durations);
-
-    if (durError) {
-      console.error('Error inserting durations:', durError);
-      throw durError;
-    }
-    console.log(`✅ Inserted ${durations.length} duration codes`);
-
-    // 5. Sync worktime extent codes (dynamically from API with fallback)
-    console.log('5. Syncing worktime extent codes...');
-    const worktimeExtents = await fetchTaxonomy('worktime-extent', WORKTIME_EXTENTS_FALLBACK);
-
-    // Rensa befintliga och lägg till nya
-    const { error: deleteWtError } = await supabase
-      .from('af_worktime_extent_codes')
-      .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000');
-
-    if (deleteWtError) console.error('Error clearing worktime extents:', deleteWtError);
-
-    console.log('Inserting worktime extent codes into database...');
-    const { error: wtError } = await supabase
-      .from('af_worktime_extent_codes')
-      .insert(worktimeExtents);
-
-    if (wtError) {
-      console.error('Error inserting worktime extents:', wtError);
-      throw wtError;
-    }
-    console.log(`✅ Inserted ${worktimeExtents.length} worktime extent codes`);
-
-    console.log('✅ Taxonomy sync completed successfully!');
-
-    return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: 'AF taxonomy sync completed successfully',
-        occupations: occupationCodes.length,
-        municipalities: municipalities.length,
-        employmentTypes: employmentTypes.length,
-        durations: durations.length,
-        worktimeExtents: worktimeExtents.length
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
 
   } catch (error) {
-    console.error('❌ Error syncing AF taxonomy:', error);
+    console.error('Sync failed:', error);
     return new Response(
       JSON.stringify({ 
-        success: false,
-        error: error.message 
+        error: error.message,
+        details: 'Failed to sync AF taxonomy'
       }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
     );
   }

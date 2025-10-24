@@ -160,16 +160,30 @@ export default function JobForm() {
 
     setLoading(true);
     try {
-      // Hitta vald municipality för att få concept_id
+      // Hitta valda items för att få concept_ids
+      const selectedOccupation = occupationCodes?.find(
+        o => o.concept_id === afOccupationCode
+      );
       const selectedMunicipality = municipalityCodes?.find(
-        m => m.code === afMunicipalityCode
+        m => m.concept_id === afMunicipalityCode
+      );
+      const selectedEmploymentType = employmentTypeCodes?.find(
+        e => e.concept_id === afEmploymentTypeCode
+      );
+      const selectedDuration = durationCodes?.find(
+        d => d.concept_id === afDurationCode
+      );
+      const selectedWorktimeExtent = worktimeExtentCodes?.find(
+        w => w.concept_id === afWorktimeExtentCode
       );
 
       // Auto-set worktime extent if employment type requires it
-      let finalAfWorktimeExtentCode = afWorktimeExtentCode;
+      let finalAfWorktimeExtentCid = afWorktimeExtentCode;
       if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
-        finalAfWorktimeExtentCode = 'xvJr_Zge_hcZ'; // Default: Heltid
-        toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid' för vanlig anställning");
+        finalAfWorktimeExtentCid = worktimeExtentCodes.find(w => w.label === 'Heltid')?.concept_id || null;
+        if (finalAfWorktimeExtentCid) {
+          toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid' för vanlig anställning");
+        }
       }
 
       const { error } = await supabase
@@ -189,18 +203,17 @@ export default function JobForm() {
           slug: slug,
           publish_at: null,
           created_by: user!.id,
-          // AF fields
+          // AF fields - use concept_ids
           last_application_date: lastApplicationDate || null,
           total_positions: totalPositions,
           contact_person_name: contactPersonName.trim() || null,
           contact_person_email: contactPersonEmail.trim() || null,
           contact_person_phone: contactPersonPhone.trim() || null,
-          af_occupation_code: afOccupationCode || null,
-          af_municipality_code: afMunicipalityCode || null,
-          af_municipality_concept_id: selectedMunicipality?.concept_id || null,
-          af_employment_type_code: afEmploymentTypeCode || null,
-          af_duration_code: afDurationCode || null,
-          af_worktime_extent_code: finalAfWorktimeExtentCode || null,
+          af_occupation_cid: selectedOccupation?.concept_id || null,
+          af_municipality_cid: selectedMunicipality?.concept_id || null,
+          af_employment_type_cid: selectedEmploymentType?.concept_id || null,
+          af_duration_cid: selectedDuration?.concept_id || null,
+          af_worktime_extent_cid: finalAfWorktimeExtentCid || null,
         });
 
       if (error) throw error;
@@ -457,11 +470,11 @@ export default function JobForm() {
                           <SelectValue placeholder="Välj yrke" />
                         </SelectTrigger>
                         <SelectContent>
-                          {occupationCodes.map((code: any) => (
-                            <SelectItem key={code.code} value={code.code}>
-                              {code.label_sv}
-                            </SelectItem>
-                          ))}
+                        {occupationCodes.map((code: any) => (
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -476,11 +489,11 @@ export default function JobForm() {
                           <SelectValue placeholder="Välj kommun" />
                         </SelectTrigger>
                         <SelectContent>
-                          {municipalityCodes.map((code: any) => (
-                            <SelectItem key={code.code} value={code.code}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
+                        {municipalityCodes.map((code: any) => (
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -507,11 +520,11 @@ export default function JobForm() {
                           <SelectValue placeholder="Välj typ" />
                         </SelectTrigger>
                         <SelectContent>
-                          {employmentTypeCodes.map((code: any) => (
-                            <SelectItem key={code.code} value={code.code}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
+                        {employmentTypeCodes.map((code: any) => (
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -529,11 +542,11 @@ export default function JobForm() {
                             <SelectValue placeholder="Välj omfattning" />
                           </SelectTrigger>
                           <SelectContent>
-                            {worktimeExtentCodes.map((code: any) => (
-                              <SelectItem key={code.code} value={code.code}>
-                                {code.label}
-                              </SelectItem>
-                            ))}
+                          {worktimeExtentCodes.map((code: any) => (
+                            <SelectItem key={code.concept_id} value={code.concept_id}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
                           </SelectContent>
                         </Select>
                         {afEmploymentTypeCode === 'PFZr_Syz_cUq' && (
@@ -562,11 +575,11 @@ export default function JobForm() {
                           <SelectValue placeholder="Välj varaktighet" />
                         </SelectTrigger>
                         <SelectContent>
-                          {durationCodes.map((code: any) => (
-                            <SelectItem key={code.code} value={code.code}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
+                        {durationCodes.map((code: any) => (
+                          <SelectItem key={code.concept_id} value={code.concept_id}>
+                            {code.label}
+                          </SelectItem>
+                        ))}
                         </SelectContent>
                       </Select>
                       {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? (

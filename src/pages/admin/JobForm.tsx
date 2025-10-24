@@ -9,11 +9,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Eye } from 'lucide-react';
+import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
 
 interface Company {
   id: string;
@@ -23,6 +25,7 @@ interface Company {
 export default function JobForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes } = useAFTaxonomy();
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   
@@ -38,6 +41,18 @@ export default function JobForm() {
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
+  
+  // AF fields
+  const [lastApplicationDate, setLastApplicationDate] = useState('');
+  const [totalPositions, setTotalPositions] = useState(1);
+  const [contactPersonName, setContactPersonName] = useState('');
+  const [contactPersonEmail, setContactPersonEmail] = useState('');
+  const [contactPersonPhone, setContactPersonPhone] = useState('');
+  const [afOccupationCode, setAfOccupationCode] = useState('');
+  const [afMunicipalityCode, setAfMunicipalityCode] = useState('');
+  const [afEmploymentTypeCode, setAfEmploymentTypeCode] = useState('');
+  const [afDurationCode, setAfDurationCode] = useState('');
+  const [afWorktimeExtentCode, setAfWorktimeExtentCode] = useState('');
 
   // Fetch companies
   useEffect(() => {
@@ -114,8 +129,19 @@ export default function JobForm() {
           language: language.trim() || null,
           status: 'draft',
           slug: slug,
-          publish_at: null, // Används inte i JobForm, sätts senare i JobEdit
+          publish_at: null,
           created_by: user!.id,
+          // AF fields
+          last_application_date: lastApplicationDate || null,
+          total_positions: totalPositions,
+          contact_person_name: contactPersonName.trim() || null,
+          contact_person_email: contactPersonEmail.trim() || null,
+          contact_person_phone: contactPersonPhone.trim() || null,
+          af_occupation_code: afOccupationCode || null,
+          af_municipality_code: afMunicipalityCode || null,
+          af_employment_type_code: afEmploymentTypeCode || null,
+          af_duration_code: afDurationCode || null,
+          af_worktime_extent_code: afWorktimeExtentCode || null,
         });
 
       if (error) throw error;
@@ -274,10 +300,230 @@ export default function JobForm() {
                     onChange={(e) => setSlug(e.target.value)}
                     placeholder="slug-genereras-automatiskt"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    OBS: Publiceringsdatum kan du sätta när du redigerar jobbet efter att det skapats.
-                  </p>
                 </div>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* AF Fields Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Arbetsförmedlingen (AF) - Fält</CardTitle>
+              <CardDescription>Fyll i information för publicering på AF</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Kontaktperson */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm">Kontaktperson</h4>
+                  <div>
+                    <Label htmlFor="contact_person_name">Namn</Label>
+                    <Input
+                      id="contact_person_name"
+                      value={contactPersonName}
+                      onChange={(e) => setContactPersonName(e.target.value)}
+                      placeholder="Anna Andersson"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact_person_email">E-post</Label>
+                    <Input
+                      id="contact_person_email"
+                      type="email"
+                      value={contactPersonEmail}
+                      onChange={(e) => setContactPersonEmail(e.target.value)}
+                      placeholder="anna@foretag.se"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact_person_phone">Telefon</Label>
+                    <Input
+                      id="contact_person_phone"
+                      type="tel"
+                      value={contactPersonPhone}
+                      onChange={(e) => setContactPersonPhone(e.target.value)}
+                      placeholder="070-123 45 67"
+                    />
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Datum och antal platser */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="last_application_date">Sista ansökningsdag</Label>
+                    <Input
+                      id="last_application_date"
+                      type="date"
+                      value={lastApplicationDate}
+                      onChange={(e) => setLastApplicationDate(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="total_positions">Antal platser</Label>
+                    <Input
+                      id="total_positions"
+                      type="number"
+                      min="1"
+                      value={totalPositions}
+                      onChange={(e) => setTotalPositions(parseInt(e.target.value) || 1)}
+                    />
+                  </div>
+                </div>
+
+                {/* AF Taxonomi-dropdowns */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm">Arbetsförmedlingens taxonomi</h4>
+                  
+                  <Alert className="mb-4">
+                    <AlertDescription className="text-sm">
+                      <strong>Anställningstyper och varaktighet:</strong>
+                      <ul className="list-disc list-inside mt-2 space-y-1">
+                        <li><strong>Vanlig anställning:</strong> Tillsvidareanställning (varaktighet anges inte)</li>
+                        <li><strong>Vikariat, Sommarjobb, etc:</strong> Tidsbegränsad (varaktighet MÅSTE anges)</li>
+                        <li><strong>Behovsanställning:</strong> Särskilda regler (ej arbetstidsomfattning)</li>
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="af_occupation_code">Yrke</Label>
+                      <Select
+                        value={afOccupationCode}
+                        onValueChange={setAfOccupationCode}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj yrke" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {occupationCodes.map((code: any) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.label_sv}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="af_municipality_code">Kommun</Label>
+                      <Select
+                        value={afMunicipalityCode}
+                        onValueChange={setAfMunicipalityCode}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj kommun" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {municipalityCodes.map((code: any) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="af_employment_type_code">Anställningstyp</Label>
+                      <Select
+                        value={afEmploymentTypeCode}
+                        onValueChange={(value) => {
+                          setAfEmploymentTypeCode(value);
+                          if (value === 'PFZr_Syz_cUq' && afDurationCode) {
+                            setAfDurationCode('');
+                            toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
+                          }
+                          if (value === '1paU_aCR_nGn' && afWorktimeExtentCode) {
+                            setAfWorktimeExtentCode('');
+                            toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj typ" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employmentTypeCodes.map((code: any) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {afEmploymentTypeCode !== '1paU_aCR_nGn' && (
+                      <div>
+                        <Label htmlFor="af_worktime_extent_code">
+                          Arbetstidsomfattning {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? '*' : ''}
+                        </Label>
+                        <Select
+                          value={afWorktimeExtentCode}
+                          onValueChange={setAfWorktimeExtentCode}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Välj omfattning" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {worktimeExtentCodes.map((code: any) => (
+                              <SelectItem key={code.code} value={code.code}>
+                                {code.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {afEmploymentTypeCode === 'PFZr_Syz_cUq' && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Obligatoriskt för vanlig anställning
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {afEmploymentTypeCode === '1paU_aCR_nGn' && (
+                      <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                        ℹ️ Arbetstidsomfattning anges inte för behovsanställning
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="af_duration_code">Varaktighet</Label>
+                      <Select
+                        value={afDurationCode}
+                        onValueChange={setAfDurationCode}
+                        disabled={afEmploymentTypeCode === 'PFZr_Syz_cUq'}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj varaktighet" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {durationCodes.map((code: any) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? (
+                        <p className="text-xs text-blue-600 mt-1">
+                          ℹ️ Vanlig anställning är automatiskt tillsvidareanställning
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Varaktighet anges för tidsbegränsade anställningar
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
 
                 <div className="flex gap-2">
                   <Button type="submit" disabled={loading}>

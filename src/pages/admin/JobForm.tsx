@@ -165,6 +165,13 @@ export default function JobForm() {
         m => m.code === afMunicipalityCode
       );
 
+      // Auto-set worktime extent if employment type requires it
+      let finalAfWorktimeExtentCode = afWorktimeExtentCode;
+      if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+        finalAfWorktimeExtentCode = 'xvJr_Zge_hcZ'; // Default: Heltid
+        toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid' för vanlig anställning");
+      }
+
       const { error } = await supabase
         .from('jobs')
         .insert({
@@ -193,7 +200,7 @@ export default function JobForm() {
           af_municipality_concept_id: selectedMunicipality?.concept_id || null,
           af_employment_type_code: afEmploymentTypeCode || null,
           af_duration_code: afDurationCode || null,
-          af_worktime_extent_code: afWorktimeExtentCode || null,
+          af_worktime_extent_code: finalAfWorktimeExtentCode || null,
         });
 
       if (error) throw error;

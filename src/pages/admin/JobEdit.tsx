@@ -286,6 +286,13 @@ export default function JobEdit() {
         m => m.code === afMunicipalityCode
       );
 
+      // Auto-set worktime extent if employment type requires it
+      let finalAfWorktimeExtentCode = afWorktimeExtentCode;
+      if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+        finalAfWorktimeExtentCode = 'xvJr_Zge_hcZ'; // Default: Heltid
+        toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid' för vanlig anställning");
+      }
+
       const updateData: any = {
         title: title.trim(),
         company_id: companyId,
@@ -310,7 +317,7 @@ export default function JobEdit() {
         af_municipality_concept_id: selectedMunicipality?.concept_id || null,
         af_employment_type_code: afEmploymentTypeCode || null,
         af_duration_code: afDurationCode || null,
-        af_worktime_extent_code: afWorktimeExtentCode || null,
+        af_worktime_extent_code: finalAfWorktimeExtentCode || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: (() => {
           if (!publishAt) return null;
@@ -413,8 +420,16 @@ export default function JobEdit() {
           .map((e: any) => `• ${e.field}: ${e.message}`)
           .join('\n');
 
-        toast.error("❌ AF API-fel", {
-          description: `${errorMessage}\n\n${errorDetails}\n\n🔍 Tracking ID: ${data.trackingId}`,
+        const safeErrorMessage = typeof errorMessage === 'string' 
+          ? errorMessage 
+          : JSON.stringify(errorMessage, null, 2);
+
+        const safeErrorDetails = typeof errorDetails === 'string'
+          ? errorDetails
+          : JSON.stringify(errorDetails, null, 2);
+
+        toast.error(safeErrorMessage || "❌ AF API-fel", {
+          description: `${safeErrorDetails}\n\n🔍 Tracking ID: ${data.trackingId}`,
           duration: 15000,
         });
         
@@ -448,8 +463,13 @@ export default function JobEdit() {
           // Om edge functionen returnerade AF API-fel
           if (errorResponse.trackingId || errorResponse.cause) {
             const errorMessage = errorResponse.cause?.message || 'AF API returnerade ett fel';
-            toast.error("❌ AF API-fel", {
-              description: `${errorMessage}\n\n🔍 Tracking ID: ${errorResponse.trackingId}`,
+            
+            const safeErrorMessage = typeof errorMessage === 'string' 
+              ? errorMessage 
+              : JSON.stringify(errorMessage, null, 2);
+
+            toast.error(safeErrorMessage || "❌ AF API-fel", {
+              description: `🔍 Tracking ID: ${errorResponse.trackingId}`,
               duration: 15000,
             });
             setAfError(JSON.stringify(errorResponse, null, 2));
@@ -504,8 +524,16 @@ export default function JobEdit() {
           .map((e: any) => `• ${e.field}: ${e.message}`)
           .join('\n');
 
-        toast.error("❌ AF API-fel", {
-          description: `${errorMessage}\n\n${errorDetails}\n\n🔍 Tracking ID: ${data.trackingId}`,
+        const safeErrorMessage = typeof errorMessage === 'string' 
+          ? errorMessage 
+          : JSON.stringify(errorMessage, null, 2);
+
+        const safeErrorDetails = typeof errorDetails === 'string'
+          ? errorDetails
+          : JSON.stringify(errorDetails, null, 2);
+
+        toast.error(safeErrorMessage || "❌ AF API-fel", {
+          description: `${safeErrorDetails}\n\n🔍 Tracking ID: ${data.trackingId}`,
           duration: 15000,
         });
         
@@ -532,8 +560,13 @@ export default function JobEdit() {
           // Om edge functionen returnerade AF API-fel
           if (errorResponse.trackingId || errorResponse.cause) {
             const errorMessage = errorResponse.cause?.message || 'AF API returnerade ett fel';
-            toast.error("❌ AF API-fel", {
-              description: `${errorMessage}\n\n🔍 Tracking ID: ${errorResponse.trackingId}`,
+            
+            const safeErrorMessage = typeof errorMessage === 'string' 
+              ? errorMessage 
+              : JSON.stringify(errorMessage, null, 2);
+
+            toast.error(safeErrorMessage || "❌ AF API-fel", {
+              description: `🔍 Tracking ID: ${errorResponse.trackingId}`,
               duration: 15000,
             });
             setAfError(JSON.stringify(errorResponse, null, 2));
@@ -586,8 +619,13 @@ export default function JobEdit() {
           // Om edge functionen returnerade AF API-fel
           if (errorResponse.trackingId || errorResponse.cause) {
             const errorMessage = errorResponse.cause?.message || 'AF API returnerade ett fel';
-            toast.error("❌ AF API-fel", {
-              description: `${errorMessage}\n\n🔍 Tracking ID: ${errorResponse.trackingId}`,
+            
+            const safeErrorMessage = typeof errorMessage === 'string' 
+              ? errorMessage 
+              : JSON.stringify(errorMessage, null, 2);
+
+            toast.error(safeErrorMessage || "❌ AF API-fel", {
+              description: `🔍 Tracking ID: ${errorResponse.trackingId}`,
               duration: 15000,
             });
             setAfError(JSON.stringify(errorResponse, null, 2));

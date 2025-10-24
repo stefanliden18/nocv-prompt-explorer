@@ -39,22 +39,55 @@ serve(async (req) => {
 
     console.log('✅ Job found, AF Ad ID:', job.af_ad_id);
 
-    // Validera conditional fields enligt AF dokumentation
+    // ✅ AF API kombinationsregler (baserat på officiell dokumentation)
+    const AF_RULES = {
+      // Dessa anställningstyper FÖRBJUDER duration (de är redan permanenta)
+      forbidsDuration: ['PFZr_Syz_cUq'], // Vanlig anställning = Tillsvidare
+      
+      // Dessa anställningstyper KRÄVER duration (tidsbegränsade)
+      requiresDuration: [
+        '1paU_aCR_nGn', // Behovsanställning
+        'h4fe_E7e_UqV', // Extratjänst
+        'bYfG_jXa_zik', // Frilans
+        'nuKG_MXb_Yua', // Säsongsarbete
+        'Jh8f_q9J_pbJ', // Sommarjobb
+        '8qLN_bEY_bhk'  // Vikariat
+      ],
+      
+      // Dessa anställningstyper FÖRBJUDER worktimeExtent
+      forbidsWorktimeExtent: ['1paU_aCR_nGn'], // Behovsanställning
+      
+      // Förbjudna kombinationer
+      forbiddenCombinations: [
+        { employmentType: 'Jh8f_q9J_pbJ', duration: 'a7uU_j21_mkL' } // Sommarjobb + Tillsvidare
+      ]
+    };
+
     const validateConditionalFields = (job: any) => {
-      const requiresWorktimeAndDuration = ['PFZr_Syz_cUq', 'Jh8f_q9J_pbJ']; // ✅ Vanlig anställning (CORRECTED), Sommarjobb
-      const forbidsWorktime = ['1paU_aCR_nGn']; // Behovsanställning
-
-      if (requiresWorktimeAndDuration.includes(job.af_employment_type_code)) {
-        if (!job.af_worktime_extent_code) {
-          throw new Error(`worktimeExtent is mandatory for employmentType ${job.af_employment_type_code}`);
-        }
-        if (!job.af_duration_code) {
-          throw new Error(`duration is mandatory for employmentType ${job.af_employment_type_code}`);
-        }
+      const employmentType = job.af_employment_type_code;
+      const duration = job.af_duration_code;
+      const worktimeExtent = job.af_worktime_extent_code;
+      
+      // ❌ FÖRBJUD duration för permanenta anställningar
+      if (AF_RULES.forbidsDuration.includes(employmentType) && duration) {
+        console.warn(`⚠️ Duration will be excluded for employment type: ${employmentType}`);
       }
-
-      if (forbidsWorktime.includes(job.af_employment_type_code) && job.af_worktime_extent_code) {
-        throw new Error(`worktimeExtent cannot be used with employmentType ${job.af_employment_type_code}`);
+      
+      // ✅ KRÄV duration för tidsbegränsade anställningar
+      if (AF_RULES.requiresDuration.includes(employmentType) && !duration) {
+        throw new Error(`Duration is mandatory for employment type "${employmentType}"`);
+      }
+      
+      // ❌ FÖRBJUD worktimeExtent för vissa typer
+      if (AF_RULES.forbidsWorktimeExtent.includes(employmentType) && worktimeExtent) {
+        throw new Error(`WorktimeExtent cannot be specified for "${employmentType}"`);
+      }
+      
+      // ❌ Kontrollera förbjudna kombinationer
+      for (const combo of AF_RULES.forbiddenCombinations) {
+        if (employmentType === combo.employmentType && duration === combo.duration) {
+          throw new Error(`Invalid combination: employmentType "${employmentType}" cannot be combined with duration "${duration}"`);
+        }
       }
     };
 
@@ -228,18 +261,20 @@ serve(async (req) => {
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
     };
 
-    // ✅ Lägg till conditional fields endast om employmentType kräver dem (CORRECTED concept ID)
-    const requiresWorktimeAndDuration = ['PFZr_Syz_cUq', 'Jh8f_q9J_pbJ']; // Vanlig anställning, Sommarjobb
-    if (requiresWorktimeAndDuration.includes(job.af_employment_type_code)) {
-      afRequestBody.worktimeExtent = job.af_worktime_extent_code;
+    // ✅ Conditional: Lägg ENDAST till duration för tidsbegränsade anställningar
+    if (AF_RULES.requiresDuration.includes(job.af_employment_type_code) && job.af_duration_code) {
       afRequestBody.duration = job.af_duration_code;
-      console.log('✅ Added conditional fields worktimeExtent & duration');
+      console.log('✅ Added duration (required for temporary employment)');
+    } else if (AF_RULES.forbidsDuration.includes(job.af_employment_type_code)) {
+      console.log('⚠️ Duration excluded (permanent employment type)');
     }
 
-    // ✅ Behovsanställning får ALDRIG ha worktimeExtent enligt AF
-    if (job.af_employment_type_code === '1paU_aCR_nGn') {
-      delete afRequestBody.worktimeExtent;
-      console.log('✅ Removed worktimeExtent for behovsanställning');
+    // ✅ Conditional: Lägg till worktimeExtent om tillåtet och angivet
+    if (!AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_code) && job.af_worktime_extent_code) {
+      afRequestBody.worktimeExtent = job.af_worktime_extent_code;
+      console.log('✅ Added worktimeExtent');
+    } else if (AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_code)) {
+      console.log('⚠️ WorktimeExtent excluded (forbidden for this employment type)');
     }
     
     // ✅ Vissa employment types får INTE ha workplaces

@@ -1010,6 +1010,18 @@ export default function JobEdit() {
               {/* AF Taxonomi-dropdowns */}
               <div className="space-y-4">
                 <h4 className="font-semibold text-sm">Arbetsförmedlingens taxonomi *</h4>
+                
+                <Alert className="mb-4">
+                  <AlertDescription className="text-sm">
+                    <strong>Anställningstyper och varaktighet:</strong>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      <li><strong>Vanlig anställning:</strong> Tillsvidareanställning (varaktighet anges inte)</li>
+                      <li><strong>Vikariat, Sommarjobb, etc:</strong> Tidsbegränsad (varaktighet MÅSTE anges)</li>
+                      <li><strong>Behovsanställning:</strong> Särskilda regler (ej arbetstidsomfattning)</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="af_occupation_code">Yrke *</Label>
@@ -1055,7 +1067,19 @@ export default function JobEdit() {
                     <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
                     <Select
                       value={afEmploymentTypeCode}
-                      onValueChange={setAfEmploymentTypeCode}
+                      onValueChange={(value) => {
+                        setAfEmploymentTypeCode(value);
+                        // Auto-clear duration om vanlig anställning väljs
+                        if (value === 'PFZr_Syz_cUq' && afDurationCode) {
+                          setAfDurationCode('');
+                          toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
+                        }
+                        // Auto-clear worktimeExtent om behovsanställning väljs
+                        if (value === '1paU_aCR_nGn' && afWorktimeExtentCode) {
+                          setAfWorktimeExtentCode('');
+                          toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Välj typ" />
@@ -1070,45 +1094,73 @@ export default function JobEdit() {
                     </Select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="af_worktime_extent_code">Arbetstidsomfattning *</Label>
-                    <Select
-                      value={afWorktimeExtentCode}
-                      onValueChange={setAfWorktimeExtentCode}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj omfattning" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {worktimeExtentCodes.map((code: any) => (
-                          <SelectItem key={code.code} value={code.code}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Arbetstidsomfattning - Dölj för behovsanställning */}
+                  {afEmploymentTypeCode !== '1paU_aCR_nGn' && (
+                    <div>
+                      <Label htmlFor="af_worktime_extent_code">
+                        Arbetstidsomfattning {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? '*' : ''}
+                      </Label>
+                      <Select
+                        value={afWorktimeExtentCode}
+                        onValueChange={setAfWorktimeExtentCode}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj omfattning" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {worktimeExtentCodes.map((code: any) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {afEmploymentTypeCode === 'PFZr_Syz_cUq' && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Obligatoriskt för vanlig anställning
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  {afEmploymentTypeCode === '1paU_aCR_nGn' && (
+                    <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                      ℹ️ Arbetstidsomfattning anges inte för behovsanställning
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="af_duration_code">Varaktighet *</Label>
-                    <Select
-                      value={afDurationCode}
-                      onValueChange={setAfDurationCode}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj varaktighet" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {durationCodes.map((code: any) => (
-                          <SelectItem key={code.code} value={code.code}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Varaktighet - Dölj för vanlig anställning */}
+                  {afEmploymentTypeCode !== 'PFZr_Syz_cUq' && (
+                    <div>
+                      <Label htmlFor="af_duration_code">
+                        Varaktighet *
+                      </Label>
+                      <Select
+                        value={afDurationCode}
+                        onValueChange={setAfDurationCode}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj varaktighet" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {durationCodes.map((code: any) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Obligatoriskt för tidsbegränsad anställning
+                      </p>
+                    </div>
+                  )}
+                  {afEmploymentTypeCode === 'PFZr_Syz_cUq' && (
+                    <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                      ℹ️ Varaktighet anges inte för vanlig anställning (gäller automatiskt tillsvidare)
+                    </div>
+                  )}
                 </div>
               </div>
 

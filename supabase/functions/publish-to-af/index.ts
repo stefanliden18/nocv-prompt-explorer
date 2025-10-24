@@ -260,19 +260,28 @@ serve(async (req) => {
       console.log('✅ Removed worktimeExtent for behovsanställning');
     }
 
-    // ✅ Fortsätt med resten av payload (inkl. country för Sverige)
-    afRequestBody.workplaces = [
-      {
-        name: String(job.companies.name || ""),
-        municipality: job.af_municipality_code,
-        postalAddress: {
-          street: String(job.companies.address || ""),
-          postalCode: String(job.companies.postal_code || ""),
-          city: String(job.companies.city || ""),
-          country: "i46j_HmG_v64" // ✅ Sverige (required per AF documentation)
-        }
-      }
+    // ✅ Vissa employment types får INTE ha workplaces
+    const employmentTypesWithoutWorkplace = [
+      '1paU_aCR_nGn', // Behovsanställning
     ];
+
+    // Endast lägg till workplaces om employment type tillåter det
+    if (!employmentTypesWithoutWorkplace.includes(job.af_employment_type_code)) {
+      afRequestBody.workplaces = [
+        {
+          name: String(job.companies.name || ""),
+          municipality: job.af_municipality_code,
+          postalAddress: {
+            street: String(job.companies.address || ""),
+            postalCode: String(job.companies.postal_code || ""),
+            city: String(job.companies.city || "")
+          }
+        }
+      ];
+      console.log('✅ Added workplaces for employment type:', job.af_employment_type_code);
+    } else {
+      console.log('✅ Skipped workplaces for employment type (not allowed):', job.af_employment_type_code);
+    }
     
     // Kontakter (array enligt AF API)
     afRequestBody.contacts = [

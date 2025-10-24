@@ -539,7 +539,7 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="af_duration_code">Varaktighet</Label>
+                      <Label htmlFor="af_duration_code">Varaktighet *</Label>
                       <Select
                         value={afDurationCode}
                         onValueChange={setAfDurationCode}

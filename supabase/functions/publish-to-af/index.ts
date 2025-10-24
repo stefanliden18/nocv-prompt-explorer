@@ -295,78 +295,85 @@ serve(async (req) => {
       console.log('⚠️ WorktimeExtent excluded (forbidden for this employment type)');
     }
 
-    // ✅ Vissa employment types får INTE ha workplaces
-    const employmentTypesWithoutWorkplace = [
-      '1paU_aCR_nGn', // Behovsanställning
+    // ✅ Workplaces måste ALLTID finnas enligt AF dokumentation
+    afRequestBody.workplaces = [
+      {
+        name: String(job.companies?.name || ""),
+        municipality: String(job.af_municipality_code || ""),
+        country: "i46j_HmG_v64", // ✅ Sverige (required enligt AF docs)
+        postalAddress: {
+          street: String(job.companies?.address || ""),
+          postalCode: String(job.companies?.postal_code || ""),
+          city: String(job.companies?.city || "")
+        }
+      }
     ];
 
-    // Endast lägg till workplaces om employment type tillåter det
-    if (!employmentTypesWithoutWorkplace.includes(job.af_employment_type_code)) {
-      afRequestBody.workplaces = [
-        {
-          name: String(job.companies.name || ""),
-          municipality: String(job.af_municipality_code || ""),
-          postalAddress: {
-            street: String(job.companies.address || ""),
-            postalCode: String(job.companies.postal_code || ""),
-            city: String(job.companies.city || "")
-          }
-        }
-      ];
-      console.log('✅ Added workplaces for employment type:', job.af_employment_type_code);
-    } else {
-      console.log('✅ Skipped workplaces for employment type (not allowed):', job.af_employment_type_code);
-    }
-    
     // Kontakter (array enligt AF API)
     afRequestBody.contacts = [
       {
-        firstname: firstname,
-        surname: surname,
-        email: job.contact_person_email,
-        phoneNumber: formatPhoneNumber(job.contact_person_phone),
+        firstname: String(firstname || ""),
+        surname: String(surname || ""),
+        email: String(job.contact_person_email || ""),
+        phoneNumber: String(formatPhoneNumber(job.contact_person_phone) || ""),
         title: "Kontaktperson"
       }
     ];
-    
+
     // Ansökan
     afRequestBody.application = {
       method: {
-        webAddress: `https://nocv.se/jobb/${job.slug}`
+        webAddress: String(`https://nocv.se/jobb/${job.slug}`)
       }
     };
-    
+
     // Övrigt
     afRequestBody.eures = false;
     afRequestBody.keywords = ["OPEN_TO_ALL"];
 
-    // Debug: Visa concept IDs
+    // Debug: Visa concept IDs (SÄKER version som inte kraschar)
     console.log("🔍 Final AF payload taxonomy:", {
+      occupation: afRequestBody.occupation,
+      employmentType: afRequestBody.employmentType,
+      worktimeExtent: afRequestBody.worktimeExtent || 'not set',
+      duration: afRequestBody.duration,
+      municipality: afRequestBody.workplaces?.[0]?.municipality || 'not set'
+    });
+
+    // 🔥 VALIDERA ATT ALLA KRITISKA FÄLT ÄR STRÄNGAR (inte objekt)
+    console.log("🔍 Validating payload field types:");
+    const criticalFields: Record<string, any> = {
       occupation: afRequestBody.occupation,
       employmentType: afRequestBody.employmentType,
       worktimeExtent: afRequestBody.worktimeExtent,
       duration: afRequestBody.duration,
-      municipality: afRequestBody.workplaces[0].municipality
-    });
+      wageType: afRequestBody.wageType,
+      municipality: afRequestBody.workplaces?.[0]?.municipality,
+      postalCode: afRequestBody.workplaces?.[0]?.postalAddress?.postalCode,
+      country: afRequestBody.workplaces?.[0]?.country,
+      phoneNumber: afRequestBody.contacts?.[0]?.phoneNumber,
+    };
 
-    // Validera att alla kritiska fält är strängar
-    console.log("🔍 AF payload field types:", {
-      municipality: `${typeof afRequestBody.workplaces[0].municipality} = "${afRequestBody.workplaces[0].municipality}"`,
-      postalCode: `${typeof afRequestBody.workplaces[0].postalAddress.postalCode} = "${afRequestBody.workplaces[0].postalAddress.postalCode}"`,
-      phoneNumber: `${typeof afRequestBody.contacts[0].phoneNumber} = "${afRequestBody.contacts[0].phoneNumber}"`,
-      occupation: `${typeof afRequestBody.occupation} = "${afRequestBody.occupation}"`
-    });
+    for (const [key, value] of Object.entries(criticalFields)) {
+      if (value === undefined || value === null) {
+        console.log(`  ${key}: ${value} (skipped - undefined/null)`);
+        continue;
+      }
+      
+      const valueType = typeof value;
+      console.log(`  ${key}: ${valueType} = "${value}"`);
+      
+      if (valueType === 'object') {
+        throw new Error(`❌ Field "${key}" is an object, must be string! Value: ${JSON.stringify(value)}`);
+      }
+      
+      // Extra validering för tomma strängar på kritiska fält
+      if (valueType === 'string' && value.trim() === '' && ['occupation', 'employmentType', 'municipality'].includes(key)) {
+        throw new Error(`❌ Field "${key}" cannot be empty!`);
+      }
+    }
 
-    if (typeof afRequestBody.workplaces[0].municipality !== 'string') {
-      throw new Error(`municipality must be string, got ${typeof afRequestBody.workplaces[0].municipality}`);
-    }
-    if (typeof afRequestBody.workplaces[0].postalAddress.postalCode !== 'string') {
-      throw new Error(`postalCode must be string, got ${typeof afRequestBody.workplaces[0].postalAddress.postalCode}`);
-    }
-    if (typeof afRequestBody.contacts[0].phoneNumber !== 'string') {
-      throw new Error(`phoneNumber must be string, got ${typeof afRequestBody.contacts[0].phoneNumber}`);
-    }
-
+    console.log("✅ All critical fields are valid");
     console.log('📨 Sending POST request to AF API...');
     console.log('Request payload:', JSON.stringify(afRequestBody, null, 2));
 

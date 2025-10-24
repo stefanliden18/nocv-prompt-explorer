@@ -133,6 +133,14 @@ export default function JobEdit() {
     }
   }, [afEmploymentTypeCode]);
 
+  // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
+  useEffect(() => {
+    if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+      setAfWorktimeExtentCode('hJi6_yUu_RBT'); // Heltid
+      toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
+    }
+  }, [afEmploymentTypeCode]);
+
   const fetchCompanies = async () => {
     try {
       const { data, error } = await supabase
@@ -231,6 +239,44 @@ export default function JobEdit() {
     if (!title.trim() || !city.trim() || !category.trim() || !descriptionHtml.trim() || !companyId) {
       toast.error('Fyll i alla obligatoriska fält');
       return;
+    }
+
+    // Validera AF-fält om några är ifyllda
+    if (afEmploymentTypeCode || afOccupationCode || contactPersonName) {
+      if (!contactPersonName.trim()) {
+        toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!contactPersonEmail.trim()) {
+        toast.error('Kontaktperson e-post är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!contactPersonPhone.trim()) {
+        toast.error('Kontaktperson telefon är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!lastApplicationDate) {
+        toast.error('Sista ansökningsdag är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!afOccupationCode) {
+        toast.error('Yrke är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!afMunicipalityCode) {
+        toast.error('Kommun är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!afEmploymentTypeCode) {
+        toast.error('Anställningstyp är obligatoriskt för AF-publicering');
+        return;
+      }
+      
+      // Extra validering för Vanlig anställning
+      if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+        toast.error('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
+        return;
+      }
     }
 
     setLoading(true);

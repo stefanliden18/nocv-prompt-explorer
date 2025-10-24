@@ -83,6 +83,14 @@ serve(async (req) => {
         throw new Error(`Duration is mandatory for employment type "${employmentType}"`);
       }
       
+      // ✅ KRÄV worktimeExtent för Vanlig anställning
+      if (employmentType === 'PFZr_Syz_cUq' && !worktimeExtent) {
+        throw new Error(
+          'worktimeExtent (Heltid/Deltid) is REQUIRED for Vanlig anställning (PFZr_Syz_cUq). ' +
+          'Choose: Heltid (hJi6_yUu_RBT) or Deltid (6YE1_gAC_R2G)'
+        );
+      }
+      
       // ❌ FÖRBJUD worktimeExtent för vissa typer
       if (AF_RULES.forbidsWorktimeExtent.includes(employmentType) && worktimeExtent) {
         throw new Error(`WorktimeExtent cannot be specified for "${employmentType}"`);

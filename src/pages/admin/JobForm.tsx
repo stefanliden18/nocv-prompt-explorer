@@ -87,6 +87,14 @@ export default function JobForm() {
     }
   }, [title]);
 
+  // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
+  useEffect(() => {
+    if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+      setAfWorktimeExtentCode('hJi6_yUu_RBT'); // Heltid
+      toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
+    }
+  }, [afEmploymentTypeCode]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -110,6 +118,44 @@ export default function JobForm() {
     if (!companyId) {
       toast.error('Företag är obligatoriskt');
       return;
+    }
+
+    // Validera AF-fält om några är ifyllda
+    if (afEmploymentTypeCode || afOccupationCode || contactPersonName) {
+      if (!contactPersonName.trim()) {
+        toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!contactPersonEmail.trim()) {
+        toast.error('Kontaktperson e-post är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!contactPersonPhone.trim()) {
+        toast.error('Kontaktperson telefon är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!lastApplicationDate) {
+        toast.error('Sista ansökningsdag är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!afOccupationCode) {
+        toast.error('Yrke är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!afMunicipalityCode) {
+        toast.error('Kommun är obligatoriskt för AF-publicering');
+        return;
+      }
+      if (!afEmploymentTypeCode) {
+        toast.error('Anställningstyp är obligatoriskt för AF-publicering');
+        return;
+      }
+      
+      // Extra validering för Vanlig anställning
+      if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+        toast.error('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
+        return;
+      }
     }
 
     setLoading(true);
@@ -315,9 +361,9 @@ export default function JobForm() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Kontaktperson */}
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-sm">Kontaktperson</h4>
+                  <h4 className="font-semibold text-sm">Kontaktperson *</h4>
                   <div>
-                    <Label htmlFor="contact_person_name">Namn</Label>
+                    <Label htmlFor="contact_person_name">Namn *</Label>
                     <Input
                       id="contact_person_name"
                       value={contactPersonName}
@@ -326,7 +372,7 @@ export default function JobForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact_person_email">E-post</Label>
+                    <Label htmlFor="contact_person_email">E-post *</Label>
                     <Input
                       id="contact_person_email"
                       type="email"
@@ -336,7 +382,7 @@ export default function JobForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact_person_phone">Telefon</Label>
+                    <Label htmlFor="contact_person_phone">Telefon *</Label>
                     <Input
                       id="contact_person_phone"
                       type="tel"
@@ -352,7 +398,7 @@ export default function JobForm() {
                 {/* Datum och antal platser */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="last_application_date">Sista ansökningsdag</Label>
+                    <Label htmlFor="last_application_date">Sista ansökningsdag *</Label>
                     <Input
                       id="last_application_date"
                       type="date"
@@ -361,7 +407,7 @@ export default function JobForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="total_positions">Antal platser</Label>
+                    <Label htmlFor="total_positions">Antal platser *</Label>
                     <Input
                       id="total_positions"
                       type="number"
@@ -389,7 +435,7 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="af_occupation_code">Yrke</Label>
+                      <Label htmlFor="af_occupation_code">Yrke *</Label>
                       <Select
                         value={afOccupationCode}
                         onValueChange={setAfOccupationCode}
@@ -408,7 +454,7 @@ export default function JobForm() {
                     </div>
 
                     <div>
-                      <Label htmlFor="af_municipality_code">Kommun</Label>
+                      <Label htmlFor="af_municipality_code">Kommun *</Label>
                       <Select
                         value={afMunicipalityCode}
                         onValueChange={setAfMunicipalityCode}
@@ -429,7 +475,7 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="af_employment_type_code">Anställningstyp</Label>
+                      <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
                       <Select
                         value={afEmploymentTypeCode}
                         onValueChange={(value) => {

@@ -29,7 +29,12 @@ serve(async (req) => {
       .from('jobs')
       .select(`
         *,
-        companies (*)
+        companies (*),
+        af_municipality_codes!jobs_af_municipality_code_fkey (
+          concept_id,
+          code,
+          label
+        )
       `)
       .eq('id', job_id)
       .single();
@@ -307,7 +312,7 @@ serve(async (req) => {
     afRequestBody.workplaces = [
       {
         name: String(job.companies?.name || ""),
-        municipality: String(job.af_municipality_code || ""),
+        municipality: String(job.af_municipality_codes?.concept_id || ""),
         country: "i46j_HmG_v64", // ✅ Sverige (required enligt AF docs)
         postalAddress: {
           street: String(job.companies?.address || ""),
@@ -345,7 +350,7 @@ serve(async (req) => {
       employmentType: afRequestBody.employmentType,
       worktimeExtent: afRequestBody.worktimeExtent || 'not set',
       duration: afRequestBody.duration,
-      municipality: afRequestBody.workplaces?.[0]?.municipality || 'not set'
+      municipality: job.af_municipality_codes?.concept_id || 'not set'
     });
 
     // 🔥 VALIDERA ATT ALLA KRITISKA FÄLT ÄR STRÄNGAR (inte objekt)

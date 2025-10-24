@@ -443,48 +443,77 @@ serve(async (req) => {
 
     console.log('Starting AF taxonomy sync...');
     
-    let totalInserted = 0;
-    const errors: string[] = [];
+    const syncResults = [];
+    let totalSynced = 0;
 
-    // Fetch and upsert each taxonomy type
+    // Fetch and sync each taxonomy type
     for (const endpoint of TAXONOMY_ENDPOINTS) {
+      console.log(`[SYNC] Fetching ${endpoint.type} v${endpoint.version}...`);
+      
       const taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);
       
       if (taxonomyData.length === 0) {
-        errors.push(`No data fetched for ${endpoint.type}`);
+        console.warn(`[SYNC] No concepts found for ${endpoint.type}`);
+        syncResults.push({
+          type: endpoint.type,
+          version: endpoint.version,
+          status: 'empty',
+          count: 0
+        });
         continue;
       }
 
-      console.log(`Upserting ${taxonomyData.length} items for ${endpoint.type}...`);
-      
+      // Delete old data for this type+version before inserting new
+      console.log(`[SYNC] Cleaning old data for ${endpoint.type} v${endpoint.version}...`);
+      const { error: deleteError } = await supabase
+        .from('af_taxonomy')
+        .delete()
+        .eq('type', endpoint.type)
+        .eq('version', endpoint.version);
+
+      if (deleteError) {
+        console.error(`[SYNC] Delete error for ${endpoint.type}:`, deleteError);
+      }
+
+      // Upsert new data
+      console.log(`[SYNC] Upserting ${taxonomyData.length} items for ${endpoint.type}...`);
       const { error: upsertError } = await supabase
         .from('af_taxonomy')
         .upsert(taxonomyData, { onConflict: 'concept_id' });
 
       if (upsertError) {
-        console.error(`Error upserting ${endpoint.type}:`, upsertError);
-        errors.push(`${endpoint.type}: ${upsertError.message}`);
+        console.error(`[SYNC] Upsert error for ${endpoint.type}:`, upsertError);
+        syncResults.push({
+          type: endpoint.type,
+          version: endpoint.version,
+          status: 'error',
+          error: upsertError.message
+        });
       } else {
-        totalInserted += taxonomyData.length;
-        console.log(`✓ Successfully upserted ${taxonomyData.length} items for ${endpoint.type}`);
+        totalSynced += taxonomyData.length;
+        console.log(`[SYNC] ✅ Synced ${taxonomyData.length} concepts for ${endpoint.type}`);
+        syncResults.push({
+          type: endpoint.type,
+          version: endpoint.version,
+          status: 'success',
+          count: taxonomyData.length
+        });
       }
     }
 
+    console.log(`[SYNC] Total synced: ${totalSynced} concepts`);
+
     const response = {
-      success: errors.length === 0,
-      message: `Synced ${totalInserted} taxonomy items`,
-      details: {
-        totalInserted,
-        endpoints: TAXONOMY_ENDPOINTS.map(e => `${e.type} (v${e.version})`),
-        errors: errors.length > 0 ? errors : undefined
-      }
+      success: true, 
+      results: syncResults,
+      total_synced: totalSynced
     };
 
     console.log('Sync complete:', response);
 
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: errors.length > 0 ? 207 : 200
+      status: 200
     });
 
   } catch (error) {

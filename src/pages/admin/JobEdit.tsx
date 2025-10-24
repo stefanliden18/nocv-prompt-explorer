@@ -14,8 +14,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive, ExternalLink } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive, ExternalLink, AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import DOMPurify from 'dompurify';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -24,45 +24,23 @@ import { cn } from '@/lib/utils';
 import { stockholmToUTC, utcToStockholm, nowInStockholm, nowUTC } from '@/lib/timezone';
 import { useDebugMode } from '@/hooks/useDebugMode';
 import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
+import type { Database } from '@/integrations/supabase/types';
 
 interface Company {
   id: string;
   name: string;
 }
 
-interface Job {
-  id: string;
-  title: string;
-  company_id: string;
-  city: string;
-  region: string | null;
-  category: string;
-  employment_type: string | null;
-  description_md: string;
-  requirements_md: string | null;
-  driver_license: boolean;
-  language: string | null;
-  status: 'draft' | 'published' | 'archived';
-  slug: string;
-  publish_at: string | null;
-  kiku_interview_url: string | null;
-  // AF-fält
-  af_published: boolean;
-  af_ad_id: string | null;
-  af_published_at: string | null;
-  af_error: string | null;
-  af_last_sync: string | null;
-  last_application_date: string | null;
-  total_positions: number;
-  contact_person_name: string | null;
-  contact_person_email: string | null;
-  contact_person_phone: string | null;
-  af_occupation_code: string | null;
-  af_municipality_code: string | null;
-  af_employment_type_code: string | null;
-  af_duration_code: string | null;
-  af_worktime_extent_code: string | null;
-}
+type Job = Database['public']['Tables']['jobs']['Row'] & {
+  companies?: {
+    name: string;
+    org_number: string | null;
+    address: string | null;
+    postal_code: string | null;
+    city: string | null;
+    website: string | null;
+  };
+};
 
 export default function JobEdit() {
   const { id } = useParams<{ id: string }>();
@@ -1329,9 +1307,21 @@ export default function JobEdit() {
               {/* Felmeddelande */}
               {afError && (
                 <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>AF Publiceringsfel</AlertTitle>
                   <AlertDescription>
-                    <strong>Fel vid publicering till Arbetsförmedlingen:</strong>
-                    <pre className="mt-2 text-xs overflow-auto whitespace-pre-wrap">{afError}</pre>
+                    <div className="mt-2 space-y-1">
+                      {afError.split(';').map((error, idx) => (
+                        <div key={idx} className="text-sm">
+                          • {error.trim()}
+                        </div>
+                      ))}
+                    </div>
+                    {afLastSync && (
+                      <p className="text-xs mt-2 opacity-70">
+                        Senast synkad: {new Date(afLastSync).toLocaleString('sv-SE')}
+                      </p>
+                    )}
                   </AlertDescription>
                 </Alert>
               )}

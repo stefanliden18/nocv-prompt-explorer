@@ -145,21 +145,27 @@ export type Database = {
           code: string | null
           concept_id: string
           label: string
+          lang: string | null
           type: string
+          updated_at: string | null
           version: number
         }
         Insert: {
           code?: string | null
           concept_id: string
           label: string
+          lang?: string | null
           type: string
+          updated_at?: string | null
           version: number
         }
         Update: {
           code?: string | null
           concept_id?: string
           label?: string
+          lang?: string | null
           type?: string
+          updated_at?: string | null
           version?: number
         }
         Relationships: []
@@ -403,7 +409,6 @@ export type Database = {
           af_last_sync: string | null
           af_municipality_cid: string | null
           af_municipality_code: string | null
-          af_municipality_concept_id: string | null
           af_occupation_cid: string | null
           af_occupation_code: string | null
           af_published: boolean | null
@@ -445,7 +450,6 @@ export type Database = {
           af_last_sync?: string | null
           af_municipality_cid?: string | null
           af_municipality_code?: string | null
-          af_municipality_concept_id?: string | null
           af_occupation_cid?: string | null
           af_occupation_code?: string | null
           af_published?: boolean | null
@@ -487,7 +491,6 @@ export type Database = {
           af_last_sync?: string | null
           af_municipality_cid?: string | null
           af_municipality_code?: string | null
-          af_municipality_concept_id?: string | null
           af_occupation_cid?: string | null
           af_occupation_code?: string | null
           af_published?: boolean | null
@@ -526,6 +529,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_duration_fk"
+            columns: ["af_duration_cid"]
+            isOneToOne: false
+            referencedRelation: "af_taxonomy"
+            referencedColumns: ["concept_id"]
+          },
+          {
+            foreignKeyName: "jobs_emp_type_fk"
+            columns: ["af_employment_type_cid"]
+            isOneToOne: false
+            referencedRelation: "af_taxonomy"
+            referencedColumns: ["concept_id"]
+          },
+          {
+            foreignKeyName: "jobs_muni_fk"
+            columns: ["af_municipality_cid"]
+            isOneToOne: false
+            referencedRelation: "af_taxonomy"
+            referencedColumns: ["concept_id"]
+          },
+          {
+            foreignKeyName: "jobs_occ_fk"
+            columns: ["af_occupation_cid"]
+            isOneToOne: false
+            referencedRelation: "af_taxonomy"
+            referencedColumns: ["concept_id"]
+          },
+          {
+            foreignKeyName: "jobs_wte_fk"
+            columns: ["af_worktime_extent_cid"]
+            isOneToOne: false
+            referencedRelation: "af_taxonomy"
+            referencedColumns: ["concept_id"]
           },
         ]
       }

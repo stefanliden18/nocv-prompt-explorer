@@ -41,6 +41,77 @@ serve(async (req) => {
 
     console.log('✅ Job found:', job.title);
 
+    // === VALIDATE CONCEPT IDS AGAINST AF_TAXONOMY ===
+    const validateConceptId = async (
+      conceptId: string | null,
+      expectedType: string,
+      expectedVersion: number,
+      fieldName: string
+    ): Promise<{ valid: boolean; error?: string }> => {
+      if (!conceptId) {
+        return { valid: false, error: `${fieldName} saknas` };
+      }
+
+      const { data, error } = await supabase
+        .from('af_taxonomy')
+        .select('concept_id')
+        .eq('concept_id', conceptId)
+        .eq('type', expectedType)
+        .eq('version', expectedVersion)
+        .maybeSingle();
+
+      if (error) {
+        return { valid: false, error: `DB error validating ${fieldName}: ${error.message}` };
+      }
+
+      if (!data) {
+        return { 
+          valid: false, 
+          error: `${fieldName} concept_id '${conceptId}' finns inte i taxonomin (type: ${expectedType}, version: ${expectedVersion})` 
+        };
+      }
+
+      return { valid: true };
+    };
+
+    // Validate all concept IDs
+    console.log('🔍 Validating concept IDs against af_taxonomy...');
+    const validations = await Promise.all([
+      validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),
+      validateConceptId(job.af_municipality_cid, 'municipality', 1, 'Municipality'),
+      validateConceptId(job.af_employment_type_cid, 'employment-type', 16, 'Employment Type'),
+      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'duration', 16, 'Duration') : Promise.resolve({ valid: true }),
+      job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 16, 'Worktime Extent') : Promise.resolve({ valid: true })
+    ]);
+
+    const validationErrors = validations.filter(v => !v.valid).map(v => v.error);
+
+    if (validationErrors.length > 0) {
+      console.error('[VALIDATION] Failed:', validationErrors);
+      const errorMessage = validationErrors.join('; ');
+      
+      await supabase
+        .from('jobs')
+        .update({ 
+          af_error: errorMessage,
+          af_last_sync: new Date().toISOString()
+        })
+        .eq('id', job_id);
+
+      return new Response(
+        JSON.stringify({ 
+          error: 'Validation failed', 
+          details: validationErrors 
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    console.log('✅ All concept IDs validated successfully');
+
     // ✅ AF API kombinationsregler (baserat på officiell dokumentation)
     const AF_RULES = {
       // Dessa anställningstyper KRÄVER automatiskt "Tillsvidare" som duration
@@ -452,11 +523,37 @@ serve(async (req) => {
       }
       console.error('💡 Hint:', errorHint);
       
-      // Spara felet i databasen
+      // Parse AF errors into readable format
+      let errorMessage = '';
+
+      if (afResponseData.cause?.message?.errors) {
+        // AF field-level errors: array of {field, message}
+        errorMessage = afResponseData.cause.message.errors
+          .map((err: any) => `${err.field}: ${err.message}`)
+          .join('; ');
+      } else if (afResponseData.errors) {
+        // Alternative structure: array of errors
+        errorMessage = Array.isArray(afResponseData.errors)
+          ? afResponseData.errors.map((e: any) => e.message || JSON.stringify(e)).join('; ')
+          : JSON.stringify(afResponseData.errors);
+      } else if (afResponseData.message) {
+        // Simple message string
+        errorMessage = afResponseData.message;
+      } else {
+        // Fallback: Save entire object
+        errorMessage = JSON.stringify(afResponseData);
+      }
+
+      // Limit length (max 500 chars for af_error)
+      if (errorMessage.length > 500) {
+        errorMessage = errorMessage.substring(0, 497) + '...';
+      }
+      
+      // Save error to database
       await supabase
         .from('jobs')
         .update({ 
-          af_error: JSON.stringify(afResponseData),
+          af_error: errorMessage,
           af_last_sync: new Date().toISOString()
         })
         .eq('id', job_id);

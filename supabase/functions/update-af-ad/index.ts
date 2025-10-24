@@ -287,7 +287,7 @@ serve(async (req) => {
       afRequestBody.workplaces = [
         {
           name: String(job.companies.name || ""),
-          municipality: job.af_municipality_code,
+          municipality: String(job.af_municipality_code || ""),
           postalAddress: {
             street: String(job.companies.address || ""),
             postalCode: String(job.companies.postal_code || ""),

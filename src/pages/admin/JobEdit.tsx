@@ -305,10 +305,27 @@ export default function JobEdit() {
       if (!contactPersonPhone?.trim()) afErrors.push('Kontaktperson telefon krävs för AF-publicering');
       if (!lastApplicationDate) afErrors.push('Sista ansökningsdag krävs för AF-publicering');
       
+      // Validera att concept_id finns i aktuell taxonomy (version 16)
+      if (afEmploymentTypeCid && !employmentTypeCodes.find(e => e.concept_id === afEmploymentTypeCid)) {
+        afErrors.push('⚠️ Anställningstyp använder gammal taxonomi-version. Välj om från listan.');
+      }
+      if (afOccupationCid && !occupationCodes.find(o => o.concept_id === afOccupationCid)) {
+        afErrors.push('⚠️ Yrke använder gammal taxonomi-version. Välj om från listan.');
+      }
+      if (afMunicipalityCid && !municipalityCodes.find(m => m.concept_id === afMunicipalityCid)) {
+        afErrors.push('⚠️ Kommun använder gammal taxonomi-version. Välj om från listan.');
+      }
+      if (afDurationCid && !durationCodes.find(d => d.concept_id === afDurationCid)) {
+        afErrors.push('⚠️ Varaktighet använder gammal taxonomi-version. Välj om från listan.');
+      }
+      if (afWorktimeExtentCid && !worktimeExtentCodes.find(w => w.concept_id === afWorktimeExtentCid)) {
+        afErrors.push('⚠️ Arbetstidsomfattning använder gammal taxonomi-version. Välj om från listan.');
+      }
+      
       if (afErrors.length > 0) {
         toast.error('AF-publicering kräver:', {
           description: afErrors.join('\n'),
-          duration: 8000
+          duration: 10000
         });
         return;
       }

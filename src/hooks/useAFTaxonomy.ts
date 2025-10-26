@@ -47,12 +47,24 @@ export const useAFTaxonomy = () => {
     worktimeCount: taxonomyData.filter(t => t.type === 'worktime-extent').length
   });
 
-  // Gruppera per typ
-  const occupationCodes = taxonomyData.filter(t => t.type === 'occupation-name');
-  const municipalityCodes = taxonomyData.filter(t => t.type === 'municipality');
-  const employmentTypeCodes = taxonomyData.filter(t => t.type === 'employment-type');
-  const durationCodes = taxonomyData.filter(t => t.type === 'duration');
-  const worktimeExtentCodes = taxonomyData.filter(t => t.type === 'worktime-extent');
+  // Hjälpfunktion: Filtrera för att endast visa senaste versionen
+  const getLatestVersion = (items: TaxonomyItem[]) => {
+    const grouped = items.reduce((acc, item) => {
+      const key = item.label;
+      if (!acc[key] || item.version > acc[key].version) {
+        acc[key] = item;
+      }
+      return acc;
+    }, {} as Record<string, TaxonomyItem>);
+    return Object.values(grouped);
+  };
+
+  // Gruppera per typ och filtrera för senaste version
+  const occupationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'occupation-name'));
+  const municipalityCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'municipality'));
+  const employmentTypeCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'employment-type'));
+  const durationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'duration'));
+  const worktimeExtentCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'worktime-extent'));
 
   console.log('📊 useAFTaxonomy: Filtered data:', {
     occupationCodes: occupationCodes.length,

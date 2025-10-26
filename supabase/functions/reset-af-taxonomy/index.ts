@@ -116,12 +116,12 @@ function getFallbackData(type: string) {
       }));
     
     case 'municipality':
-      // Use correct AF concept IDs from imported JSON data
-      return municipalitiesData.map(m => ({
-        concept_id: m.id, // AF concept ID like "jNrY_Gve_R9n"
+      // Generate unique concept IDs based on municipality name
+      return municipalitiesData.map((m, index) => ({
+        concept_id: `mun_${m.label.toLowerCase().replace(/[^a-zåäö0-9]/g, '_')}_${index}`,
         type: 'municipality',
         version: 16,
-        code: null, // No SCB codes in this dataset
+        code: null,
         label: m.label,
         lang: 'sv',
         updated_at: new Date().toISOString()

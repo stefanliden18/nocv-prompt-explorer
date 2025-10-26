@@ -184,3 +184,9 @@ All colors MUST be HSL.
   display: list-item;
   list-style-type: decimal;
 }
+
+/* Fix z-index for Radix Select dropdowns */
+[data-radix-select-content] {
+  z-index: 9999 !important;
+  background: hsl(var(--popover)) !important;
+}

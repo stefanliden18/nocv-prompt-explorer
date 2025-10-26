@@ -352,14 +352,16 @@ async function fetchMunicipalityTaxonomy(): Promise<any[]> {
 }
 
 // Create SCB code mapping from MUNICIPALITIES fallback data
-const SCB_MUNICIPALITY_CODES: Record<string, string> = MUNICIPALITIES.reduce((acc, mun) => {
-  acc[mun.label] = mun.id;
-  return acc;
-}, {} as Record<string, string>);
+function getSCBMunicipalityCodes(): Record<string, string> {
+  return MUNICIPALITIES.reduce((acc, mun) => {
+    acc[mun.label] = mun.id;
+    return acc;
+  }, {} as Record<string, string>);
+}
 
 // Helper function to add SCB codes to municipality concepts
 function addSCBCode(municipality: any): any {
-  const scbCode = SCB_MUNICIPALITY_CODES[municipality.label];
+  const scbCode = getSCBMunicipalityCodes()[municipality.label];
   if (!scbCode) {
     console.warn(`⚠️ No SCB code found for municipality: ${municipality.label}`);
   }

@@ -1307,7 +1307,7 @@ export default function JobEdit() {
                           <SelectTrigger>
                             <SelectValue placeholder="Välj omfattning" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper" side="bottom" sideOffset={4}>
                             {worktimeExtentCodes.map((code: any) => (
                               <SelectItem key={code.concept_id} value={code.concept_id}>
                                 {code.label}

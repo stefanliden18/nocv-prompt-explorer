@@ -13,7 +13,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
           <AdminHeader />
-          <main className="flex-1 p-6 bg-muted/30">
+          <main className="flex-1 p-6 bg-muted/30 relative" style={{ isolation: 'auto' }}>
             {children}
           </main>
         </div>

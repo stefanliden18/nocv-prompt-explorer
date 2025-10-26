@@ -190,3 +190,14 @@ All colors MUST be HSL.
   z-index: 9999 !important;
   background: hsl(var(--popover)) !important;
 }
+
+/* Force select dropdowns to be visible */
+[data-radix-select-viewport] {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+[data-radix-popper-content-wrapper] {
+  z-index: 9999 !important;
+  isolation: auto !important;
+}

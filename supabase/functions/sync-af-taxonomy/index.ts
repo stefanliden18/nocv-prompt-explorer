@@ -532,10 +532,8 @@ serve(async (req) => {
     const syncResults = [];
     let totalSynced = 0;
 
-    // Fetch and sync each taxonomy type (excluding municipality - handled separately)
+    // Fetch and sync each taxonomy type
     for (const endpoint of TAXONOMY_ENDPOINTS) {
-      if (endpoint.type === 'municipality') continue; // Skip, handled separately below
-      
       console.log(`[SYNC] Fetching ${endpoint.type} v${endpoint.version}...`);
       
       const taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);

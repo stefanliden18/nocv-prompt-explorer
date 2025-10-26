@@ -376,33 +376,37 @@ async function fetchTaxonomy(type: string, version: number) {
   console.log(`Fetching taxonomy: ${type} version ${version}`);
   
   try {
-    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
+    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=${type}`;
     console.log(`Fetching from: ${url}`);
     
     const response = await fetch(url);
     
     if (!response.ok) {
+      const errorBody = await response.text();
       console.error(`Failed to fetch ${type}: ${response.status} ${response.statusText}`);
+      console.error(`Response body: ${errorBody}`);
+      console.error(`URL attempted: ${url}`);
       console.log(`⚠️ Using fallback data for ${type} due to HTTP error`);
       return getFallbackData(type, version);
     }
     
     const data = await response.json();
     
-    if (!data || !data.concepts || !Array.isArray(data.concepts)) {
-      console.error(`Invalid response format for ${type}:`, data);
+    // AF /main/ endpoint returns ROOT ARRAY, not { concepts: [] }
+    if (!Array.isArray(data)) {
+      console.error(`Invalid response format for ${type} - expected array, got:`, typeof data);
       console.log(`⚠️ Using fallback data for ${type} due to invalid format`);
       return getFallbackData(type, version);
     }
     
-    console.log(`✅ Successfully fetched ${data.concepts.length} items for ${type} from API`);
+    console.log(`✅ Successfully fetched ${data.length} items for ${type} from API`);
     
-    return data.concepts.map((concept: any) => ({
-      concept_id: concept['concept-id'] || concept.id,
+    return data.map((concept: any) => ({
+      concept_id: concept['taxonomy/id'],
       type: type,
       version: version,
       code: concept['legacy-ams-taxonomy-id'] || concept.code || null,
-      label: concept.term || concept.label || 'Unknown'
+      label: concept['taxonomy/preferred-label'] || concept['taxonomy/definition'] || 'Unknown'
     }));
   } catch (error) {
     console.error(`Error fetching ${type}:`, error);

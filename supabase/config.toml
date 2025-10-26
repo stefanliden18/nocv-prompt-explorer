@@ -47,3 +47,6 @@ verify_jwt = true
 
 [functions.reset-af-taxonomy]
 verify_jwt = false
+
+[functions.fetch-af-taxonomy]
+verify_jwt = false

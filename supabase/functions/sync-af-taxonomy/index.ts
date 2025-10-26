@@ -75,13 +75,9 @@ function getFallbackData(type: string, version: number) {
       }));
     
     case 'municipality':
-      return MUNICIPALITIES.map(mun => ({
-        concept_id: `mun_${mun.id}`,
-        type: 'municipality',
-        version: 1,
-        code: mun.id,
-        label: mun.label
-      }));
+      // ❌ Ingen fallback för municipality - använd endast AF API data
+      console.error('❌ Municipality data måste hämtas från AF API - fallback stöds inte');
+      throw new Error('Municipality taxonomy must be fetched from AF API');
     
     case 'employment-type':
       return EMPLOYMENT_TYPES_FALLBACK.map(et => ({

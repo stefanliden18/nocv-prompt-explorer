@@ -1316,7 +1316,7 @@ export default function JobEdit() {
                             await updateJobField('af_employment_type_code', selected.code || '');
                           }
                           // Auto-clear duration om vanlig anställning väljs
-                          if (value === 'PFZr_Syz_cUq' && afDurationCid) {
+                          if (value === 'kpPX_CNN_gDU' && afDurationCid) {
                             setAfDurationCode('');
                             setAfDurationCid('');
                             await updateJobField('af_duration_cid', null);
@@ -1350,9 +1350,9 @@ export default function JobEdit() {
                   {/* Arbetstidsomfattning - Dölj för behovsanställning */}
                   {afEmploymentTypeCid !== '1paU_aCR_nGn' && (
                     <div>
-                      <Label htmlFor="af_worktime_extent_code" className={afEmploymentTypeCid === 'PFZr_Syz_cUq' ? 'text-red-600' : ''}>
-                        Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
-                        {afEmploymentTypeCid === 'PFZr_Syz_cUq' && (
+                      <Label htmlFor="af_worktime_extent_code" className={afEmploymentTypeCid === 'kpPX_CNN_gDU' ? 'text-red-600' : ''}>
+                        Arbetstidsomfattning {afEmploymentTypeCid === 'kpPX_CNN_gDU' ? '*' : ''}
+                        {afEmploymentTypeCid === 'kpPX_CNN_gDU' && (
                           <span className="text-xs text-muted-foreground ml-1">(Obligatoriskt för vanlig anställning)</span>
                         )}
                       </Label>
@@ -1444,7 +1444,7 @@ export default function JobEdit() {
                             await updateJobField('af_duration_code', selected.code || '');
                           }
                         }}
-                        disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}
+                        disabled={afEmploymentTypeCid === 'kpPX_CNN_gDU'}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Välj varaktighet" />
@@ -1458,7 +1458,7 @@ export default function JobEdit() {
                         </SelectContent>
                       </Select>
                     </div>
-                    {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? (
+                    {afEmploymentTypeCid === 'kpPX_CNN_gDU' ? (
                       <p className="text-xs text-blue-600 mt-1">
                         ℹ️ Vanlig anställning är automatiskt tillsvidareanställning
                       </p>

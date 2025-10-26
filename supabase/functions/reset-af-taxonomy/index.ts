@@ -5,15 +5,15 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// AF API Base URL - Taxonomy API
-const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se';
+// AF API Base URL - RIKTIGT Taxonomy API
+const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy';
 
-// Taxonomy types we need
+// Taxonomy types we need (RIKTIGA från AF API)
 const TAXONOMY_TYPES = [
   'occupation-name',
   'municipality', 
   'employment-type',
-  'duration',
+  'employment-duration',  // ✅ AF använder "employment-duration" INTE "duration"!
   'worktime-extent'
 ];
 
@@ -311,23 +311,23 @@ const municipalitiesData = [
   { "id": "oRmZ_Bwp_K2f", "label": "Övertorneå", "county": "Norrbottens län" }
 ];
 
-// Employment types fallback data
+// ✅ RIKTIGA Employment types från AF Taxonomy API
 const EMPLOYMENT_TYPES_FALLBACK = [
   { code: 'kpPX_CNN_gDU', label: 'Tillsvidareanställning (inkl. eventuell provanställning)' },
-  { code: '8qLN_bEY_bhk', label: 'Vikariat' },
-  { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
+  { code: 'sTu5_NBQ_udq', label: 'Tidsbegränsad anställning' },
+  { code: 'gro4_cWF_6D7', label: 'Vikariat' },
   { code: '1paU_aCR_nGn', label: 'Behovsanställning' },
-  { code: 'bYfG_jXa_zik', label: 'Frilans' },
-  { code: 'h4fe_E7e_UqV', label: 'Extratjänst' },
-  { code: 'Jh8f_q9J_pbJ', label: 'Sommarjobb/Feriejobb' }
+  { code: 'EBhX_Qm2_8eX', label: 'Säsongsanställning' }
 ];
 
-// Duration fallback data
+// ✅ RIKTIGA Duration (employment-duration) från AF Taxonomy API
 const DURATIONS_FALLBACK = [
-  { code: 'a7uU_j21_mkL', label: 'Tillsvidare' },
-  { code: '9uK9_HfZ_uGj', label: 'Visstid mer än 6 månader' },
-  { code: 'roiG_Mii_fiZ', label: 'Visstid 3-6 månader' },
-  { code: 'fPhi_RmE_iUg', label: 'Visstid mindre än 3 månader' }
+  { code: 'a7uU_j21_mkL', label: 'Tills vidare' },
+  { code: '9RGe_UxD_FZw', label: '12 månader - upp till 2 år' },
+  { code: 'gJRb_akA_95y', label: '6 månader – upp till 12 månader' },
+  { code: 'Xj7x_7yZ_jEn', label: '3 månader – upp till 6 månader' },
+  { code: 'Sy9J_aRd_ALx', label: '11 dagar - upp till 3 månader' },
+  { code: 'cAQ8_TpB_Tdv', label: 'Upp till 10 dagar' }
 ];
 
 // Worktime extent fallback data
@@ -429,10 +429,10 @@ function getFallbackData(type: string) {
         updated_at: new Date().toISOString()
       }));
     
-    case 'duration':
+    case 'employment-duration':
       return DURATIONS_FALLBACK.map(dur => ({
         concept_id: dur.code,
-        type: 'duration',
+        type: 'employment-duration',  // ✅ AF använder "employment-duration"
         version: 16,
         code: null,
         label: dur.label,
@@ -499,7 +499,8 @@ Deno.serve(async (req) => {
         continue;
       }
       
-      const url = `${AF_API_BASE}/v1/taxonomy/versioned/concepts?type=${type}&version=16`;
+      // ✅ RIKTIGT AF API URL - använd /main/concepts istället för /versioned/concepts
+      const url = `${AF_API_BASE}/main/concepts?type=${type}&offset=0&limit=500`;
       
       try {
         const response = await fetch(url);

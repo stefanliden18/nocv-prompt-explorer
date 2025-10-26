@@ -92,7 +92,7 @@ serve(async (req) => {
       validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),
       validateConceptId(job.af_municipality_cid, 'municipality', 16, 'Municipality'),
       validateConceptId(job.af_employment_type_cid, 'employment-type', 16, 'Employment Type'),
-      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'duration', 16, 'Duration') : Promise.resolve({ valid: true }),
+      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'employment-duration', 16, 'Duration') : Promise.resolve({ valid: true }),  // ✅ AF använder "employment-duration"
       job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 16, 'Worktime Extent') : Promise.resolve({ valid: true })
     ]);
 

@@ -32,17 +32,19 @@ async function fetchTaxonomy(type: string, version: number) {
     
     if (!response.ok) {
       console.error(`Failed to fetch ${type}: ${response.status} ${response.statusText}`);
-      return [];
+      console.log(`⚠️ Using fallback data for ${type} due to HTTP error`);
+      return getFallbackData(type, version);
     }
     
     const data = await response.json();
     
     if (!data || !data.concepts || !Array.isArray(data.concepts)) {
       console.error(`Invalid response format for ${type}:`, data);
-      return [];
+      console.log(`⚠️ Using fallback data for ${type} due to invalid format`);
+      return getFallbackData(type, version);
     }
     
-    console.log(`Successfully fetched ${data.concepts.length} items for ${type}`);
+    console.log(`✅ Successfully fetched ${data.concepts.length} items for ${type} from API`);
     
     return data.concepts.map((concept: any) => ({
       concept_id: concept['concept-id'] || concept.id,
@@ -53,7 +55,64 @@ async function fetchTaxonomy(type: string, version: number) {
     }));
   } catch (error) {
     console.error(`Error fetching ${type}:`, error);
-    return [];
+    console.log(`⚠️ Using fallback data for ${type} due to network/DNS error`);
+    return getFallbackData(type, version);
+  }
+}
+
+// 🆕 Get fallback data when API is unavailable
+function getFallbackData(type: string, version: number) {
+  console.log(`Loading fallback data for ${type}...`);
+  
+  switch (type) {
+    case 'occupation-name':
+      return OCCUPATIONS.map(occ => ({
+        concept_id: occ.id,
+        type: 'occupation-name',
+        version: 1,
+        code: occ.ssyk,
+        label: occ.label
+      }));
+    
+    case 'municipality':
+      return MUNICIPALITIES.map(mun => ({
+        concept_id: `mun_${mun.id}`,
+        type: 'municipality',
+        version: 1,
+        code: mun.id,
+        label: mun.label
+      }));
+    
+    case 'employment-type':
+      return EMPLOYMENT_TYPES_FALLBACK.map(et => ({
+        concept_id: et.code,
+        type: 'employment-type',
+        version: 1,
+        code: null,
+        label: et.label
+      }));
+    
+    case 'duration':
+      return DURATIONS_FALLBACK.map(dur => ({
+        concept_id: dur.code,
+        type: 'duration',
+        version: 1,
+        code: null,
+        label: dur.label
+      }));
+    
+    case 'worktime-extent':
+      return WORKTIME_EXTENTS_FALLBACK.map(wt => ({
+        concept_id: wt.code,
+        type: 'worktime-extent',
+        version: 1,
+        code: null,
+        label: wt.label
+      }));
+    
+    default:
+      console.log(`No fallback data available for type: ${type}`);
+      return [];
   }
 }
 
@@ -78,8 +137,8 @@ const DURATIONS_FALLBACK = [
 
 // Statiska fallback-data för arbetstidsomfattning
 const WORKTIME_EXTENTS_FALLBACK = [
-  { code: '6YE1_gAC_R2G', label: 'Heltid' },  // ✅ Uppdaterad från AF dokumentation
-  { code: 'aUF9_eHe_iUe', label: 'Deltid' }
+  { code: 'hJi6_yUu_RBT', label: 'Heltid' },
+  { code: '6YE1_gAC_R2G', label: 'Deltid' }
 ];
 
 // Statiska yrkeskoder (50 vanligaste)
@@ -453,7 +512,7 @@ serve(async (req) => {
       const taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);
       
       if (taxonomyData.length === 0) {
-        console.warn(`[SYNC] No concepts found for ${endpoint.type}`);
+        console.warn(`[SYNC] No concepts found for ${endpoint.type} (neither from API nor fallback)`);
         syncResults.push({
           type: endpoint.type,
           version: endpoint.version,
@@ -462,6 +521,8 @@ serve(async (req) => {
         });
         continue;
       }
+      
+      console.log(`[SYNC] Retrieved ${taxonomyData.length} concepts for ${endpoint.type}`);
 
       // Delete old data for this type+version before inserting new
       console.log(`[SYNC] Cleaning old data for ${endpoint.type} v${endpoint.version}...`);

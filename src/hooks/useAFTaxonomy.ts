@@ -12,6 +12,8 @@ interface TaxonomyItem {
 export const useAFTaxonomy = () => {
   const { data: taxonomyData = [], isLoading } = useQuery({
     queryKey: ['af-taxonomy'],
+    staleTime: 0, // Tvinga alltid fresh data
+    refetchOnMount: true, // Refetch när komponenten mountar
     queryFn: async () => {
       console.log('🔄 useAFTaxonomy: Fetching taxonomy data...');
       const { data, error } = await supabase

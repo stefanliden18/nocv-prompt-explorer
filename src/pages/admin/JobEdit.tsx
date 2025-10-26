@@ -118,6 +118,12 @@ export default function JobEdit() {
     }
   }, [id]);
 
+  // Invalidera taxonomy cache när komponenten mountar för att få fresh data
+  useEffect(() => {
+    console.log('🔄 JobEdit: Invalidating af-taxonomy cache on mount...');
+    queryClient.invalidateQueries({ queryKey: ['af-taxonomy'] });
+  }, [queryClient]);
+
   // Auto-sätt "Tillsvidare" för Vanlig anställning
   useEffect(() => {
     if (afEmploymentTypeCid === 'PFZr_Syz_cUq') {
@@ -1366,8 +1372,8 @@ export default function JobEdit() {
                             value={afWorktimeExtentCid || ''}
                             onValueChange={async (value) => {
                               console.log('🔄 JobEdit: Arbetstidsomfattning onValueChange triggered:', value);
-                              const selected = worktimeExtentCodes.find(w => w.concept_id === value);
-                              console.log('   - Selected item:', selected);
+                              const selected = directWorktimeData.find(w => w.concept_id === value);
+                              console.log('   - Selected item (DIRECT):', selected);
                               if (selected) {
                                 setAfWorktimeExtentCode(selected.code || '');
                                 setAfWorktimeExtentCid(selected.concept_id);
@@ -1382,8 +1388,8 @@ export default function JobEdit() {
                               <SelectValue placeholder="Välj omfattning" />
                             </SelectTrigger>
                             <SelectContent position="popper" side="bottom" sideOffset={4}>
-                              {worktimeExtentCodes.map((code: any) => {
-                                console.log('   - Rendering SelectItem:', code.label, code.concept_id);
+                              {directWorktimeData.map((code: any) => {
+                                console.log('   - Rendering SelectItem (DIRECT):', code.label, code.concept_id);
                                 return (
                                   <SelectItem key={code.concept_id} value={code.concept_id}>
                                     {code.label}

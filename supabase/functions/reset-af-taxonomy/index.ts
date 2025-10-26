@@ -77,13 +77,16 @@ Deno.serve(async (req) => {
 
       const data: TaxonomyItem[] = await response.json();
       
-      // Filter for version 16 only
-      const v16Data = data.filter(item => item.version === 16);
+      // AF's current API is version 16 - take all items without filtering
+      console.log(`  ✅ ${type}: Found ${data.length} items`);
       
-      console.log(`  ✅ ${type}: Found ${v16Data.length} version 16 items (filtered from ${data.length} total)`);
+      // Log a sample item to see the API structure
+      if (data.length > 0) {
+        console.log(`  📋 Sample item from ${type}:`, JSON.stringify(data[0], null, 2));
+      }
 
       // Transform to our format
-      for (const item of v16Data) {
+      for (const item of data) {
         const label = item.term || item.label?.sv_SE || 'Unknown';
         
         allFreshData.push({

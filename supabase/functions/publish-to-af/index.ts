@@ -87,11 +87,11 @@ serve(async (req) => {
     
     // SEDAN: Validera concept IDs (endast om de finns)
     const validations = await Promise.all([
-      validateConceptId(job.af_occupation_cid, 'occupation-name', 1, 'Occupation'),
+      validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),
       validateConceptId(job.af_municipality_cid, 'municipality', 1, 'Municipality'),
-      validateConceptId(job.af_employment_type_cid, 'employment-type', 1, 'Employment Type'),
+      validateConceptId(job.af_employment_type_cid, 'employment-type', 16, 'Employment Type'),
       job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'duration', 1, 'Duration') : Promise.resolve({ valid: true }),
-      job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 1, 'Worktime Extent') : Promise.resolve({ valid: true })
+      job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 16, 'Worktime Extent') : Promise.resolve({ valid: true })
     ]);
 
     validationErrors.push(...validations.filter(v => !v.valid).map(v => v.error!));

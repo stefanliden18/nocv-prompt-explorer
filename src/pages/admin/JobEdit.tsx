@@ -121,7 +121,6 @@ export default function JobEdit() {
   }, [afEmploymentTypeCid, durationCodes]);
 
   // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
-  // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
   useEffect(() => {
     if (
       id &&
@@ -130,17 +129,31 @@ export default function JobEdit() {
       worktimeExtentCodes.length > 0 &&
       !taxonomyLoading
     ) {
+      console.log('🔄 Auto-setting Heltid for Vanlig anställning', {
+        worktimeExtentCodes: worktimeExtentCodes.length,
+        currentCid: afWorktimeExtentCid
+      });
+      
       const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
+        console.log('✅ Found Heltid:', heltid.concept_id, heltid.label);
         setAfWorktimeExtentCode(heltid.code || '');
         setAfWorktimeExtentCid(heltid.concept_id);
+        
         // Spara direkt till databas
-        updateJobField('af_worktime_extent_cid', heltid.concept_id);
-        updateJobField('af_worktime_extent_code', heltid.code || '');
+        updateJobField('af_worktime_extent_cid', heltid.concept_id).then(() => {
+          console.log('✅ Saved af_worktime_extent_cid to database');
+        });
+        updateJobField('af_worktime_extent_code', heltid.code || '').then(() => {
+          console.log('✅ Saved af_worktime_extent_code to database');
+        });
+        
         toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
+      } else {
+        console.error('❌ Could not find Heltid (6YE1_gAC_R2G) in worktimeExtentCodes:', worktimeExtentCodes);
       }
     }
-  }, [afEmploymentTypeCid, worktimeExtentCodes, afWorktimeExtentCid, taxonomyLoading, id]);
+  }, [afEmploymentTypeCid, worktimeExtentCodes.length, afWorktimeExtentCid, taxonomyLoading, id]);
 
   // Funktion för att uppdatera enskilda fält direkt i databasen
   const updateJobField = async (field: string, value: any) => {

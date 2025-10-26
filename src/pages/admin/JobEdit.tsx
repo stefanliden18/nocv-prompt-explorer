@@ -1238,7 +1238,7 @@ export default function JobEdit() {
                   </div>
 
                   {/* Arbetstidsomfattning - Dölj för behovsanställning */}
-                  {afEmploymentTypeCode !== '1paU_aCR_nGn' && (
+                  {afEmploymentTypeCid !== '1paU_aCR_nGn' && (
                     <div>
                       <Label htmlFor="af_worktime_extent_code">
                         Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}

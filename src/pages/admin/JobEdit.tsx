@@ -90,6 +90,11 @@ export default function JobEdit() {
   const [afEmploymentTypeCode, setAfEmploymentTypeCode] = useState('');
   const [afDurationCode, setAfDurationCode] = useState('');
   const [afWorktimeExtentCode, setAfWorktimeExtentCode] = useState('');
+  const [afOccupationCid, setAfOccupationCid] = useState('');
+  const [afMunicipalityCid, setAfMunicipalityCid] = useState('');
+  const [afEmploymentTypeCid, setAfEmploymentTypeCid] = useState('');
+  const [afDurationCid, setAfDurationCid] = useState('');
+  const [afWorktimeExtentCid, setAfWorktimeExtentCid] = useState('');
   const [publishingToAF, setPublishingToAF] = useState(false);
   const [updatingAF, setUpdatingAF] = useState(false);
   const [unpublishingFromAF, setUnpublishingFromAF] = useState(false);
@@ -103,21 +108,29 @@ export default function JobEdit() {
 
   // Auto-sätt "Tillsvidare" för Vanlig anställning
   useEffect(() => {
-    if (afEmploymentTypeCode === 'PFZr_Syz_cUq') {
-      if (afDurationCode !== 'a7uU_j21_mkL') {
-        setAfDurationCode('a7uU_j21_mkL');
-        toast.info('Varaktighet automatiskt satt till "Tillsvidare" för vanlig anställning');
+    if (afEmploymentTypeCid === 'PFZr_Syz_cUq') {
+      if (afDurationCid !== 'a7uU_j21_mkL') {
+        const tillsvidare = durationCodes.find(d => d.concept_id === 'a7uU_j21_mkL');
+        if (tillsvidare) {
+          setAfDurationCode(tillsvidare.code || '');
+          setAfDurationCid(tillsvidare.concept_id);
+          toast.info('Varaktighet automatiskt satt till "Tillsvidare" för vanlig anställning');
+        }
       }
     }
-  }, [afEmploymentTypeCode]);
+  }, [afEmploymentTypeCid, durationCodes]);
 
   // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
   useEffect(() => {
-    if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
-      setAfWorktimeExtentCode('hJi6_yUu_RBT'); // Heltid
-      toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
+    if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
+      const heltid = worktimeExtentCodes.find(w => w.concept_id === 'hJi6_yUu_RBT');
+      if (heltid) {
+        setAfWorktimeExtentCode(heltid.code || '');
+        setAfWorktimeExtentCid(heltid.concept_id);
+        toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
+      }
     }
-  }, [afEmploymentTypeCode]);
+  }, [afEmploymentTypeCid, worktimeExtentCodes]);
 
   const fetchCompanies = async () => {
     try {
@@ -173,11 +186,16 @@ export default function JobEdit() {
       setContactPersonName(job.contact_person_name || '');
       setContactPersonEmail(job.contact_person_email || '');
       setContactPersonPhone(job.contact_person_phone || '');
-      setAfOccupationCode(job.af_occupation_cid || '');
-      setAfMunicipalityCode(job.af_municipality_cid || '');
-      setAfEmploymentTypeCode(job.af_employment_type_cid || '');
-      setAfDurationCode(job.af_duration_cid || '');
-      setAfWorktimeExtentCode(job.af_worktime_extent_cid || '');
+      setAfOccupationCode(job.af_occupation_code || '');
+      setAfOccupationCid(job.af_occupation_cid || '');
+      setAfMunicipalityCode(job.af_municipality_code || '');
+      setAfMunicipalityCid(job.af_municipality_cid || '');
+      setAfEmploymentTypeCode(job.af_employment_type_code || '');
+      setAfEmploymentTypeCid(job.af_employment_type_cid || '');
+      setAfDurationCode(job.af_duration_code || '');
+      setAfDurationCid(job.af_duration_cid || '');
+      setAfWorktimeExtentCode(job.af_worktime_extent_code || '');
+      setAfWorktimeExtentCid(job.af_worktime_extent_cid || '');
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
         const stockholmDate = utcToStockholm(job.publish_at);
@@ -240,7 +258,7 @@ export default function JobEdit() {
     }
 
     // Validera AF-fält om några är ifyllda (för vanlig publicering utan AF)
-    if (!afPublished && (afEmploymentTypeCode || afOccupationCode || contactPersonName)) {
+    if (!afPublished && (afEmploymentTypeCid || afOccupationCid || contactPersonName)) {
       if (!contactPersonName.trim()) {
         toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
         return;
@@ -257,21 +275,21 @@ export default function JobEdit() {
         toast.error('Sista ansökningsdag är obligatoriskt för AF-publicering');
         return;
       }
-      if (!afOccupationCode) {
+      if (!afOccupationCid) {
         toast.error('Yrke är obligatoriskt för AF-publicering');
         return;
       }
-      if (!afMunicipalityCode) {
+      if (!afMunicipalityCid) {
         toast.error('Kommun är obligatoriskt för AF-publicering');
         return;
       }
-      if (!afEmploymentTypeCode) {
+      if (!afEmploymentTypeCid) {
         toast.error('Anställningstyp är obligatoriskt för AF-publicering');
         return;
       }
       
       // Extra validering för Vanlig anställning
-      if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
+      if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
         toast.error('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
         return;
       }
@@ -279,19 +297,6 @@ export default function JobEdit() {
 
     setLoading(true);
     try {
-      // Hitta valda items för att få concept_ids
-      const selectedOccupation = occupationCodes?.find(o => o.concept_id === afOccupationCode);
-      const selectedMunicipality = municipalityCodes?.find(m => m.concept_id === afMunicipalityCode);
-      const selectedEmploymentType = employmentTypeCodes?.find(e => e.concept_id === afEmploymentTypeCode);
-      const selectedDuration = durationCodes?.find(d => d.concept_id === afDurationCode);
-      const selectedWorktimeExtent = worktimeExtentCodes?.find(w => w.concept_id === afWorktimeExtentCode);
-
-      let finalAfWorktimeExtentCid = afWorktimeExtentCode;
-      if (afEmploymentTypeCode === 'PFZr_Syz_cUq' && !afWorktimeExtentCode) {
-        finalAfWorktimeExtentCid = worktimeExtentCodes.find(w => w.label === 'Heltid')?.concept_id || null;
-        if (finalAfWorktimeExtentCid) toast.info("Arbetstidsomfattning sattes automatiskt till 'Heltid'");
-      }
-
       const updateData: any = {
         title: title.trim(),
         company_id: companyId,
@@ -305,17 +310,22 @@ export default function JobEdit() {
         language: language.trim() || null,
         slug: slug,
         kiku_interview_url: kikuInterviewUrl.trim() || null,
-        // AF-fält - use concept_ids
+        // AF-fält - spara både code och concept_id
         last_application_date: lastApplicationDate || null,
         total_positions: totalPositions,
         contact_person_name: contactPersonName.trim() || null,
         contact_person_email: contactPersonEmail.trim() || null,
         contact_person_phone: contactPersonPhone.trim() || null,
-        af_occupation_cid: selectedOccupation?.concept_id || null,
-        af_municipality_cid: selectedMunicipality?.concept_id || null,
-        af_employment_type_cid: selectedEmploymentType?.concept_id || null,
-        af_duration_cid: selectedDuration?.concept_id || null,
-        af_worktime_extent_cid: finalAfWorktimeExtentCid || null,
+        af_occupation_code: afOccupationCode || null,
+        af_occupation_cid: afOccupationCid || null,
+        af_municipality_code: afMunicipalityCode || null,
+        af_municipality_cid: afMunicipalityCid || null,
+        af_employment_type_code: afEmploymentTypeCode || null,
+        af_employment_type_cid: afEmploymentTypeCid || null,
+        af_duration_code: afDurationCode || null,
+        af_duration_cid: afDurationCid || null,
+        af_worktime_extent_code: afWorktimeExtentCode || null,
+        af_worktime_extent_cid: afWorktimeExtentCid || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: (() => {
           if (!publishAt) return null;
@@ -1141,8 +1151,14 @@ export default function JobEdit() {
                   <div>
                     <Label htmlFor="af_occupation_code">Yrke *</Label>
                     <Select
-                      value={afOccupationCode}
-                      onValueChange={setAfOccupationCode}
+                      value={afOccupationCid}
+                      onValueChange={(value) => {
+                        const selected = occupationCodes.find(o => o.concept_id === value);
+                        if (selected) {
+                          setAfOccupationCode(selected.code || '');
+                          setAfOccupationCid(selected.concept_id);
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Välj yrke" />
@@ -1160,8 +1176,14 @@ export default function JobEdit() {
                   <div>
                     <Label htmlFor="af_municipality_code">Kommun *</Label>
                     <Select
-                      value={afMunicipalityCode}
-                      onValueChange={setAfMunicipalityCode}
+                      value={afMunicipalityCid}
+                      onValueChange={(value) => {
+                        const selected = municipalityCodes.find(m => m.concept_id === value);
+                        if (selected) {
+                          setAfMunicipalityCode(selected.code || '');
+                          setAfMunicipalityCid(selected.concept_id);
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Välj kommun" />
@@ -1181,17 +1203,23 @@ export default function JobEdit() {
                   <div>
                     <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
                     <Select
-                      value={afEmploymentTypeCode}
+                      value={afEmploymentTypeCid}
                       onValueChange={(value) => {
-                        setAfEmploymentTypeCode(value);
+                        const selected = employmentTypeCodes.find(e => e.concept_id === value);
+                        if (selected) {
+                          setAfEmploymentTypeCode(selected.code || '');
+                          setAfEmploymentTypeCid(selected.concept_id);
+                        }
                         // Auto-clear duration om vanlig anställning väljs
-                        if (value === 'PFZr_Syz_cUq' && afDurationCode) {
+                        if (value === 'PFZr_Syz_cUq' && afDurationCid) {
                           setAfDurationCode('');
+                          setAfDurationCid('');
                           toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
                         }
                         // Auto-clear worktimeExtent om behovsanställning väljs
-                        if (value === '1paU_aCR_nGn' && afWorktimeExtentCode) {
+                        if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {
                           setAfWorktimeExtentCode('');
+                          setAfWorktimeExtentCid('');
                           toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
                         }
                       }}
@@ -1213,11 +1241,17 @@ export default function JobEdit() {
                   {afEmploymentTypeCode !== '1paU_aCR_nGn' && (
                     <div>
                       <Label htmlFor="af_worktime_extent_code">
-                        Arbetstidsomfattning {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? '*' : ''}
+                        Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
                       </Label>
                       <Select
-                        value={afWorktimeExtentCode}
-                        onValueChange={setAfWorktimeExtentCode}
+                        value={afWorktimeExtentCid}
+                        onValueChange={(value) => {
+                          const selected = worktimeExtentCodes.find(w => w.concept_id === value);
+                          if (selected) {
+                            setAfWorktimeExtentCode(selected.code || '');
+                            setAfWorktimeExtentCid(selected.concept_id);
+                          }
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Välj omfattning" />
@@ -1230,14 +1264,14 @@ export default function JobEdit() {
                           ))}
                         </SelectContent>
                       </Select>
-                      {afEmploymentTypeCode === 'PFZr_Syz_cUq' && (
+                      {afEmploymentTypeCid === 'PFZr_Syz_cUq' && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Obligatoriskt för vanlig anställning
                         </p>
                       )}
                     </div>
                   )}
-                  {afEmploymentTypeCode === '1paU_aCR_nGn' && (
+                  {afEmploymentTypeCid === '1paU_aCR_nGn' && (
                     <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
                       ℹ️ Arbetstidsomfattning anges inte för behovsanställning
                     </div>
@@ -1251,9 +1285,15 @@ export default function JobEdit() {
                       Varaktighet *
                     </Label>
                     <Select
-                      value={afDurationCode}
-                      onValueChange={setAfDurationCode}
-                      disabled={afEmploymentTypeCode === 'PFZr_Syz_cUq'}
+                      value={afDurationCid}
+                      onValueChange={(value) => {
+                        const selected = durationCodes.find(d => d.concept_id === value);
+                        if (selected) {
+                          setAfDurationCode(selected.code || '');
+                          setAfDurationCid(selected.concept_id);
+                        }
+                      }}
+                      disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Välj varaktighet" />
@@ -1266,7 +1306,7 @@ export default function JobEdit() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {afEmploymentTypeCode === 'PFZr_Syz_cUq' ? (
+                    {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? (
                       <p className="text-xs text-blue-600 mt-1">
                         ℹ️ Vanlig anställning är automatiskt tillsvidareanställning
                       </p>

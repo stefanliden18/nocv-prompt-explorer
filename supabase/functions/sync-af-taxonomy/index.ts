@@ -366,6 +366,12 @@ async function fetchTaxonomy(type: string, version: number) {
     
     console.log(`✅ Successfully fetched ${data.length} items for ${type} from API`);
     
+    // Extra logging för municipality
+    if (type === 'municipality') {
+      console.log(`[MUNICIPALITY DEBUG] Raw API response length: ${data.length}`);
+      console.log(`[MUNICIPALITY DEBUG] First item:`, data[0]);
+    }
+    
     // If API returns 0 items, use fallback data (especially for duration)
     if (data.length === 0) {
       console.log(`⚠️ API returned 0 items for ${type}, using fallback data`);
@@ -401,8 +407,13 @@ function getFallbackData(type: string, version: number) {
       }));
     
     case 'municipality':
-      // Ingen fallback - förlitar oss på att nya API:et fungerar
-      throw new Error('Municipality taxonomy must be fetched from AF API');
+      return MUNICIPALITIES.map(mun => ({
+        concept_id: mun.id,
+        type: 'municipality',
+        version: 16,
+        code: mun.id,
+        label: mun.label
+      }));
     
     case 'employment-type':
       return EMPLOYMENT_TYPES_FALLBACK.map(et => ({

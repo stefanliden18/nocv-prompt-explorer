@@ -11,6 +11,11 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { utcToStockholm, nowInStockholm, stockholmToUTC } from '@/lib/timezone';
 
+interface TaxonomyResult {
+  type: string;
+  count: number;
+}
+
 interface Job {
   id: string;
   title: string;
@@ -66,8 +71,16 @@ export default function AdminJobs() {
       
       if (error) throw error;
       
+      const results = data.results as TaxonomyResult[];
+      
+      const occupations = results.find(r => r.type === 'occupation-name')?.count || 0;
+      const municipalities = results.find(r => r.type === 'municipality')?.count || 0;
+      const employmentTypes = results.find(r => r.type === 'employment-type')?.count || 0;
+      const durations = results.find(r => r.type === 'duration')?.count || 0;
+      const worktimeExtents = results.find(r => r.type === 'worktime-extent')?.count || 0;
+      
       toast.success(
-        `Synkning klar! Yrkeskoder: ${data.occupations}, Kommunkoder: ${data.municipalities}, Anställningstyper: ${data.employmentTypes}, Varaktighet: ${data.durations}`,
+        `Synkning klar! Yrkeskoder: ${occupations}, Kommunkoder: ${municipalities}, Anställningstyper: ${employmentTypes}, Varaktighet: ${durations}, Arbetstid: ${worktimeExtents}`,
         { id: loadingToast }
       );
     } catch (error: any) {

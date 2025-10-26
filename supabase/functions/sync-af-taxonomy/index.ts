@@ -21,231 +21,7 @@ const TAXONOMY_ENDPOINTS: TaxonomyEndpoint[] = [
   { type: 'duration', version: 16 }
 ];
 
-// Helper function to fetch municipality taxonomy from AF API (special handling)
-async function fetchMunicipalityTaxonomy(): Promise<any[]> {
-  const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=municipality`;
-  console.log(`Fetching municipalities from: ${url}`);
-  
-  try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch municipality: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // AF API returns ROOT ARRAY for /main/ endpoint, not { concepts: [] }
-    if (!Array.isArray(data)) {
-      console.error('Invalid municipality response - expected array, got:', typeof data);
-      throw new Error('Invalid municipality response format from AF API');
-    }
-    
-    console.log(`✅ Successfully fetched ${data.length} municipalities from AF API`);
-    
-    // Map AF API format to our format (without code, will be added via SCB mapping)
-    return data.map((concept: any) => ({
-      concept_id: concept['taxonomy/id'],
-      type: 'municipality',
-      version: 1,
-      code: null, // Will be filled by addSCBCode()
-      label: concept['taxonomy/preferred-label'] || concept['taxonomy/definition'] || 'Unknown'
-    }));
-  } catch (error) {
-    console.error(`Error fetching municipalities from AF API:`, error);
-    throw error; // Municipality MUST come from AF API
-  }
-}
-
-// Create SCB code mapping from MUNICIPALITIES fallback data
-const SCB_MUNICIPALITY_CODES: Record<string, string> = MUNICIPALITIES.reduce((acc, mun) => {
-  acc[mun.label] = mun.id;
-  return acc;
-}, {} as Record<string, string>);
-
-// Helper function to add SCB codes to municipality concepts
-function addSCBCode(municipality: any): any {
-  const scbCode = SCB_MUNICIPALITY_CODES[municipality.label];
-  if (!scbCode) {
-    console.warn(`⚠️ No SCB code found for municipality: ${municipality.label}`);
-  }
-  return {
-    ...municipality,
-    code: scbCode || null
-  };
-}
-
-// Helper function to fetch taxonomy from AF API with fallback (for non-municipality types)
-async function fetchTaxonomy(type: string, version: number) {
-  console.log(`Fetching taxonomy: ${type} version ${version}`);
-  
-  try {
-    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
-    console.log(`Fetching from: ${url}`);
-    
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      console.error(`Failed to fetch ${type}: ${response.status} ${response.statusText}`);
-      console.log(`⚠️ Using fallback data for ${type} due to HTTP error`);
-      return getFallbackData(type, version);
-    }
-    
-    const data = await response.json();
-    
-    if (!data || !data.concepts || !Array.isArray(data.concepts)) {
-      console.error(`Invalid response format for ${type}:`, data);
-      console.log(`⚠️ Using fallback data for ${type} due to invalid format`);
-      return getFallbackData(type, version);
-    }
-    
-    console.log(`✅ Successfully fetched ${data.concepts.length} items for ${type} from API`);
-    
-    return data.concepts.map((concept: any) => ({
-      concept_id: concept['concept-id'] || concept.id,
-      type: type,
-      version: version,
-      code: concept['legacy-ams-taxonomy-id'] || concept.code || null,
-      label: concept.term || concept.label || 'Unknown'
-    }));
-  } catch (error) {
-    console.error(`Error fetching ${type}:`, error);
-    console.log(`⚠️ Using fallback data for ${type} due to network/DNS error`);
-    return getFallbackData(type, version);
-  }
-}
-
-// 🆕 Get fallback data when API is unavailable
-function getFallbackData(type: string, version: number) {
-  console.log(`Loading fallback data for ${type}...`);
-  
-  switch (type) {
-    case 'occupation-name':
-      return OCCUPATIONS.map(occ => ({
-        concept_id: occ.id,
-        type: 'occupation-name',
-        version: 1,
-        code: occ.ssyk,
-        label: occ.label
-      }));
-    
-    case 'municipality':
-      // Ingen fallback - förlitar oss på att nya API:et fungerar
-      throw new Error('Municipality taxonomy must be fetched from AF API');
-    
-    case 'employment-type':
-      return EMPLOYMENT_TYPES_FALLBACK.map(et => ({
-        concept_id: et.code,
-        type: 'employment-type',
-        version: 1,
-        code: null,
-        label: et.label
-      }));
-    
-    case 'duration':
-      return DURATIONS_FALLBACK.map(dur => ({
-        concept_id: dur.code,
-        type: 'duration',
-        version: 1,
-        code: null,
-        label: dur.label
-      }));
-    
-    case 'worktime-extent':
-      return WORKTIME_EXTENTS_FALLBACK.map(wt => ({
-        concept_id: wt.code,
-        type: 'worktime-extent',
-        version: 1,
-        code: null,
-        label: wt.label
-      }));
-    
-    default:
-      console.log(`No fallback data available for type: ${type}`);
-      return [];
-  }
-}
-
-// ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation
-const EMPLOYMENT_TYPES_FALLBACK = [
-  { code: 'PFZr_Syz_cUq', label: 'Vanlig anställning' },  // ✅ CORRECTED från dokumentation
-  { code: '8qLN_bEY_bhk', label: 'Vikariat' },
-  { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
-  { code: '1paU_aCR_nGn', label: 'Behovsanställning' },
-  { code: 'bYfG_jXa_zik', label: 'Frilans' },
-  { code: 'h4fe_E7e_UqV', label: 'Extratjänst' },
-  { code: 'Jh8f_q9J_pbJ', label: 'Sommarjobb/Feriejobb' }
-];
-
-// Statiska fallback-data för varaktighet
-const DURATIONS_FALLBACK = [
-  { code: 'a7uU_j21_mkL', label: 'Tillsvidare' },  // ✅ Uppdaterad från AF dokumentation
-  { code: '9uK9_HfZ_uGj', label: 'Visstid mer än 6 månader' },
-  { code: 'roiG_Mii_fiZ', label: 'Visstid 3-6 månader' },
-  { code: 'fPhi_RmE_iUg', label: 'Visstid mindre än 3 månader' }
-];
-
-// Statiska fallback-data för arbetstidsomfattning
-const WORKTIME_EXTENTS_FALLBACK = [
-  { code: 'hJi6_yUu_RBT', label: 'Heltid' },
-  { code: '6YE1_gAC_R2G', label: 'Deltid' }
-];
-
-// Statiska yrkeskoder (50 vanligaste)
-const OCCUPATIONS = [
-  { id: "apaJ_2YB_LuF", label: "Lastbilsförare", label_en: "Truck driver", ssyk: "8332" },
-  { id: "itoJ_h1z_LKr", label: "Lagerarbetare", label_en: "Warehouse worker", ssyk: "4321" },
-  { id: "hjHe_QXp_Upv", label: "Personlig assistent", label_en: "Personal assistant", ssyk: "5322" },
-  { id: "bQRz_gGe_d8j", label: "Undersköterska", label_en: "Nursing assistant", ssyk: "5321" },
-  { id: "Yxq8_4Bd_FJt", label: "Busschaufför", label_en: "Bus driver", ssyk: "8331" },
-  { id: "WcqW_Ngb_oBj", label: "Vårdbiträde", label_en: "Care assistant", ssyk: "5329" },
-  { id: "iHpu_u2i_xBD", label: "Lokalvårdare", label_en: "Cleaner", ssyk: "9112" },
-  { id: "nqLg_Z5U_FXS", label: "Snickare", label_en: "Carpenter", ssyk: "7115" },
-  { id: "UKfm_ShJ_mgp", label: "Barnskötare", label_en: "Childcare worker", ssyk: "5311" },
-  { id: "UGUB_ymo_oWW", label: "Säljare", label_en: "Salesperson", ssyk: "5223" },
-  { id: "ZXM4_2xg_gzV", label: "Städare", label_en: "Cleaner", ssyk: "9112" },
-  { id: "qmpF_ibd_mZ8", label: "Kock", label_en: "Chef", ssyk: "5120" },
-  { id: "EPFQ_ejx_2J4", label: "Elektriker", label_en: "Electrician", ssyk: "7411" },
-  { id: "oZDm_8bJ_iiH", label: "Maskinoperatör", label_en: "Machine operator", ssyk: "8189" },
-  { id: "aTVQ_cS3_J3g", label: "Vaktmästare", label_en: "Caretaker", ssyk: "5153" },
-  { id: "mSRN_WYZ_dAh", label: "VVS-montör", label_en: "Plumber", ssyk: "7126" },
-  { id: "j8pG_XEG_XiY", label: "Förskollärare", label_en: "Preschool teacher", ssyk: "2342" },
-  { id: "AUBi_qM1_RBc", label: "Svetsare", label_en: "Welder", ssyk: "7212" },
-  { id: "rnPh_xAP_4C9", label: "Byggarbetare", label_en: "Construction worker", ssyk: "7119" },
-  { id: "c2Dg_XL8_pjQ", label: "Servicetekniker", label_en: "Service technician", ssyk: "7421" },
-  { id: "uXnb_pYj_hq2", label: "Programmerare", label_en: "Programmer", ssyk: "2512" },
-  { id: "VFyF_oBj_Uc6", label: "Sjuksköterska", label_en: "Nurse", ssyk: "2223" },
-  { id: "kZFG_Tub_hYv", label: "Fastighetsskötare", label_en: "Property caretaker", ssyk: "5153" },
-  { id: "qMjh_Ybu_gW9", label: "Murare", label_en: "Bricklayer", ssyk: "7112" },
-  { id: "xJni_8Cf_vD3", label: "Kundtjänstmedarbetare", label_en: "Customer service representative", ssyk: "4222" },
-  { id: "pWcz_4Hx_jL8", label: "Plattsättare", label_en: "Tiler", ssyk: "7122" },
-  { id: "gTbn_9Qp_mR2", label: "Målare", label_en: "Painter", ssyk: "7131" },
-  { id: "vFhq_3Kw_nS7", label: "Behandlingsassistent", label_en: "Treatment assistant", ssyk: "5312" },
-  { id: "dYxm_6Lp_oT4", label: "Ekonomiassistent", label_en: "Finance assistant", ssyk: "4311" },
-  { id: "hNzk_2Mp_pU9", label: "Restaurangbiträde", label_en: "Restaurant assistant", ssyk: "5130" },
-  { id: "jPvl_8Nq_qV1", label: "Truckförare", label_en: "Forklift driver", ssyk: "8344" },
-  { id: "bRwm_4Or_rW6", label: "Mekaniker", label_en: "Mechanic", ssyk: "7231" },
-  { id: "fTxn_7Ps_sX3", label: "Receptionist", label_en: "Receptionist", ssyk: "4226" },
-  { id: "lVyo_1Qt_tY8", label: "Tandhygienist", label_en: "Dental hygienist", ssyk: "3251" },
-  { id: "nXzp_5Ru_uZ2", label: "Lärare grundskolan", label_en: "Primary school teacher", ssyk: "2341" },
-  { id: "pZaq_9Sv_vA7", label: "Kontorsassistent", label_en: "Office assistant", ssyk: "4110" },
-  { id: "rBbr_3Tw_wB4", label: "CNC-operatör", label_en: "CNC operator", ssyk: "8211" },
-  { id: "tDcs_7Ux_xC9", label: "Redovisningsekonom", label_en: "Accountant", ssyk: "2411" },
-  { id: "vFdt_1Vy_yD1", label: "Projektledare", label_en: "Project manager", ssyk: "2421" },
-  { id: "xHeu_5Wz_zE6", label: "Revisor", label_en: "Auditor", ssyk: "2412" },
-  { id: "zJfv_9Xa_aF3", label: "HR-specialist", label_en: "HR specialist", ssyk: "2423" },
-  { id: "bLgw_3Yb_bG8", label: "Marknadsförare", label_en: "Marketing specialist", ssyk: "2431" },
-  { id: "dNhx_7Zc_cH2", label: "Systemutvecklare", label_en: "Systems developer", ssyk: "2512" },
-  { id: "fPiy_1Ad_dI7", label: "Systemadministratör", label_en: "System administrator", ssyk: "2522" },
-  { id: "hRjz_5Be_eJ4", label: "Nätverkstekniker", label_en: "Network technician", ssyk: "3513" },
-  { id: "jTka_9Cf_fK9", label: "IT-support", label_en: "IT support", ssyk: "3512" },
-  { id: "lVlb_3Dg_gL1", label: "Gymnasielärare", label_en: "High school teacher", ssyk: "2330" },
-  { id: "nXmc_7Eh_hM6", label: "Skolsköterska", label_en: "School nurse", ssyk: "2223" },
-  { id: "pZnd_1Fi_iN3", label: "Socionom", label_en: "Social worker", ssyk: "2635" },
-  { id: "rBoe_5Gj_jO8", label: "Psykolog", label_en: "Psychologist", ssyk: "2634" }
-];
-
-// Alla svenska kommuner (290 st)
+// Alla svenska kommuner (290 st) - MUST be defined before SCB_MUNICIPALITY_CODES
 const MUNICIPALITIES = [
   { id: "0114", label: "Upplands Väsby", county: "Stockholms län" },
   { id: "0115", label: "Vallentuna", county: "Stockholms län" },
@@ -537,6 +313,230 @@ const MUNICIPALITIES = [
   { id: "2582", label: "Boden", county: "Norrbottens län" },
   { id: "2583", label: "Haparanda", county: "Norrbottens län" },
   { id: "2584", label: "Kiruna", county: "Norrbottens län" }
+];
+
+// Helper function to fetch municipality taxonomy from AF API (special handling)
+async function fetchMunicipalityTaxonomy(): Promise<any[]> {
+  const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=municipality`;
+  console.log(`Fetching municipalities from: ${url}`);
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch municipality: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // AF API returns ROOT ARRAY for /main/ endpoint, not { concepts: [] }
+    if (!Array.isArray(data)) {
+      console.error('Invalid municipality response - expected array, got:', typeof data);
+      throw new Error('Invalid municipality response format from AF API');
+    }
+    
+    console.log(`✅ Successfully fetched ${data.length} municipalities from AF API`);
+    
+    // Map AF API format to our format (without code, will be added via SCB mapping)
+    return data.map((concept: any) => ({
+      concept_id: concept['taxonomy/id'],
+      type: 'municipality',
+      version: 1,
+      code: null, // Will be filled by addSCBCode()
+      label: concept['taxonomy/preferred-label'] || concept['taxonomy/definition'] || 'Unknown'
+    }));
+  } catch (error) {
+    console.error(`Error fetching municipalities from AF API:`, error);
+    throw error; // Municipality MUST come from AF API
+  }
+}
+
+// Create SCB code mapping from MUNICIPALITIES fallback data
+const SCB_MUNICIPALITY_CODES: Record<string, string> = MUNICIPALITIES.reduce((acc, mun) => {
+  acc[mun.label] = mun.id;
+  return acc;
+}, {} as Record<string, string>);
+
+// Helper function to add SCB codes to municipality concepts
+function addSCBCode(municipality: any): any {
+  const scbCode = SCB_MUNICIPALITY_CODES[municipality.label];
+  if (!scbCode) {
+    console.warn(`⚠️ No SCB code found for municipality: ${municipality.label}`);
+  }
+  return {
+    ...municipality,
+    code: scbCode || null
+  };
+}
+
+// Helper function to fetch taxonomy from AF API with fallback (for non-municipality types)
+async function fetchTaxonomy(type: string, version: number) {
+  console.log(`Fetching taxonomy: ${type} version ${version}`);
+  
+  try {
+    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
+    console.log(`Fetching from: ${url}`);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      console.error(`Failed to fetch ${type}: ${response.status} ${response.statusText}`);
+      console.log(`⚠️ Using fallback data for ${type} due to HTTP error`);
+      return getFallbackData(type, version);
+    }
+    
+    const data = await response.json();
+    
+    if (!data || !data.concepts || !Array.isArray(data.concepts)) {
+      console.error(`Invalid response format for ${type}:`, data);
+      console.log(`⚠️ Using fallback data for ${type} due to invalid format`);
+      return getFallbackData(type, version);
+    }
+    
+    console.log(`✅ Successfully fetched ${data.concepts.length} items for ${type} from API`);
+    
+    return data.concepts.map((concept: any) => ({
+      concept_id: concept['concept-id'] || concept.id,
+      type: type,
+      version: version,
+      code: concept['legacy-ams-taxonomy-id'] || concept.code || null,
+      label: concept.term || concept.label || 'Unknown'
+    }));
+  } catch (error) {
+    console.error(`Error fetching ${type}:`, error);
+    console.log(`⚠️ Using fallback data for ${type} due to network/DNS error`);
+    return getFallbackData(type, version);
+  }
+}
+
+// 🆕 Get fallback data when API is unavailable
+function getFallbackData(type: string, version: number) {
+  console.log(`Loading fallback data for ${type}...`);
+  
+  switch (type) {
+    case 'occupation-name':
+      return OCCUPATIONS.map(occ => ({
+        concept_id: occ.id,
+        type: 'occupation-name',
+        version: 1,
+        code: occ.ssyk,
+        label: occ.label
+      }));
+    
+    case 'municipality':
+      // Ingen fallback - förlitar oss på att nya API:et fungerar
+      throw new Error('Municipality taxonomy must be fetched from AF API');
+    
+    case 'employment-type':
+      return EMPLOYMENT_TYPES_FALLBACK.map(et => ({
+        concept_id: et.code,
+        type: 'employment-type',
+        version: 1,
+        code: null,
+        label: et.label
+      }));
+    
+    case 'duration':
+      return DURATIONS_FALLBACK.map(dur => ({
+        concept_id: dur.code,
+        type: 'duration',
+        version: 1,
+        code: null,
+        label: dur.label
+      }));
+    
+    case 'worktime-extent':
+      return WORKTIME_EXTENTS_FALLBACK.map(wt => ({
+        concept_id: wt.code,
+        type: 'worktime-extent',
+        version: 1,
+        code: null,
+        label: wt.label
+      }));
+    
+    default:
+      console.log(`No fallback data available for type: ${type}`);
+      return [];
+  }
+}
+
+// ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation
+const EMPLOYMENT_TYPES_FALLBACK = [
+  { code: 'PFZr_Syz_cUq', label: 'Vanlig anställning' },  // ✅ CORRECTED från dokumentation
+  { code: '8qLN_bEY_bhk', label: 'Vikariat' },
+  { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
+  { code: '1paU_aCR_nGn', label: 'Behovsanställning' },
+  { code: 'bYfG_jXa_zik', label: 'Frilans' },
+  { code: 'h4fe_E7e_UqV', label: 'Extratjänst' },
+  { code: 'Jh8f_q9J_pbJ', label: 'Sommarjobb/Feriejobb' }
+];
+
+// Statiska fallback-data för varaktighet
+const DURATIONS_FALLBACK = [
+  { code: 'a7uU_j21_mkL', label: 'Tillsvidare' },  // ✅ Uppdaterad från AF dokumentation
+  { code: '9uK9_HfZ_uGj', label: 'Visstid mer än 6 månader' },
+  { code: 'roiG_Mii_fiZ', label: 'Visstid 3-6 månader' },
+  { code: 'fPhi_RmE_iUg', label: 'Visstid mindre än 3 månader' }
+];
+
+// Statiska fallback-data för arbetstidsomfattning
+const WORKTIME_EXTENTS_FALLBACK = [
+  { code: 'hJi6_yUu_RBT', label: 'Heltid' },
+  { code: '6YE1_gAC_R2G', label: 'Deltid' }
+];
+
+// Statiska yrkeskoder (50 vanligaste)
+const OCCUPATIONS = [
+  { id: "apaJ_2YB_LuF", label: "Lastbilsförare", label_en: "Truck driver", ssyk: "8332" },
+  { id: "itoJ_h1z_LKr", label: "Lagerarbetare", label_en: "Warehouse worker", ssyk: "4321" },
+  { id: "hjHe_QXp_Upv", label: "Personlig assistent", label_en: "Personal assistant", ssyk: "5322" },
+  { id: "bQRz_gGe_d8j", label: "Undersköterska", label_en: "Nursing assistant", ssyk: "5321" },
+  { id: "Yxq8_4Bd_FJt", label: "Busschaufför", label_en: "Bus driver", ssyk: "8331" },
+  { id: "WcqW_Ngb_oBj", label: "Vårdbiträde", label_en: "Care assistant", ssyk: "5329" },
+  { id: "iHpu_u2i_xBD", label: "Lokalvårdare", label_en: "Cleaner", ssyk: "9112" },
+  { id: "nqLg_Z5U_FXS", label: "Snickare", label_en: "Carpenter", ssyk: "7115" },
+  { id: "UKfm_ShJ_mgp", label: "Barnskötare", label_en: "Childcare worker", ssyk: "5311" },
+  { id: "UGUB_ymo_oWW", label: "Säljare", label_en: "Salesperson", ssyk: "5223" },
+  { id: "ZXM4_2xg_gzV", label: "Städare", label_en: "Cleaner", ssyk: "9112" },
+  { id: "qmpF_ibd_mZ8", label: "Kock", label_en: "Chef", ssyk: "5120" },
+  { id: "EPFQ_ejx_2J4", label: "Elektriker", label_en: "Electrician", ssyk: "7411" },
+  { id: "oZDm_8bJ_iiH", label: "Maskinoperatör", label_en: "Machine operator", ssyk: "8189" },
+  { id: "aTVQ_cS3_J3g", label: "Vaktmästare", label_en: "Caretaker", ssyk: "5153" },
+  { id: "mSRN_WYZ_dAh", label: "VVS-montör", label_en: "Plumber", ssyk: "7126" },
+  { id: "j8pG_XEG_XiY", label: "Förskollärare", label_en: "Preschool teacher", ssyk: "2342" },
+  { id: "AUBi_qM1_RBc", label: "Svetsare", label_en: "Welder", ssyk: "7212" },
+  { id: "rnPh_xAP_4C9", label: "Byggarbetare", label_en: "Construction worker", ssyk: "7119" },
+  { id: "c2Dg_XL8_pjQ", label: "Servicetekniker", label_en: "Service technician", ssyk: "7421" },
+  { id: "uXnb_pYj_hq2", label: "Programmerare", label_en: "Programmer", ssyk: "2512" },
+  { id: "VFyF_oBj_Uc6", label: "Sjuksköterska", label_en: "Nurse", ssyk: "2223" },
+  { id: "kZFG_Tub_hYv", label: "Fastighetsskötare", label_en: "Property caretaker", ssyk: "5153" },
+  { id: "qMjh_Ybu_gW9", label: "Murare", label_en: "Bricklayer", ssyk: "7112" },
+  { id: "xJni_8Cf_vD3", label: "Kundtjänstmedarbetare", label_en: "Customer service representative", ssyk: "4222" },
+  { id: "pWcz_4Hx_jL8", label: "Plattsättare", label_en: "Tiler", ssyk: "7122" },
+  { id: "gTbn_9Qp_mR2", label: "Målare", label_en: "Painter", ssyk: "7131" },
+  { id: "vFhq_3Kw_nS7", label: "Behandlingsassistent", label_en: "Treatment assistant", ssyk: "5312" },
+  { id: "dYxm_6Lp_oT4", label: "Ekonomiassistent", label_en: "Finance assistant", ssyk: "4311" },
+  { id: "hNzk_2Mp_pU9", label: "Restaurangbiträde", label_en: "Restaurant assistant", ssyk: "5130" },
+  { id: "jPvl_8Nq_qV1", label: "Truckförare", label_en: "Forklift driver", ssyk: "8344" },
+  { id: "bRwm_4Or_rW6", label: "Mekaniker", label_en: "Mechanic", ssyk: "7231" },
+  { id: "fTxn_7Ps_sX3", label: "Receptionist", label_en: "Receptionist", ssyk: "4226" },
+  { id: "lVyo_1Qt_tY8", label: "Tandhygienist", label_en: "Dental hygienist", ssyk: "3251" },
+  { id: "nXzp_5Ru_uZ2", label: "Lärare grundskolan", label_en: "Primary school teacher", ssyk: "2341" },
+  { id: "pZaq_9Sv_vA7", label: "Kontorsassistent", label_en: "Office assistant", ssyk: "4110" },
+  { id: "rBbr_3Tw_wB4", label: "CNC-operatör", label_en: "CNC operator", ssyk: "8211" },
+  { id: "tDcs_7Ux_xC9", label: "Redovisningsekonom", label_en: "Accountant", ssyk: "2411" },
+  { id: "vFdt_1Vy_yD1", label: "Projektledare", label_en: "Project manager", ssyk: "2421" },
+  { id: "xHeu_5Wz_zE6", label: "Revisor", label_en: "Auditor", ssyk: "2412" },
+  { id: "zJfv_9Xa_aF3", label: "HR-specialist", label_en: "HR specialist", ssyk: "2423" },
+  { id: "bLgw_3Yb_bG8", label: "Marknadsförare", label_en: "Marketing specialist", ssyk: "2431" },
+  { id: "dNhx_7Zc_cH2", label: "Systemutvecklare", label_en: "Systems developer", ssyk: "2512" },
+  { id: "fPiy_1Ad_dI7", label: "Systemadministratör", label_en: "System administrator", ssyk: "2522" },
+  { id: "hRjz_5Be_eJ4", label: "Nätverkstekniker", label_en: "Network technician", ssyk: "3513" },
+  { id: "jTka_9Cf_fK9", label: "IT-support", label_en: "IT support", ssyk: "3512" },
+  { id: "lVlb_3Dg_gL1", label: "Gymnasielärare", label_en: "High school teacher", ssyk: "2330" },
+  { id: "nXmc_7Eh_hM6", label: "Skolsköterska", label_en: "School nurse", ssyk: "2223" },
+  { id: "pZnd_1Fi_iN3", label: "Socionom", label_en: "Social worker", ssyk: "2635" },
+  { id: "rBoe_5Gj_jO8", label: "Psykolog", label_en: "Psychologist", ssyk: "2634" }
 ];
 
 serve(async (req) => {

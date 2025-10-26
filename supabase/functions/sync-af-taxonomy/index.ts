@@ -487,8 +487,8 @@ const DURATIONS_FALLBACK = [
 
 // Statiska fallback-data för arbetstidsomfattning
 const WORKTIME_EXTENTS_FALLBACK = [
-  { code: 'hJi6_yUu_RBT', label: 'Heltid' },
-  { code: '6YE1_gAC_R2G', label: 'Deltid' }
+  { code: '6YE1_gAC_R2G', label: 'Heltid' },
+  { code: '947z_JGS_Uk2', label: 'Deltid' }
 ];
 
 // Statiska yrkeskoder (50 vanligaste)

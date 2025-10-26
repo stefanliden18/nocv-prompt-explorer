@@ -123,7 +123,7 @@ export default function JobEdit() {
   // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
   useEffect(() => {
     if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
-      const heltid = worktimeExtentCodes.find(w => w.concept_id === 'hJi6_yUu_RBT');
+      const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
         setAfWorktimeExtentCode(heltid.code || '');
         setAfWorktimeExtentCid(heltid.concept_id);

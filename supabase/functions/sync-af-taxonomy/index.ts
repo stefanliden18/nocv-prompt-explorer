@@ -16,7 +16,7 @@ interface TaxonomyEndpoint {
 const TAXONOMY_ENDPOINTS: TaxonomyEndpoint[] = [
   { type: 'occupation-name', version: 16 },
   { type: 'worktime-extent', version: 16 },
-  { type: 'municipality', version: 1 },
+  { type: 'municipality', version: 16 },
   { type: 'employment-type', version: 16 },
   { type: 'duration', version: 16 }
 ];
@@ -424,7 +424,7 @@ function getFallbackData(type: string, version: number) {
       return OCCUPATIONS.map(occ => ({
         concept_id: occ.id,
         type: 'occupation-name',
-        version: 1,
+        version: 16,
         code: occ.ssyk,
         label: occ.label
       }));
@@ -437,7 +437,7 @@ function getFallbackData(type: string, version: number) {
       return EMPLOYMENT_TYPES_FALLBACK.map(et => ({
         concept_id: et.code,
         type: 'employment-type',
-        version: 1,
+        version: 16,
         code: null,
         label: et.label
       }));
@@ -446,7 +446,7 @@ function getFallbackData(type: string, version: number) {
       return DURATIONS_FALLBACK.map(dur => ({
         concept_id: dur.code,
         type: 'duration',
-        version: 1,
+        version: 16,
         code: null,
         label: dur.label
       }));
@@ -455,7 +455,7 @@ function getFallbackData(type: string, version: number) {
       return WORKTIME_EXTENTS_FALLBACK.map(wt => ({
         concept_id: wt.code,
         type: 'worktime-extent',
-        version: 1,
+        version: 16,
         code: null,
         label: wt.label
       }));
@@ -466,9 +466,9 @@ function getFallbackData(type: string, version: number) {
   }
 }
 
-// ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation
+// ✅ Statiska fallback-data med uppdaterade concept IDs från AF API dokumentation (version 16)
 const EMPLOYMENT_TYPES_FALLBACK = [
-  { code: 'PFZr_Syz_cUq', label: 'Vanlig anställning' },  // ✅ CORRECTED från dokumentation
+  { code: 'kpPX_CNN_gDU', label: 'Tillsvidareanställning (inkl. eventuell provanställning)' },  // ✅ Version 16
   { code: '8qLN_bEY_bhk', label: 'Vikariat' },
   { code: 'nuKG_MXb_Yua', label: 'Säsongsarbete' },
   { code: '1paU_aCR_nGn', label: 'Behovsanställning' },

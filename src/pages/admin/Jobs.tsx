@@ -65,7 +65,7 @@ export default function AdminJobs() {
   };
 
   const handleSyncTaxonomy = async () => {
-    const loadingToast = toast.loading('Synkroniserar AF-taxonomi...');
+    const loadingToast = toast.loading('Synkroniserar AF-taxonomi version 16 från Jobtech API...');
     try {
       const { data, error } = await supabase.functions.invoke('sync-af-taxonomy');
       
@@ -80,9 +80,12 @@ export default function AdminJobs() {
       const worktimeExtents = results.find(r => r.type === 'worktime-extent')?.count || 0;
       
       toast.success(
-        `Synkning klar! Yrkeskoder: ${occupations}, Kommunkoder: ${municipalities}, Anställningstyper: ${employmentTypes}, Varaktighet: ${durations}, Arbetstid: ${worktimeExtents}`,
-        { id: loadingToast }
+        `✅ Taxonomi uppdaterad till version 16!\n\nYrkeskoder: ${occupations}\nKommunkoder: ${municipalities}\nAnställningstyper: ${employmentTypes} (inkl. "Tillsvidareanställning")\nVaraktighet: ${durations}\nArbetstid: ${worktimeExtents}`,
+        { id: loadingToast, duration: 6000 }
       );
+      
+      // Refresh jobs list after sync to reflect any changes
+      fetchJobs();
     } catch (error: any) {
       console.error('Error syncing taxonomy:', error);
       toast.error('Kunde inte synka taxonomi: ' + error.message, { id: loadingToast });
@@ -117,7 +120,7 @@ export default function AdminJobs() {
           <div className="flex gap-2">
             <Button variant="outline" onClick={handleSyncTaxonomy}>
               <RefreshCw className="h-4 w-4 mr-2" />
-              Synka AF-taxonomi
+              Synka Taxonomy (Version 16)
             </Button>
             <Button variant="outline" onClick={() => navigate('/admin/jobs/import')}>
               <Upload className="h-4 w-4 mr-2" />

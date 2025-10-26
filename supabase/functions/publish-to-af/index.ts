@@ -80,17 +80,17 @@ serve(async (req) => {
     // FÖRST: Kontrollera obligatoriska fält
     const validationErrors: string[] = [];
     
-    // Kolla att worktime finns för Vanlig anställning
-    if (job.af_employment_type_cid === 'PFZr_Syz_cUq' && !job.af_worktime_extent_cid) {
-      validationErrors.push('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
+    // Kolla att worktime finns för Tillsvidareanställning
+    if (job.af_employment_type_cid === 'kpPX_CNN_gDU' && !job.af_worktime_extent_cid) {
+      validationErrors.push('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Tillsvidareanställning');
     }
     
     // SEDAN: Validera concept IDs (endast om de finns)
     const validations = await Promise.all([
       validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),
-      validateConceptId(job.af_municipality_cid, 'municipality', 1, 'Municipality'),
+      validateConceptId(job.af_municipality_cid, 'municipality', 16, 'Municipality'),
       validateConceptId(job.af_employment_type_cid, 'employment-type', 16, 'Employment Type'),
-      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'duration', 1, 'Duration') : Promise.resolve({ valid: true }),
+      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'duration', 16, 'Duration') : Promise.resolve({ valid: true }),
       job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 16, 'Worktime Extent') : Promise.resolve({ valid: true })
     ]);
 

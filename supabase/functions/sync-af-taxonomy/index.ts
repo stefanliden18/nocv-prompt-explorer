@@ -582,13 +582,12 @@ serve(async (req) => {
       
       console.log(`[SYNC] Retrieved ${taxonomyData.length} concepts for ${endpoint.type}`);
 
-      // Delete old data for this type+version before inserting new
-      console.log(`[SYNC] Cleaning old data for ${endpoint.type} v${endpoint.version}...`);
+      // Delete ALL old data for this type (all versions) before inserting new
+      console.log(`[SYNC] Cleaning ALL data for ${endpoint.type}...`);
       const { error: deleteError } = await supabase
         .from('af_taxonomy')
         .delete()
-        .eq('type', endpoint.type)
-        .eq('version', endpoint.version);
+        .eq('type', endpoint.type);
 
       if (deleteError) {
         console.error(`[SYNC] Delete error for ${endpoint.type}:`, deleteError);
@@ -628,12 +627,11 @@ serve(async (req) => {
       console.log(`[SYNC] Adding SCB codes to ${municipalityConcepts.length} municipalities...`);
       municipalityConcepts = municipalityConcepts.map(addSCBCode);
       
-      console.log('[SYNC] Cleaning old municipality data...');
+      console.log('[SYNC] Cleaning ALL municipality data...');
       const { error: deleteError } = await supabase
         .from('af_taxonomy')
         .delete()
-        .eq('type', 'municipality')
-        .eq('version', 1);
+        .eq('type', 'municipality');
 
       if (deleteError) {
         console.error('[SYNC] Delete error for municipality:', deleteError);

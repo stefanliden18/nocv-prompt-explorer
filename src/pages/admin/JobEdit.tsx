@@ -1308,19 +1308,47 @@ export default function JobEdit() {
                         )}
                       </Label>
                       
+                      {(() => {
+                        console.log('🔍 JobEdit: Arbetstidsomfattning render state:', {
+                          taxonomyLoading,
+                          worktimeExtentCodesLength: worktimeExtentCodes.length,
+                          worktimeExtentCodes: worktimeExtentCodes,
+                          afEmploymentTypeCid,
+                          afWorktimeExtentCid,
+                          afWorktimeExtentCode,
+                          isHidden: afEmploymentTypeCid === '1paU_aCR_nGn'
+                        });
+                        return null;
+                      })()}
+                      
                       {taxonomyLoading ? (
                         <p className="text-sm text-muted-foreground">Laddar alternativ...</p>
                       ) : (
                         <div className="relative">
+                          {(() => {
+                            console.log('🎨 JobEdit: Rendering Select component for Arbetstidsomfattning');
+                            console.log('   - Current value:', afWorktimeExtentCid);
+                            console.log('   - Available options:', worktimeExtentCodes.map(c => ({
+                              concept_id: c.concept_id,
+                              label: c.label,
+                              code: c.code
+                            })));
+                            return null;
+                          })()}
+                          
                           <Select
                             value={afWorktimeExtentCid || ''}
                             onValueChange={async (value) => {
+                              console.log('🔄 JobEdit: Arbetstidsomfattning onValueChange triggered:', value);
                               const selected = worktimeExtentCodes.find(w => w.concept_id === value);
+                              console.log('   - Selected item:', selected);
                               if (selected) {
                                 setAfWorktimeExtentCode(selected.code || '');
                                 setAfWorktimeExtentCid(selected.concept_id);
+                                console.log('   - Updating database fields...');
                                 await updateJobField('af_worktime_extent_cid', selected.concept_id);
                                 await updateJobField('af_worktime_extent_code', selected.code || '');
+                                console.log('   - Database update complete');
                               }
                             }}
                           >
@@ -1328,11 +1356,14 @@ export default function JobEdit() {
                               <SelectValue placeholder="Välj omfattning" />
                             </SelectTrigger>
                             <SelectContent position="popper" side="bottom" sideOffset={4}>
-                              {worktimeExtentCodes.map((code: any) => (
-                                <SelectItem key={code.concept_id} value={code.concept_id}>
-                                  {code.label}
-                                </SelectItem>
-                              ))}
+                              {worktimeExtentCodes.map((code: any) => {
+                                console.log('   - Rendering SelectItem:', code.label, code.concept_id);
+                                return (
+                                  <SelectItem key={code.concept_id} value={code.concept_id}>
+                                    {code.label}
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                         </div>

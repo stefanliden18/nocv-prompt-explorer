@@ -547,7 +547,7 @@ serve(async (req) => {
     for (const endpoint of TAXONOMY_ENDPOINTS) {
       console.log(`[SYNC] Fetching ${endpoint.type} v${endpoint.version}...`);
       
-      const taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);
+      let taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);
       
       if (taxonomyData.length === 0) {
         console.warn(`[SYNC] No concepts found for ${endpoint.type} (neither from API nor fallback)`);

@@ -315,41 +315,6 @@ const MUNICIPALITIES = [
   { id: "2584", label: "Kiruna", county: "Norrbottens län" }
 ];
 
-// Helper function to fetch municipality taxonomy from AF API (special handling)
-async function fetchMunicipalityTaxonomy(): Promise<any[]> {
-  const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=municipality`;
-  console.log(`Fetching municipalities from: ${url}`);
-  
-  try {
-    const response = await fetch(url);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch municipality: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // AF API returns ROOT ARRAY for /main/ endpoint, not { concepts: [] }
-    if (!Array.isArray(data)) {
-      console.error('Invalid municipality response - expected array, got:', typeof data);
-      throw new Error('Invalid municipality response format from AF API');
-    }
-    
-    console.log(`✅ Successfully fetched ${data.length} municipalities from AF API`);
-    
-    // Map AF API format to our format (without code, will be added via SCB mapping)
-    return data.map((concept: any) => ({
-      concept_id: concept['taxonomy/id'],
-      type: 'municipality',
-      version: 1,
-      code: null, // Will be filled by addSCBCode()
-      label: concept['taxonomy/preferred-label'] || concept['taxonomy/definition'] || 'Unknown'
-    }));
-  } catch (error) {
-    console.error(`Error fetching municipalities from AF API:`, error);
-    throw error; // Municipality MUST come from AF API
-  }
-}
 
 // Create SCB code mapping from MUNICIPALITIES fallback data
 function getSCBMunicipalityCodes(): Record<string, string> {
@@ -371,12 +336,12 @@ function addSCBCode(municipality: any): any {
   };
 }
 
-// Helper function to fetch taxonomy from AF API with fallback (for non-municipality types)
+// Helper function to fetch taxonomy from AF API with fallback
 async function fetchTaxonomy(type: string, version: number) {
   console.log(`Fetching taxonomy: ${type} version ${version}`);
   
   try {
-    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=${type}`;
+    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/versioned/concepts?type=${type}&version=${version}`;
     console.log(`Fetching from: ${url}`);
     
     const response = await fetch(url);
@@ -392,7 +357,7 @@ async function fetchTaxonomy(type: string, version: number) {
     
     const data = await response.json();
     
-    // AF /main/ endpoint returns ROOT ARRAY, not { concepts: [] }
+    // AF versioned endpoint returns ROOT ARRAY
     if (!Array.isArray(data)) {
       console.error(`Invalid response format for ${type} - expected array, got:`, typeof data);
       console.log(`⚠️ Using fallback data for ${type} due to invalid format`);
@@ -400,6 +365,12 @@ async function fetchTaxonomy(type: string, version: number) {
     }
     
     console.log(`✅ Successfully fetched ${data.length} items for ${type} from API`);
+    
+    // If API returns 0 items, use fallback data (especially for duration)
+    if (data.length === 0) {
+      console.log(`⚠️ API returned 0 items for ${type}, using fallback data`);
+      return getFallbackData(type, version);
+    }
     
     return data.map((concept: any) => ({
       concept_id: concept['taxonomy/id'],
@@ -593,6 +564,12 @@ serve(async (req) => {
         console.error(`[SYNC] Delete error for ${endpoint.type}:`, deleteError);
       }
 
+      // Special handling for municipality: add SCB codes after fetching
+      if (endpoint.type === 'municipality') {
+        console.log(`[SYNC] Adding SCB codes to ${taxonomyData.length} municipalities...`);
+        taxonomyData = taxonomyData.map(addSCBCode);
+      }
+
       // Upsert new data
       console.log(`[SYNC] Upserting ${taxonomyData.length} items for ${endpoint.type}...`);
       const { error: upsertError } = await supabase
@@ -617,57 +594,6 @@ serve(async (req) => {
           count: taxonomyData.length
         });
       }
-    }
-
-    // MUNICIPALITY: Special handling - fetch from AF API and add SCB codes
-    try {
-      console.log('[SYNC] Fetching municipalities from AF API...');
-      let municipalityConcepts = await fetchMunicipalityTaxonomy();
-      
-      console.log(`[SYNC] Adding SCB codes to ${municipalityConcepts.length} municipalities...`);
-      municipalityConcepts = municipalityConcepts.map(addSCBCode);
-      
-      console.log('[SYNC] Cleaning ALL municipality data...');
-      const { error: deleteError } = await supabase
-        .from('af_taxonomy')
-        .delete()
-        .eq('type', 'municipality');
-
-      if (deleteError) {
-        console.error('[SYNC] Delete error for municipality:', deleteError);
-      }
-
-      console.log(`[SYNC] Upserting ${municipalityConcepts.length} municipalities with SCB codes...`);
-      const { error: upsertError } = await supabase
-        .from('af_taxonomy')
-        .upsert(municipalityConcepts, { onConflict: 'concept_id' });
-
-      if (upsertError) {
-        console.error('[SYNC] Upsert error for municipality:', upsertError);
-        syncResults.push({
-          type: 'municipality',
-          version: 1,
-          status: 'error',
-          error: upsertError.message
-        });
-      } else {
-        totalSynced += municipalityConcepts.length;
-        console.log(`[SYNC] ✅ Synced ${municipalityConcepts.length} municipalities with SCB codes`);
-        syncResults.push({
-          type: 'municipality',
-          version: 1,
-          status: 'success',
-          count: municipalityConcepts.length
-        });
-      }
-    } catch (municipalityError) {
-      console.error('[SYNC] Failed to sync municipalities:', municipalityError);
-      syncResults.push({
-        type: 'municipality',
-        version: 1,
-        status: 'error',
-        error: municipalityError instanceof Error ? municipalityError.message : 'Unknown error'
-      });
     }
 
     console.log(`[SYNC] Total synced: ${totalSynced} concepts`);

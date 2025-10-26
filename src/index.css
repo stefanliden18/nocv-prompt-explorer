@@ -187,7 +187,7 @@ All colors MUST be HSL.
 
 /* Fix z-index for Radix Select dropdowns */
 [data-radix-select-content] {
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   background: hsl(var(--popover)) !important;
 }
 
@@ -198,6 +198,6 @@ All colors MUST be HSL.
 }
 
 [data-radix-popper-content-wrapper] {
-  z-index: 9999 !important;
+  z-index: 99999 !important;
   isolation: auto !important;
 }

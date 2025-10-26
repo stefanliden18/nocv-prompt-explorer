@@ -1151,7 +1151,7 @@ export default function JobEdit() {
                   <div>
                     <Label htmlFor="af_occupation_code">Yrke *</Label>
                     <Select
-                      value={afOccupationCid}
+                      value={afOccupationCid || ''}
                       onValueChange={(value) => {
                         const selected = occupationCodes.find(o => o.concept_id === value);
                         if (selected) {
@@ -1176,7 +1176,7 @@ export default function JobEdit() {
                   <div>
                     <Label htmlFor="af_municipality_code">Kommun *</Label>
                     <Select
-                      value={afMunicipalityCid}
+                      value={afMunicipalityCid || ''}
                       onValueChange={(value) => {
                         const selected = municipalityCodes.find(m => m.concept_id === value);
                         if (selected) {
@@ -1203,7 +1203,7 @@ export default function JobEdit() {
                   <div>
                     <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
                     <Select
-                      value={afEmploymentTypeCid}
+                      value={afEmploymentTypeCid || ''}
                       onValueChange={(value) => {
                         const selected = employmentTypeCodes.find(e => e.concept_id === value);
                         if (selected) {
@@ -1244,7 +1244,7 @@ export default function JobEdit() {
                         Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
                       </Label>
                       <Select
-                        value={afWorktimeExtentCid}
+                        value={afWorktimeExtentCid || ''}
                         onValueChange={(value) => {
                           const selected = worktimeExtentCodes.find(w => w.concept_id === value);
                           if (selected) {
@@ -1285,7 +1285,7 @@ export default function JobEdit() {
                       Varaktighet *
                     </Label>
                     <Select
-                      value={afDurationCid}
+                      value={afDurationCid || ''}
                       onValueChange={(value) => {
                         const selected = durationCodes.find(d => d.concept_id === value);
                         if (selected) {

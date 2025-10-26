@@ -184,7 +184,7 @@ Deno.serve(async (req) => {
     const { error: deleteError } = await supabase
       .from('af_taxonomy')
       .delete()
-      .neq('concept_id', ''); // Delete everything
+      .gte('version', 0); // Match all rows (version is always >= 0)
 
     if (deleteError) {
       console.error('❌ Failed to delete existing data:', deleteError);
@@ -269,7 +269,7 @@ Deno.serve(async (req) => {
       
       const { error: insertError } = await supabase
         .from('af_taxonomy')
-        .insert(batch);
+        .upsert(batch, { onConflict: 'concept_id' });
 
       if (insertError) {
         console.error(`❌ Insert error at batch ${i}:`, insertError);

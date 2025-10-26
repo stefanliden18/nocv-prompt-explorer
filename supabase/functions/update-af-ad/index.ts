@@ -113,7 +113,10 @@ serve(async (req) => {
     // ✅ AF API kombinationsregler (baserat på officiell dokumentation)
     const AF_RULES = {
       // Dessa anställningstyper KRÄVER automatiskt "Tillsvidare" som duration
-      autoSetTillsvidare: ['PFZr_Syz_cUq'], // Vanlig anställning
+      autoSetTillsvidare: [
+        'PFZr_Syz_cUq',    // Vanlig anställning
+        'kpPX_CNN_gDU'     // Tillsvidareanställning (inkl. provanställning)
+      ],
       
       // Dessa anställningstyper KRÄVER duration (tidsbegränsade)
       requiresDuration: [
@@ -121,8 +124,11 @@ serve(async (req) => {
         'h4fe_E7e_UqV', // Extratjänst
         'bYfG_jXa_zik', // Frilans
         'nuKG_MXb_Yua', // Säsongsarbete
+        'EBhX_Qm2_8eX', // Säsongsanställning
         'Jh8f_q9J_pbJ', // Sommarjobb
-        '8qLN_bEY_bhk'  // Vikariat
+        'sTu5_NBQ_udq', // Tidsbegränsad anställning
+        '8qLN_bEY_bhk', // Vikariat
+        'gro4_cWF_6D7'  // Vikariat (dublett)
       ],
       
       // Dessa anställningstyper FÖRBJUDER worktimeExtent

@@ -115,7 +115,10 @@ serve(async (req) => {
     // ✅ AF API kombinationsregler (baserat på officiell dokumentation)
     const AF_RULES = {
       // Dessa anställningstyper KRÄVER automatiskt "Tillsvidare" som duration
-      autoSetTillsvidare: ['PFZr_Syz_cUq'], // Vanlig anställning
+      autoSetTillsvidare: [
+        'PFZr_Syz_cUq',    // Vanlig anställning
+        'kpPX_CNN_gDU'     // Tillsvidareanställning (inkl. provanställning)
+      ],
       
       // Dessa anställningstyper KRÄVER duration (tidsbegränsade)
       requiresDuration: [
@@ -123,8 +126,11 @@ serve(async (req) => {
         'h4fe_E7e_UqV', // Extratjänst
         'bYfG_jXa_zik', // Frilans
         'nuKG_MXb_Yua', // Säsongsarbete
+        'EBhX_Qm2_8eX', // Säsongsanställning
         'Jh8f_q9J_pbJ', // Sommarjobb
-        '8qLN_bEY_bhk'  // Vikariat
+        'sTu5_NBQ_udq', // Tidsbegränsad anställning
+        '8qLN_bEY_bhk', // Vikariat
+        'gro4_cWF_6D7'  // Vikariat (dublett)
       ],
       
       // Dessa anställningstyper FÖRBJUDER worktimeExtent
@@ -158,7 +164,7 @@ serve(async (req) => {
       if (employmentType === 'PFZr_Syz_cUq' && !worktimeExtent) {
         throw new Error(
           'worktimeExtent (Heltid/Deltid) is REQUIRED for Vanlig anställning (PFZr_Syz_cUq). ' +
-          'Choose: Heltid (hJi6_yUu_RBT) or Deltid (6YE1_gAC_R2G)'
+          'Choose: Heltid (6YE1_gAC_R2G) or Deltid (947z_JGS_Uk2)'
         );
       }
       

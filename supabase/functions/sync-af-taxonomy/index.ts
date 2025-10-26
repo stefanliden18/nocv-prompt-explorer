@@ -25,7 +25,10 @@ async function fetchTaxonomy(type: string, version: number) {
   console.log(`Fetching taxonomy: ${type} version ${version}`);
   
   try {
-    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
+    // Municipality använder /main/ endpoint utan version
+    const url = type === 'municipality'
+      ? `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=${type}`
+      : `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
     console.log(`Fetching from: ${url}`);
     
     const response = await fetch(url);
@@ -50,7 +53,7 @@ async function fetchTaxonomy(type: string, version: number) {
       concept_id: concept['concept-id'] || concept.id,
       type: type,
       version: version,
-      code: concept['legacy-ams-taxonomy-id'] || null,
+      code: concept['legacy-ams-taxonomy-id'] || concept.code || null,
       label: concept.term || concept.label || 'Unknown'
     }));
   } catch (error) {

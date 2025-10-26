@@ -24,6 +24,8 @@ import { cn } from '@/lib/utils';
 import { stockholmToUTC, utcToStockholm, nowInStockholm, nowUTC } from '@/lib/timezone';
 import { useDebugMode } from '@/hooks/useDebugMode';
 import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
+import { useAFTaxonomyDirect } from '@/hooks/useAFTaxonomyDirect';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
 
 interface Company {
@@ -47,7 +49,17 @@ export default function JobEdit() {
   const navigate = useNavigate();
   const { isDebugEnabled } = useDebugMode();
   const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes, isLoading: taxonomyLoading } = useAFTaxonomy();
+  const { data: directWorktimeData, loading: directLoading } = useAFTaxonomyDirect();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+
+  // DEBUG COMPARISON LOG
+  console.log('🆚 COMPARISON:', {
+    reactQuery: worktimeExtentCodes,
+    directFetch: directWorktimeData,
+    taxonomyLoading,
+    directLoading
+  });
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobLoading, setJobLoading] = useState(true);
   
@@ -821,6 +833,20 @@ export default function JobEdit() {
             >
               <Archive className="h-4 w-4 mr-2" />
               Arkivera
+            </Button>
+            
+            {/* DEBUG BUTTON */}
+            <Button
+              onClick={() => {
+                console.log('🔄 Invalidating af-taxonomy cache...');
+                queryClient.invalidateQueries({ queryKey: ['af-taxonomy'] });
+                toast.info('Laddar om taxonomi-data...');
+              }}
+              variant="outline"
+              size="sm"
+              className="border-orange-500 text-orange-600 hover:bg-orange-50"
+            >
+              🔄 Reload Taxonomy (DEBUG)
             </Button>
           </div>
         </div>

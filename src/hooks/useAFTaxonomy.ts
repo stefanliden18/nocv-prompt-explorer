@@ -23,9 +23,26 @@ export const useAFTaxonomy = () => {
         console.error('❌ useAFTaxonomy: Error fetching data:', error);
         throw error;
       }
+      
+      // NYA LOGS - Kolla RAW data INNAN return
+      console.log('🔍 RAW DATA från Supabase:', {
+        totalRows: data?.length,
+        firstRow: data?.[0],
+        worktimeRows: data?.filter(d => d.type === 'worktime-extent'),
+        uniqueTypes: [...new Set(data?.map(d => d.type))]
+      });
+      
       console.log('✅ useAFTaxonomy: Data fetched:', data?.length, 'items');
       return data as TaxonomyItem[];
     }
+  });
+
+  // EXTRA LOG - Kolla vad taxonomyData innehåller EFTER React Query
+  console.log('📦 taxonomyData EFTER React Query:', {
+    length: taxonomyData.length,
+    isArray: Array.isArray(taxonomyData),
+    sample: taxonomyData[0],
+    worktimeCount: taxonomyData.filter(t => t.type === 'worktime-extent').length
   });
 
   // Gruppera per typ

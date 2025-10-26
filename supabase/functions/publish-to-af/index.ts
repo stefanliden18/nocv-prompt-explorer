@@ -76,6 +76,16 @@ serve(async (req) => {
 
     // Validate all concept IDs
     console.log('🔍 Validating concept IDs against af_taxonomy...');
+    
+    // FÖRST: Kontrollera obligatoriska fält
+    const validationErrors: string[] = [];
+    
+    // Kolla att worktime finns för Vanlig anställning
+    if (job.af_employment_type_cid === 'PFZr_Syz_cUq' && !job.af_worktime_extent_cid) {
+      validationErrors.push('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
+    }
+    
+    // SEDAN: Validera concept IDs (endast om de finns)
     const validations = await Promise.all([
       validateConceptId(job.af_occupation_cid, 'occupation-name', 1, 'Occupation'),
       validateConceptId(job.af_municipality_cid, 'municipality', 1, 'Municipality'),
@@ -84,7 +94,7 @@ serve(async (req) => {
       job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 1, 'Worktime Extent') : Promise.resolve({ valid: true })
     ]);
 
-    const validationErrors = validations.filter(v => !v.valid).map(v => v.error);
+    validationErrors.push(...validations.filter(v => !v.valid).map(v => v.error!));
 
     if (validationErrors.length > 0) {
       console.error('[VALIDATION] Failed:', validationErrors);

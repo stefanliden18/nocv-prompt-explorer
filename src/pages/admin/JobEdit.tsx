@@ -46,7 +46,7 @@ export default function JobEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isDebugEnabled } = useDebugMode();
-  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes } = useAFTaxonomy();
+  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes, isLoading: taxonomyLoading } = useAFTaxonomy();
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobLoading, setJobLoading] = useState(true);
@@ -122,7 +122,11 @@ export default function JobEdit() {
 
   // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
   useEffect(() => {
-    if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && (!afWorktimeExtentCid || afWorktimeExtentCid === '')) {
+    if (
+      afEmploymentTypeCid === 'PFZr_Syz_cUq' && 
+      (!afWorktimeExtentCid || afWorktimeExtentCid === '') &&
+      worktimeExtentCodes.length > 0
+    ) {
       const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
         setAfWorktimeExtentCode(heltid.code || '');
@@ -130,7 +134,7 @@ export default function JobEdit() {
         toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
       }
     }
-  }, [afEmploymentTypeCid, worktimeExtentCodes]);
+  }, [afEmploymentTypeCid, worktimeExtentCodes, afWorktimeExtentCid]);
 
   const fetchCompanies = async () => {
     try {
@@ -1243,27 +1247,33 @@ export default function JobEdit() {
                       <Label htmlFor="af_worktime_extent_code">
                         Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
                       </Label>
-                      <Select
-                        value={afWorktimeExtentCid || ''}
-                        onValueChange={(value) => {
-                          const selected = worktimeExtentCodes.find(w => w.concept_id === value);
-                          if (selected) {
-                            setAfWorktimeExtentCode(selected.code || '');
-                            setAfWorktimeExtentCid(selected.concept_id);
-                          }
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj omfattning" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {worktimeExtentCodes.map((code: any) => (
-                            <SelectItem key={code.concept_id} value={code.concept_id}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      
+                      {taxonomyLoading ? (
+                        <p className="text-sm text-muted-foreground">Laddar alternativ...</p>
+                      ) : (
+                        <Select
+                          value={afWorktimeExtentCid || ''}
+                          onValueChange={(value) => {
+                            const selected = worktimeExtentCodes.find(w => w.concept_id === value);
+                            if (selected) {
+                              setAfWorktimeExtentCode(selected.code || '');
+                              setAfWorktimeExtentCid(selected.concept_id);
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Välj omfattning" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {worktimeExtentCodes.map((code: any) => (
+                              <SelectItem key={code.concept_id} value={code.concept_id}>
+                                {code.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      
                       {afEmploymentTypeCid === 'PFZr_Syz_cUq' && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Obligatoriskt för vanlig anställning

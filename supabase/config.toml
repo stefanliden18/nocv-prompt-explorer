@@ -44,3 +44,6 @@ verify_jwt = true
 
 [functions.unpublish-af-ad]
 verify_jwt = true
+
+[functions.reset-af-taxonomy]
+verify_jwt = false

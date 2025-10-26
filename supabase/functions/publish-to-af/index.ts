@@ -85,6 +85,8 @@ serve(async (req) => {
       validationErrors.push('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Tillsvidareanställning');
     }
     
+    console.log('[VALIDATION] Using taxonomy version 16 for all validations');
+    
     // SEDAN: Validera concept IDs (endast om de finns)
     const validations = await Promise.all([
       validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),

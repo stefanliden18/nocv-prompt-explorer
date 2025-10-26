@@ -121,20 +121,42 @@ export default function JobEdit() {
   }, [afEmploymentTypeCid, durationCodes]);
 
   // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
+  // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
   useEffect(() => {
     if (
+      id &&
       afEmploymentTypeCid === 'PFZr_Syz_cUq' && 
       (!afWorktimeExtentCid || afWorktimeExtentCid === '') &&
-      worktimeExtentCodes.length > 0
+      worktimeExtentCodes.length > 0 &&
+      !taxonomyLoading
     ) {
       const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
         setAfWorktimeExtentCode(heltid.code || '');
         setAfWorktimeExtentCid(heltid.concept_id);
+        // Spara direkt till databas
+        updateJobField('af_worktime_extent_cid', heltid.concept_id);
+        updateJobField('af_worktime_extent_code', heltid.code || '');
         toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
       }
     }
-  }, [afEmploymentTypeCid, worktimeExtentCodes, afWorktimeExtentCid]);
+  }, [afEmploymentTypeCid, worktimeExtentCodes, afWorktimeExtentCid, taxonomyLoading, id]);
+
+  // Funktion för att uppdatera enskilda fält direkt i databasen
+  const updateJobField = async (field: string, value: any) => {
+    if (!id) return;
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .update({ [field]: value })
+        .eq('id', id);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error(`Failed to update ${field}:`, error);
+      toast.error(`Kunde inte spara ${field}`);
+    }
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -1153,14 +1175,18 @@ export default function JobEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_occupation_code">Yrke *</Label>
+                    <Label htmlFor="af_occupation_code" className="text-red-600">
+                      Yrke * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
+                    </Label>
                     <Select
                       value={afOccupationCid || ''}
-                      onValueChange={(value) => {
+                      onValueChange={async (value) => {
                         const selected = occupationCodes.find(o => o.concept_id === value);
                         if (selected) {
                           setAfOccupationCode(selected.code || '');
                           setAfOccupationCid(selected.concept_id);
+                          await updateJobField('af_occupation_cid', selected.concept_id);
+                          await updateJobField('af_occupation_code', selected.code || '');
                         }
                       }}
                     >
@@ -1178,14 +1204,18 @@ export default function JobEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="af_municipality_code">Kommun *</Label>
+                    <Label htmlFor="af_municipality_code" className="text-red-600">
+                      Kommun * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
+                    </Label>
                     <Select
                       value={afMunicipalityCid || ''}
-                      onValueChange={(value) => {
+                      onValueChange={async (value) => {
                         const selected = municipalityCodes.find(m => m.concept_id === value);
                         if (selected) {
                           setAfMunicipalityCode(selected.code || '');
                           setAfMunicipalityCid(selected.concept_id);
+                          await updateJobField('af_municipality_cid', selected.concept_id);
+                          await updateJobField('af_municipality_code', selected.code || '');
                         }
                       }}
                     >
@@ -1205,25 +1235,33 @@ export default function JobEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
+                    <Label htmlFor="af_employment_type_code" className="text-red-600">
+                      Anställningstyp * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
+                    </Label>
                     <Select
                       value={afEmploymentTypeCid || ''}
-                      onValueChange={(value) => {
+                      onValueChange={async (value) => {
                         const selected = employmentTypeCodes.find(e => e.concept_id === value);
                         if (selected) {
                           setAfEmploymentTypeCode(selected.code || '');
                           setAfEmploymentTypeCid(selected.concept_id);
+                          await updateJobField('af_employment_type_cid', selected.concept_id);
+                          await updateJobField('af_employment_type_code', selected.code || '');
                         }
                         // Auto-clear duration om vanlig anställning väljs
                         if (value === 'PFZr_Syz_cUq' && afDurationCid) {
                           setAfDurationCode('');
                           setAfDurationCid('');
+                          await updateJobField('af_duration_cid', null);
+                          await updateJobField('af_duration_code', null);
                           toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
                         }
                         // Auto-clear worktimeExtent om behovsanställning väljs
                         if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {
                           setAfWorktimeExtentCode('');
                           setAfWorktimeExtentCid('');
+                          await updateJobField('af_worktime_extent_cid', null);
+                          await updateJobField('af_worktime_extent_code', null);
                           toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
                         }
                       }}
@@ -1244,8 +1282,11 @@ export default function JobEdit() {
                   {/* Arbetstidsomfattning - Dölj för behovsanställning */}
                   {afEmploymentTypeCid !== '1paU_aCR_nGn' && (
                     <div>
-                      <Label htmlFor="af_worktime_extent_code">
+                      <Label htmlFor="af_worktime_extent_code" className={afEmploymentTypeCid === 'PFZr_Syz_cUq' ? 'text-red-600' : ''}>
                         Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
+                        {afEmploymentTypeCid === 'PFZr_Syz_cUq' && (
+                          <span className="text-xs text-muted-foreground ml-1">(Obligatoriskt för vanlig anställning)</span>
+                        )}
                       </Label>
                       
                       {taxonomyLoading ? (
@@ -1253,11 +1294,13 @@ export default function JobEdit() {
                       ) : (
                         <Select
                           value={afWorktimeExtentCid || ''}
-                          onValueChange={(value) => {
+                          onValueChange={async (value) => {
                             const selected = worktimeExtentCodes.find(w => w.concept_id === value);
                             if (selected) {
                               setAfWorktimeExtentCode(selected.code || '');
                               setAfWorktimeExtentCid(selected.concept_id);
+                              await updateJobField('af_worktime_extent_cid', selected.concept_id);
+                              await updateJobField('af_worktime_extent_code', selected.code || '');
                             }
                           }}
                         >
@@ -1272,12 +1315,6 @@ export default function JobEdit() {
                             ))}
                           </SelectContent>
                         </Select>
-                      )}
-                      
-                      {afEmploymentTypeCid === 'PFZr_Syz_cUq' && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Obligatoriskt för vanlig anställning
-                        </p>
                       )}
                     </div>
                   )}
@@ -1296,11 +1333,13 @@ export default function JobEdit() {
                     </Label>
                     <Select
                       value={afDurationCid || ''}
-                      onValueChange={(value) => {
+                      onValueChange={async (value) => {
                         const selected = durationCodes.find(d => d.concept_id === value);
                         if (selected) {
                           setAfDurationCode(selected.code || '');
                           setAfDurationCid(selected.concept_id);
+                          await updateJobField('af_duration_cid', selected.concept_id);
+                          await updateJobField('af_duration_code', selected.code || '');
                         }
                       }}
                       disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}

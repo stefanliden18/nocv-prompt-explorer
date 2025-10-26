@@ -1207,7 +1207,7 @@ export default function JobEdit() {
                         <SelectTrigger>
                           <SelectValue placeholder="Välj yrke" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper" side="bottom" sideOffset={4}>
                           {occupationCodes.map((code: any) => (
                             <SelectItem key={code.concept_id} value={code.concept_id}>
                               {code.label}
@@ -1238,7 +1238,7 @@ export default function JobEdit() {
                         <SelectTrigger>
                           <SelectValue placeholder="Välj kommun" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper" side="bottom" sideOffset={4}>
                           {municipalityCodes.map((code: any) => (
                             <SelectItem key={code.concept_id} value={code.concept_id}>
                               {code.label}
@@ -1287,7 +1287,7 @@ export default function JobEdit() {
                         <SelectTrigger>
                           <SelectValue placeholder="Välj typ" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper" side="bottom" sideOffset={4}>
                           {employmentTypeCodes.map((code: any) => (
                             <SelectItem key={code.concept_id} value={code.concept_id}>
                               {code.label}
@@ -1352,30 +1352,32 @@ export default function JobEdit() {
                     <Label htmlFor="af_duration_code">
                       Varaktighet *
                     </Label>
-                    <Select
-                      value={afDurationCid || ''}
-                      onValueChange={async (value) => {
-                        const selected = durationCodes.find(d => d.concept_id === value);
-                        if (selected) {
-                          setAfDurationCode(selected.code || '');
-                          setAfDurationCid(selected.concept_id);
-                          await updateJobField('af_duration_cid', selected.concept_id);
-                          await updateJobField('af_duration_code', selected.code || '');
-                        }
-                      }}
-                      disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj varaktighet" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {durationCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Select
+                        value={afDurationCid || ''}
+                        onValueChange={async (value) => {
+                          const selected = durationCodes.find(d => d.concept_id === value);
+                          if (selected) {
+                            setAfDurationCode(selected.code || '');
+                            setAfDurationCid(selected.concept_id);
+                            await updateJobField('af_duration_cid', selected.concept_id);
+                            await updateJobField('af_duration_code', selected.code || '');
+                          }
+                        }}
+                        disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj varaktighet" />
+                        </SelectTrigger>
+                        <SelectContent position="popper" side="bottom" sideOffset={4}>
+                          {durationCodes.map((code: any) => (
+                            <SelectItem key={code.concept_id} value={code.concept_id}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? (
                       <p className="text-xs text-blue-600 mt-1">
                         ℹ️ Vanlig anställning är automatiskt tillsvidareanställning

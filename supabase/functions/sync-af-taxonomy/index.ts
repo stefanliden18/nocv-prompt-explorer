@@ -21,14 +21,66 @@ const TAXONOMY_ENDPOINTS: TaxonomyEndpoint[] = [
   { type: 'duration', version: 16 }
 ];
 
+// Helper function to fetch municipality taxonomy from AF API (special handling)
+async function fetchMunicipalityTaxonomy(): Promise<any[]> {
+  const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=municipality`;
+  console.log(`Fetching municipalities from: ${url}`);
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch municipality: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // AF API returns ROOT ARRAY for /main/ endpoint, not { concepts: [] }
+    if (!Array.isArray(data)) {
+      console.error('Invalid municipality response - expected array, got:', typeof data);
+      throw new Error('Invalid municipality response format from AF API');
+    }
+    
+    console.log(`✅ Successfully fetched ${data.length} municipalities from AF API`);
+    
+    // Map AF API format to our format (without code, will be added via SCB mapping)
+    return data.map((concept: any) => ({
+      concept_id: concept['taxonomy/id'],
+      type: 'municipality',
+      version: 1,
+      code: null, // Will be filled by addSCBCode()
+      label: concept['taxonomy/preferred-label'] || concept['taxonomy/definition'] || 'Unknown'
+    }));
+  } catch (error) {
+    console.error(`Error fetching municipalities from AF API:`, error);
+    throw error; // Municipality MUST come from AF API
+  }
+}
+
+// Create SCB code mapping from MUNICIPALITIES fallback data
+const SCB_MUNICIPALITY_CODES: Record<string, string> = MUNICIPALITIES.reduce((acc, mun) => {
+  acc[mun.label] = mun.id;
+  return acc;
+}, {} as Record<string, string>);
+
+// Helper function to add SCB codes to municipality concepts
+function addSCBCode(municipality: any): any {
+  const scbCode = SCB_MUNICIPALITY_CODES[municipality.label];
+  if (!scbCode) {
+    console.warn(`⚠️ No SCB code found for municipality: ${municipality.label}`);
+  }
+  return {
+    ...municipality,
+    code: scbCode || null
+  };
+}
+
+// Helper function to fetch taxonomy from AF API with fallback (for non-municipality types)
 async function fetchTaxonomy(type: string, version: number) {
   console.log(`Fetching taxonomy: ${type} version ${version}`);
   
   try {
-    // Municipality använder /main/ endpoint utan version
-    const url = type === 'municipality'
-      ? `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/main/concepts?type=${type}`
-      : `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
+    const url = `${JOBTECH_TAXONOMY_BASE_URL}/v1/taxonomy/specific/concepts?type=${type}&version=${version}`;
     console.log(`Fetching from: ${url}`);
     
     const response = await fetch(url);
@@ -503,8 +555,10 @@ serve(async (req) => {
     const syncResults = [];
     let totalSynced = 0;
 
-    // Fetch and sync each taxonomy type
+    // Fetch and sync each taxonomy type (excluding municipality - handled separately)
     for (const endpoint of TAXONOMY_ENDPOINTS) {
+      if (endpoint.type === 'municipality') continue; // Skip, handled separately below
+      
       console.log(`[SYNC] Fetching ${endpoint.type} v${endpoint.version}...`);
       
       const taxonomyData = await fetchTaxonomy(endpoint.type, endpoint.version);
@@ -558,6 +612,58 @@ serve(async (req) => {
           count: taxonomyData.length
         });
       }
+    }
+
+    // MUNICIPALITY: Special handling - fetch from AF API and add SCB codes
+    try {
+      console.log('[SYNC] Fetching municipalities from AF API...');
+      let municipalityConcepts = await fetchMunicipalityTaxonomy();
+      
+      console.log(`[SYNC] Adding SCB codes to ${municipalityConcepts.length} municipalities...`);
+      municipalityConcepts = municipalityConcepts.map(addSCBCode);
+      
+      console.log('[SYNC] Cleaning old municipality data...');
+      const { error: deleteError } = await supabase
+        .from('af_taxonomy')
+        .delete()
+        .eq('type', 'municipality')
+        .eq('version', 1);
+
+      if (deleteError) {
+        console.error('[SYNC] Delete error for municipality:', deleteError);
+      }
+
+      console.log(`[SYNC] Upserting ${municipalityConcepts.length} municipalities with SCB codes...`);
+      const { error: upsertError } = await supabase
+        .from('af_taxonomy')
+        .upsert(municipalityConcepts, { onConflict: 'concept_id' });
+
+      if (upsertError) {
+        console.error('[SYNC] Upsert error for municipality:', upsertError);
+        syncResults.push({
+          type: 'municipality',
+          version: 1,
+          status: 'error',
+          error: upsertError.message
+        });
+      } else {
+        totalSynced += municipalityConcepts.length;
+        console.log(`[SYNC] ✅ Synced ${municipalityConcepts.length} municipalities with SCB codes`);
+        syncResults.push({
+          type: 'municipality',
+          version: 1,
+          status: 'success',
+          count: municipalityConcepts.length
+        });
+      }
+    } catch (municipalityError) {
+      console.error('[SYNC] Failed to sync municipalities:', municipalityError);
+      syncResults.push({
+        type: 'municipality',
+        version: 1,
+        status: 'error',
+        error: municipalityError instanceof Error ? municipalityError.message : 'Unknown error'
+      });
     }
 
     console.log(`[SYNC] Total synced: ${totalSynced} concepts`);

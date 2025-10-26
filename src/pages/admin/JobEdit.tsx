@@ -122,7 +122,7 @@ export default function JobEdit() {
 
   // Auto-sätt "Heltid" för Vanlig anställning om worktimeExtent saknas
   useEffect(() => {
-    if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
+    if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && (!afWorktimeExtentCid || afWorktimeExtentCid === '')) {
       const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
         setAfWorktimeExtentCode(heltid.code || '');
@@ -187,15 +187,15 @@ export default function JobEdit() {
       setContactPersonEmail(job.contact_person_email || '');
       setContactPersonPhone(job.contact_person_phone || '');
       setAfOccupationCode(job.af_occupation_code || '');
-      setAfOccupationCid(job.af_occupation_cid || '');
+      setAfOccupationCid(job.af_occupation_cid || null);
       setAfMunicipalityCode(job.af_municipality_code || '');
-      setAfMunicipalityCid(job.af_municipality_cid || '');
+      setAfMunicipalityCid(job.af_municipality_cid || null);
       setAfEmploymentTypeCode(job.af_employment_type_code || '');
-      setAfEmploymentTypeCid(job.af_employment_type_cid || '');
+      setAfEmploymentTypeCid(job.af_employment_type_cid || null);
       setAfDurationCode(job.af_duration_code || '');
-      setAfDurationCid(job.af_duration_cid || '');
+      setAfDurationCid(job.af_duration_cid || null);
       setAfWorktimeExtentCode(job.af_worktime_extent_code || '');
-      setAfWorktimeExtentCid(job.af_worktime_extent_cid || '');
+      setAfWorktimeExtentCid(job.af_worktime_extent_cid || null);
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
         const stockholmDate = utcToStockholm(job.publish_at);

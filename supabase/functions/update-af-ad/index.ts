@@ -352,7 +352,7 @@ serve(async (req) => {
     afRequestBody.workplaces = [
       {
         name: String(job.companies?.name || ""),
-        municipality: job.af_municipality_cid, // ✅ Använd concept_id direkt
+        municipality: job.af_municipality_code, // ✅ Använd kommun-kod istället för concept_id
         country: "i46j_HmG_v64", // ✅ Sverige (required enligt AF docs)
         postalAddress: {
           street: String(job.companies?.address || ""),

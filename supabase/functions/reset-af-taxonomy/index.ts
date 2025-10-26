@@ -5,8 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// AF API Base URL
-const AF_API_BASE = 'https://jobsearch.api.jobtechdev.se';
+// AF API Base URL - Taxonomy API
+const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se';
 
 // Taxonomy types we need
 const TAXONOMY_TYPES = [
@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
     for (const type of TAXONOMY_TYPES) {
       console.log(`  📥 Fetching ${type}...`);
       
-      const response = await fetch(`${AF_API_BASE}/taxonomy/v1/${type}`, {
+      const response = await fetch(`${AF_API_BASE}/v1/taxonomy/versioned/concepts?type=${type}&version=16`, {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -75,18 +75,25 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const data: TaxonomyItem[] = await response.json();
+      const responseData = await response.json();
       
-      // AF's current API is version 16 - take all items without filtering
-      console.log(`  ✅ ${type}: Found ${data.length} items`);
+      // Handle response structure - API might return {concepts: [...]} or direct array
+      const data: TaxonomyItem[] = Array.isArray(responseData) 
+        ? responseData 
+        : (responseData.concepts || []);
+      
+      // Filter for version 16 only
+      const v16Data = data.filter(item => item.version === 16);
+      
+      console.log(`  ✅ ${type}: Found ${v16Data.length} version 16 items (filtered from ${data.length} total)`);
       
       // Log a sample item to see the API structure
-      if (data.length > 0) {
-        console.log(`  📋 Sample item from ${type}:`, JSON.stringify(data[0], null, 2));
+      if (v16Data.length > 0) {
+        console.log(`  📋 Sample item from ${type}:`, JSON.stringify(v16Data[0], null, 2));
       }
 
       // Transform to our format
-      for (const item of data) {
+      for (const item of v16Data) {
         const label = item.term || item.label?.sv_SE || 'Unknown';
         
         allFreshData.push({

@@ -135,9 +135,9 @@ serve(async (req) => {
     };
 
     const validateConditionalFields = (job: any) => {
-      const employmentType = job.af_employment_type_code;
-      let duration = job.af_duration_code;
-      const worktimeExtent = job.af_worktime_extent_code;
+      const employmentType = job.af_employment_type_cid;
+      let duration = job.af_duration_cid;
+      const worktimeExtent = job.af_worktime_extent_cid;
       
       // ✅ Auto-sätt "Tillsvidare" för permanenta anställningar
       if (AF_RULES.autoSetTillsvidare.includes(employmentType)) {
@@ -170,12 +170,12 @@ serve(async (req) => {
     // ✅ Validera förbjudna employment types och kombinationer
     const validateEmploymentType = (job: any) => {
       // Forbidden: Arbete utomlands
-      if (job.af_employment_type_code === '9Wuo_2Yb_36E') {
+      if (job.af_employment_type_cid === '9Wuo_2Yb_36E') {
         throw new Error('employmentType "Arbete utomlands" (9Wuo_2Yb_36E) is not allowed by AF');
       }
       
       // Forbidden combination: Sommarjobb + Tillsvidare
-      if (job.af_employment_type_code === 'Jh8f_q9J_pbJ' && job.af_duration_code === 'a7uU_j21_mkL') {
+      if (job.af_employment_type_cid === 'Jh8f_q9J_pbJ' && job.af_duration_cid === 'a7uU_j21_mkL') {
         throw new Error('Sommarjobb cannot be combined with duration Tillsvidare');
       }
     };

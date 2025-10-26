@@ -483,6 +483,15 @@ Deno.serve(async (req) => {
     for (const type of TAXONOMY_TYPES) {
       console.log(`  📥 Fetching ${type}...`);
       
+      // FORCE FALLBACK FOR MUNICIPALITIES - AF API returns wrong structure
+      if (type === 'municipality') {
+        console.log(`  ⚠️ FORCING fallback for municipalities (AF API uses wrong field mapping)`);
+        const fallbackData = getFallbackData(type);
+        allFreshData.push(...fallbackData);
+        console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
+        continue;
+      }
+      
       const url = `${AF_API_BASE}/v1/taxonomy/versioned/concepts?type=${type}&version=16`;
       
       try {

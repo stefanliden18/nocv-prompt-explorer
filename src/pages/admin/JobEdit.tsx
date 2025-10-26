@@ -1191,58 +1191,62 @@ export default function JobEdit() {
                     <Label htmlFor="af_occupation_code" className="text-red-600">
                       Yrke * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <Select
-                      value={afOccupationCid || ''}
-                      onValueChange={async (value) => {
-                        const selected = occupationCodes.find(o => o.concept_id === value);
-                        if (selected) {
-                          setAfOccupationCode(selected.code || '');
-                          setAfOccupationCid(selected.concept_id);
-                          await updateJobField('af_occupation_cid', selected.concept_id);
-                          await updateJobField('af_occupation_code', selected.code || '');
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj yrke" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {occupationCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Select
+                        value={afOccupationCid || ''}
+                        onValueChange={async (value) => {
+                          const selected = occupationCodes.find(o => o.concept_id === value);
+                          if (selected) {
+                            setAfOccupationCode(selected.code || '');
+                            setAfOccupationCid(selected.concept_id);
+                            await updateJobField('af_occupation_cid', selected.concept_id);
+                            await updateJobField('af_occupation_code', selected.code || '');
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj yrke" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {occupationCodes.map((code: any) => (
+                            <SelectItem key={code.concept_id} value={code.concept_id}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   <div>
                     <Label htmlFor="af_municipality_code" className="text-red-600">
                       Kommun * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <Select
-                      value={afMunicipalityCid || ''}
-                      onValueChange={async (value) => {
-                        const selected = municipalityCodes.find(m => m.concept_id === value);
-                        if (selected) {
-                          setAfMunicipalityCode(selected.code || '');
-                          setAfMunicipalityCid(selected.concept_id);
-                          await updateJobField('af_municipality_cid', selected.concept_id);
-                          await updateJobField('af_municipality_code', selected.code || '');
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj kommun" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {municipalityCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Select
+                        value={afMunicipalityCid || ''}
+                        onValueChange={async (value) => {
+                          const selected = municipalityCodes.find(m => m.concept_id === value);
+                          if (selected) {
+                            setAfMunicipalityCode(selected.code || '');
+                            setAfMunicipalityCid(selected.concept_id);
+                            await updateJobField('af_municipality_cid', selected.concept_id);
+                            await updateJobField('af_municipality_code', selected.code || '');
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj kommun" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {municipalityCodes.map((code: any) => (
+                            <SelectItem key={code.concept_id} value={code.concept_id}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 
@@ -1251,45 +1255,47 @@ export default function JobEdit() {
                     <Label htmlFor="af_employment_type_code" className="text-red-600">
                       Anställningstyp * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <Select
-                      value={afEmploymentTypeCid || ''}
-                      onValueChange={async (value) => {
-                        const selected = employmentTypeCodes.find(e => e.concept_id === value);
-                        if (selected) {
-                          setAfEmploymentTypeCode(selected.code || '');
-                          setAfEmploymentTypeCid(selected.concept_id);
-                          await updateJobField('af_employment_type_cid', selected.concept_id);
-                          await updateJobField('af_employment_type_code', selected.code || '');
-                        }
-                        // Auto-clear duration om vanlig anställning väljs
-                        if (value === 'PFZr_Syz_cUq' && afDurationCid) {
-                          setAfDurationCode('');
-                          setAfDurationCid('');
-                          await updateJobField('af_duration_cid', null);
-                          await updateJobField('af_duration_code', null);
-                          toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
-                        }
-                        // Auto-clear worktimeExtent om behovsanställning väljs
-                        if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {
-                          setAfWorktimeExtentCode('');
-                          setAfWorktimeExtentCid('');
-                          await updateJobField('af_worktime_extent_cid', null);
-                          await updateJobField('af_worktime_extent_code', null);
-                          toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
-                        }
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj typ" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employmentTypeCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="relative">
+                      <Select
+                        value={afEmploymentTypeCid || ''}
+                        onValueChange={async (value) => {
+                          const selected = employmentTypeCodes.find(e => e.concept_id === value);
+                          if (selected) {
+                            setAfEmploymentTypeCode(selected.code || '');
+                            setAfEmploymentTypeCid(selected.concept_id);
+                            await updateJobField('af_employment_type_cid', selected.concept_id);
+                            await updateJobField('af_employment_type_code', selected.code || '');
+                          }
+                          // Auto-clear duration om vanlig anställning väljs
+                          if (value === 'PFZr_Syz_cUq' && afDurationCid) {
+                            setAfDurationCode('');
+                            setAfDurationCid('');
+                            await updateJobField('af_duration_cid', null);
+                            await updateJobField('af_duration_code', null);
+                            toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
+                          }
+                          // Auto-clear worktimeExtent om behovsanställning väljs
+                          if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {
+                            setAfWorktimeExtentCode('');
+                            setAfWorktimeExtentCid('');
+                            await updateJobField('af_worktime_extent_cid', null);
+                            await updateJobField('af_worktime_extent_code', null);
+                            toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Välj typ" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {employmentTypeCodes.map((code: any) => (
+                            <SelectItem key={code.concept_id} value={code.concept_id}>
+                              {code.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
 
                   {/* Arbetstidsomfattning - Dölj för behovsanställning */}
@@ -1305,29 +1311,31 @@ export default function JobEdit() {
                       {taxonomyLoading ? (
                         <p className="text-sm text-muted-foreground">Laddar alternativ...</p>
                       ) : (
-                        <Select
-                          value={afWorktimeExtentCid || ''}
-                          onValueChange={async (value) => {
-                            const selected = worktimeExtentCodes.find(w => w.concept_id === value);
-                            if (selected) {
-                              setAfWorktimeExtentCode(selected.code || '');
-                              setAfWorktimeExtentCid(selected.concept_id);
-                              await updateJobField('af_worktime_extent_cid', selected.concept_id);
-                              await updateJobField('af_worktime_extent_code', selected.code || '');
-                            }
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Välj omfattning" />
-                          </SelectTrigger>
-                          <SelectContent position="popper" side="bottom" sideOffset={4}>
-                            {worktimeExtentCodes.map((code: any) => (
-                              <SelectItem key={code.concept_id} value={code.concept_id}>
-                                {code.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <Select
+                            value={afWorktimeExtentCid || ''}
+                            onValueChange={async (value) => {
+                              const selected = worktimeExtentCodes.find(w => w.concept_id === value);
+                              if (selected) {
+                                setAfWorktimeExtentCode(selected.code || '');
+                                setAfWorktimeExtentCid(selected.concept_id);
+                                await updateJobField('af_worktime_extent_cid', selected.concept_id);
+                                await updateJobField('af_worktime_extent_code', selected.code || '');
+                              }
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Välj omfattning" />
+                            </SelectTrigger>
+                            <SelectContent position="popper" side="bottom" sideOffset={4}>
+                              {worktimeExtentCodes.map((code: any) => (
+                                <SelectItem key={code.concept_id} value={code.concept_id}>
+                                  {code.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       )}
                     </div>
                   )}

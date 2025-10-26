@@ -185,19 +185,8 @@ All colors MUST be HSL.
   list-style-type: decimal;
 }
 
-/* Fix z-index for Radix Select dropdowns */
-[data-radix-select-content] {
-  z-index: 99999 !important;
-  background: hsl(var(--popover)) !important;
-}
-
 /* Force select dropdowns to be visible */
 [data-radix-select-viewport] {
   max-height: 300px;
   overflow-y: auto;
-}
-
-[data-radix-popper-content-wrapper] {
-  z-index: 99999 !important;
-  isolation: auto !important;
 }

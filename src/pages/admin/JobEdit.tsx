@@ -219,8 +219,28 @@ export default function JobEdit() {
       return;
     }
 
-    // Validera AF-fält om några är ifyllda
-    if (afEmploymentTypeCode || afOccupationCode || contactPersonName) {
+    // STRIKT validering om AF-publicering är aktiverad
+    if (afPublished) {
+      const afErrors = [];
+      if (!afOccupationCode) afErrors.push('Yrke måste väljas för AF-publicering');
+      if (!afMunicipalityCode) afErrors.push('Kommun måste väljas för AF-publicering');
+      if (!afEmploymentTypeCode) afErrors.push('Anställningstyp måste väljas för AF-publicering');
+      if (!contactPersonName?.trim()) afErrors.push('Kontaktperson namn krävs för AF-publicering');
+      if (!contactPersonEmail?.trim()) afErrors.push('Kontaktperson e-post krävs för AF-publicering');
+      if (!contactPersonPhone?.trim()) afErrors.push('Kontaktperson telefon krävs för AF-publicering');
+      if (!lastApplicationDate) afErrors.push('Sista ansökningsdag krävs för AF-publicering');
+      
+      if (afErrors.length > 0) {
+        toast.error('AF-publicering kräver:', {
+          description: afErrors.join('\n'),
+          duration: 8000
+        });
+        return;
+      }
+    }
+
+    // Validera AF-fält om några är ifyllda (för vanlig publicering utan AF)
+    if (!afPublished && (afEmploymentTypeCode || afOccupationCode || contactPersonName)) {
       if (!contactPersonName.trim()) {
         toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
         return;
@@ -371,7 +391,24 @@ export default function JobEdit() {
         body: { job_id: id }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('AF publish error:', error);
+        
+        // Hämta uppdaterat jobb för att visa AF-error från databasen
+        const { data: updatedJob } = await supabase
+          .from('jobs')
+          .select('af_error')
+          .eq('id', id)
+          .single();
+        
+        const errorMsg = updatedJob?.af_error || error.message || 'Okänt fel vid publicering till AF';
+        toast.error('Kunde inte publicera till AF', {
+          description: errorMsg,
+          duration: 10000
+        });
+        setAfError(errorMsg);
+        return;
+      }
 
       // Kolla om det är ett edge function-fel (validering eller krasch)
       if (data?.error === 'EDGE_CRASH') {

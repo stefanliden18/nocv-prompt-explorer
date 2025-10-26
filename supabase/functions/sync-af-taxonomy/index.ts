@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const JOBTECH_TAXONOMY_BASE_URL = 'https://jobtech-taxonomy.api.jobtechdev.se';
+const JOBTECH_TAXONOMY_BASE_URL = 'https://taxonomy.api.jobtechdev.se';
 
 interface TaxonomyEndpoint {
   type: string;
@@ -75,15 +75,8 @@ function getFallbackData(type: string, version: number) {
       }));
     
     case 'municipality':
-      // ✅ Använd statisk municipality-data från AF API
-      console.log('⚠️ Using static municipality data from af-municipalities.json');
-      return MUNICIPALITIES.map(mun => ({
-        concept_id: mun.id,
-        type: 'municipality',
-        version: 1,
-        code: null,
-        label: mun.label
-      }));
+      // Ingen fallback - förlitar oss på att nya API:et fungerar
+      throw new Error('Municipality taxonomy must be fetched from AF API');
     
     case 'employment-type':
       return EMPLOYMENT_TYPES_FALLBACK.map(et => ({

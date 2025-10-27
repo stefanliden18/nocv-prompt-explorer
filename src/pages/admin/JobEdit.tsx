@@ -124,15 +124,17 @@ export default function JobEdit() {
     queryClient.invalidateQueries({ queryKey: ['af-taxonomy'] });
   }, [queryClient]);
 
-  // Auto-sätt "Tillsvidare" för Vanlig anställning
+  // Auto-sätt "Tills vidare" för Tillsvidareanställning
   useEffect(() => {
-    if (afEmploymentTypeCid === 'PFZr_Syz_cUq') {
+    if (afEmploymentTypeCid === 'kpPX_CNN_gDU') {
       if (afDurationCid !== 'a7uU_j21_mkL') {
         const tillsvidare = durationCodes.find(d => d.concept_id === 'a7uU_j21_mkL');
         if (tillsvidare) {
           setAfDurationCode(tillsvidare.code || '');
           setAfDurationCid(tillsvidare.concept_id);
-          toast.info('Varaktighet automatiskt satt till "Tillsvidare" för vanlig anställning');
+          updateJobField('af_duration_cid', 'a7uU_j21_mkL');
+          updateJobField('af_duration_code', tillsvidare.code || '');
+          toast.info('Varaktighet automatiskt satt till "Tills vidare"');
         }
       }
     }
@@ -1314,14 +1316,6 @@ export default function JobEdit() {
                             setAfEmploymentTypeCid(selected.concept_id);
                             await updateJobField('af_employment_type_cid', selected.concept_id);
                             await updateJobField('af_employment_type_code', selected.code || '');
-                          }
-                          // Auto-clear duration om vanlig anställning väljs
-                          if (value === 'kpPX_CNN_gDU' && afDurationCid) {
-                            setAfDurationCode('');
-                            setAfDurationCid('');
-                            await updateJobField('af_duration_cid', null);
-                            await updateJobField('af_duration_code', null);
-                            toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
                           }
                           // Auto-clear worktimeExtent om behovsanställning väljs
                           if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {

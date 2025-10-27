@@ -8,13 +8,14 @@ const corsHeaders = {
 // AF API Base URL - RIKTIGT Taxonomy API
 const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy';
 
-// Taxonomy types we need (RIKTIGA från AF API)
+// ✅ KRITISKT: Taxonomi-versioner enligt AF Partner API dokumentation (sektion 6.2)
+// https://arbetsformedlingen.se/for-arbetsgivare/rekrytera/annonsera-i-platsbanken/for-over-annonser-till-platsbanken/koppla-ditt-rekryteringsverktyg-till-platsbanken
 const TAXONOMY_TYPES = [
-  'occupation-name',
-  'municipality', 
-  'employment-type',
-  'employment-duration',  // ✅ AF använder "employment-duration" INTE "duration"!
-  'worktime-extent'
+  { type: 'occupation-name', version: 16 },       // ✅ Version 16
+  { type: 'municipality', version: 1 },           // ✅ Version 1
+  { type: 'employment-type', version: 1 },        // ✅ Version 1
+  { type: 'employment-duration', version: 1 },    // ✅ Version 1 (AF använder "employment-duration")
+  { type: 'worktime-extent', version: 16 }        // ✅ Version 16
 ];
 
 // Municipality data with REAL AF concept IDs (from af-municipalities.json)
@@ -604,15 +605,15 @@ const SSYK_MAPPING: Record<string, string> = {
 };
 
 // Helper function to get fallback data
-function getFallbackData(type: string) {
-  console.log(`⚠️ Using fallback data for ${type}`);
+function getFallbackData(type: string, version: number) {
+  console.log(`⚠️ Using fallback data for ${type} (version ${version})`);
   
   switch (type) {
     case 'occupation-name':
       return OCCUPATIONS.map(occ => ({
         concept_id: occ.id,
         type: 'occupation-name',
-        version: 16,
+        version: version,
         code: occ.ssyk || null,
         label: occ.label,
         lang: 'sv',
@@ -624,7 +625,7 @@ function getFallbackData(type: string) {
       return municipalitiesData.map((m, index) => ({
         concept_id: m.id,  // ✅ Use AF's actual concept_id (e.g., "jNrY_Gve_R9n")
         type: 'municipality',
-        version: 16,
+        version: version,
         code: null,
         label: m.label,
         lang: 'sv',
@@ -635,7 +636,7 @@ function getFallbackData(type: string) {
       return EMPLOYMENT_TYPES_FALLBACK.map(et => ({
         concept_id: et.code,
         type: 'employment-type',
-        version: 16,
+        version: version,
         code: null,
         label: et.label,
         lang: 'sv',
@@ -646,7 +647,7 @@ function getFallbackData(type: string) {
       return DURATIONS_FALLBACK.map(dur => ({
         concept_id: dur.code,
         type: 'employment-duration',  // ✅ AF använder "employment-duration"
-        version: 16,
+        version: version,
         code: null,
         label: dur.label,
         lang: 'sv',
@@ -657,7 +658,7 @@ function getFallbackData(type: string) {
       return WORKTIME_EXTENTS_FALLBACK.map(wt => ({
         concept_id: wt.code,
         type: 'worktime-extent',
-        version: 16,
+        version: version,
         code: null,
         label: wt.label,
         lang: 'sv',
@@ -701,26 +702,27 @@ Deno.serve(async (req) => {
     
     const allFreshData: any[] = [];
     
-    for (const type of TAXONOMY_TYPES) {
-      console.log(`  📥 Fetching ${type}...`);
+    for (const taxonomyConfig of TAXONOMY_TYPES) {
+      const { type, version } = taxonomyConfig;
+      console.log(`  📥 Fetching ${type} (version ${version})...`);
       
       // Use embedded municipality data (AF API not reliable)
       if (type === 'municipality') {
-        const fallbackData = getFallbackData(type);
+        const fallbackData = getFallbackData(type, version);
         allFreshData.push(...fallbackData);
         console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from EMBEDDED DATA`);
         continue;
       }
       
-      // ✅ RIKTIGT AF API URL - använd /main/concepts istället för /versioned/concepts
-      const url = `${AF_API_BASE}/main/concepts?type=${type}&offset=0&limit=500`;
+      // ✅ KRITISKT: Använd /versioned/concepts med specifik version enligt AF Partner API docs
+      const url = `${AF_API_BASE}/versioned/concepts/${version}?type=${type}&offset=0&limit=500`;
       
       try {
         const response = await fetch(url);
         
         if (!response.ok) {
           console.error(`❌ API failed for ${type} (${response.status}) - using fallback`);
-          const fallbackData = getFallbackData(type);
+          const fallbackData = getFallbackData(type, version);
           allFreshData.push(...fallbackData);
           console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
           continue;
@@ -731,7 +733,7 @@ Deno.serve(async (req) => {
         // AF versioned endpoint returns ROOT ARRAY directly
         if (!Array.isArray(data)) {
           console.error(`❌ Invalid response for ${type} - using fallback`);
-          const fallbackData = getFallbackData(type);
+          const fallbackData = getFallbackData(type, version);
           allFreshData.push(...fallbackData);
           console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
           continue;
@@ -739,7 +741,7 @@ Deno.serve(async (req) => {
         
         if (data.length === 0) {
           console.warn(`⚠️ API returned 0 items for ${type} - using fallback`);
-          const fallbackData = getFallbackData(type);
+          const fallbackData = getFallbackData(type, version);
           allFreshData.push(...fallbackData);
           console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
           continue;
@@ -760,7 +762,7 @@ Deno.serve(async (req) => {
             concept_id: concept['taxonomy/id'],
             legacy_id: legacyId,  // ✅ Använd legacy_id från API ELLER SSYK-mappning
             type: type,
-            version: 16,
+            version: version,  // ✅ Använd rätt version för varje taxonomi-typ
             code: concept['legacy-ams-taxonomy-id'] || null,
             label: label,
             lang: 'sv',
@@ -769,7 +771,7 @@ Deno.serve(async (req) => {
         }
       } catch (error) {
         console.error(`❌ Error fetching ${type}:`, error);
-        const fallbackData = getFallbackData(type);
+        const fallbackData = getFallbackData(type, version);
         allFreshData.push(...fallbackData);
         console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
       }

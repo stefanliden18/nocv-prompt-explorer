@@ -13,12 +13,14 @@ interface TaxonomyEndpoint {
   version: number;
 }
 
+// ✅ KRITISKT: Taxonomi-versioner enligt AF Partner API dokumentation (sektion 6.2)
+// https://arbetsformedlingen.se/for-arbetsgivare/rekrytera/annonsera-i-platsbanken/for-over-annonser-till-platsbanken/koppla-ditt-rekryteringsverktyg-till-platsbanken
 const TAXONOMY_ENDPOINTS: TaxonomyEndpoint[] = [
-  { type: 'occupation-name', version: 16 },
-  { type: 'worktime-extent', version: 16 },
-  { type: 'municipality', version: 16 },
-  { type: 'employment-type', version: 16 },
-  { type: 'duration', version: 16 }
+  { type: 'occupation-name', version: 16 },       // ✅ Version 16
+  { type: 'municipality', version: 1 },           // ✅ Version 1
+  { type: 'employment-type', version: 1 },        // ✅ Version 1
+  { type: 'employment-duration', version: 1 },    // ✅ Version 1 (AF använder "employment-duration")
+  { type: 'worktime-extent', version: 16 }        // ✅ Version 16
 ];
 
 // Alla svenska kommuner (290 st) - MUST be defined before SCB_MUNICIPALITY_CODES

@@ -63,7 +63,7 @@ export const useAFTaxonomy = () => {
   const occupationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'occupation-name'));
   const municipalityCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'municipality'));
   const employmentTypeCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'employment-type'));
-  const durationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'duration'));
+  const durationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'employment-duration'));  // ✅ AF använder "employment-duration"
   const worktimeExtentCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'worktime-extent'));
 
   console.log('📊 useAFTaxonomy: Filtered data:', {

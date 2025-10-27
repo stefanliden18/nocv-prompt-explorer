@@ -355,57 +355,42 @@ serve(async (req) => {
     const firstname = nameParts[0] || '';
     const surname = nameParts.slice(1).join(' ') || '';
 
-    console.log('🔍 Looking up legacy_ids for AF Partner API...');
+    console.log('🔍 Preparing AF Partner API payload with correct taxonomy IDs...');
     
-    // ✅ ENDAST occupation-name behöver lookup av legacy_id (SSYK)
-    const lookupLegacyId = async (conceptId: string | null, type: string): Promise<string | null> => {
-      if (!conceptId) return null;
-      
-      // ✅ ENDAST occupation-name behöver lookup av legacy_id (SSYK)
-      if (type === 'occupation-name') {
-        const { data, error } = await supabase
-          .from('af_taxonomy')
-          .select('legacy_id, concept_id')
-          .eq('concept_id', conceptId)
-          .eq('type', type)
-          .single();
-        
-        if (error || !data || !data.legacy_id) {
-          throw new Error(`❌ Occupation saknar SSYK-kod (legacy_id) för concept_id: ${conceptId}`);
-        }
-        
-        console.log(`✅ ${type}: concept_id=${conceptId} → legacy_id=${data.legacy_id}`);
-        return data.legacy_id; // Returnera SSYK-kod
-      }
-      
-      // ✅ Alla andra typer: använd concept_id direkt (inget lookup behövs)
-      console.log(`✅ ${type}: använder concept_id direkt = ${conceptId}`);
-      return conceptId;
-    };
+    // ✅ ENDAST occupation behöver lookup av legacy_id (SSYK-kod)
+    const { data: occupationData, error: occupationError } = await supabase
+      .from('af_taxonomy')
+      .select('legacy_id, concept_id')
+      .eq('concept_id', job.af_occupation_cid)
+      .eq('type', 'occupation-name')
+      .single();
     
-    const [
-      occupationLegacyId,
-      employmentTypeLegacyId,
-      municipalityLegacyId,
-      durationLegacyId,
-      worktimeExtentLegacyId
-    ] = await Promise.all([
-      lookupLegacyId(job.af_occupation_cid, 'occupation-name'),
-      lookupLegacyId(job.af_employment_type_cid, 'employment-type'),
-      lookupLegacyId(job.af_municipality_cid, 'municipality'),
-      lookupLegacyId(job.af_duration_cid || validatedDuration, 'employment-duration'),
-      lookupLegacyId(job.af_worktime_extent_cid, 'worktime-extent')
-    ]);
+    if (occupationError || !occupationData || !occupationData.legacy_id) {
+      throw new Error(`❌ Occupation saknar SSYK-kod (legacy_id) för concept_id: ${job.af_occupation_cid}`);
+    }
+    
+    const occupationLegacyId = occupationData.legacy_id; // SSYK-kod för occupation
+    
+    // ✅ Alla andra fält: använd concept_id direkt från job-objektet
+    const employmentTypeConceptId = job.af_employment_type_cid;
+    const municipalityConceptId = job.af_municipality_cid;
+    const durationConceptId = job.af_duration_cid || validatedDuration;
+    const worktimeExtentConceptId = job.af_worktime_extent_cid;
 
-    console.log('🔍 AF payload with legacy_ids:', {
-      occupation: occupationLegacyId,
-      employmentType: employmentTypeLegacyId,
-      worktimeExtent: worktimeExtentLegacyId,
-      duration: durationLegacyId,
-      municipality: municipalityLegacyId
+    console.log('🔍 AF payload taxonomy IDs (legacy_id för occupation, concept_id för resten):', {
+      occupation: `${occupationLegacyId} (SSYK legacy_id)`,
+      employmentType: `${employmentTypeConceptId} (concept_id)`,
+      municipality: `${municipalityConceptId} (concept_id)`,
+      duration: `${durationConceptId} (concept_id)`,
+      worktimeExtent: `${worktimeExtentConceptId || 'not set'} (concept_id)`
     });
+    
+    // Validera att alla required fields finns
+    if (!occupationLegacyId || !employmentTypeConceptId || !municipalityConceptId || !durationConceptId) {
+      throw new Error('Missing required taxonomy IDs');
+    }
 
-    // Bygg payload baserat på conditional rules - ✅ ANVÄND LEGACY_ID
+    // Bygg payload enligt AF Partner API - ✅ SSYK för occupation, concept_id för resten
     const afRequestBody: any = {
       // Obligatoriska administrativa fält
       jobAdResponsibleEmail: "admin@nocv.se",
@@ -417,29 +402,29 @@ serve(async (req) => {
       lastPublishDate: job.last_application_date,
       totalJobOpenings: job.total_positions || 1,
       
-      // ✅ KRITISKT: Använd legacy_id istället för concept_id för Partner API
-      occupation: occupationLegacyId,
-      employmentType: employmentTypeLegacyId,
-      wageType: job.af_wage_type_code || "oG8G_9cW_nRf", // Fast månadslön (default)
-      duration: durationLegacyId,
+      // ✅ Taxonomy IDs: SSYK för occupation, concept_id för alla andra
+      occupation: occupationLegacyId, // SSYK-kod (4 siffror)
+      employmentType: employmentTypeConceptId, // concept_id från version 1
+      wageType: job.af_wage_type_code || "oG8G_9cW_nRf",
+      duration: durationConceptId, // concept_id från version 1
     };
 
     console.log('✅ Duration set:', afRequestBody.duration);
 
-    // ✅ Conditional: Lägg till worktimeExtent om tillåtet och angivet (använd legacy_id)
-    if (!AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_cid) && worktimeExtentLegacyId) {
-      afRequestBody.worktimeExtent = worktimeExtentLegacyId;
-      console.log('✅ Added worktimeExtent (legacy_id)');
+    // ✅ Conditional: Lägg till worktimeExtent om tillåtet och angivet
+    if (!AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_cid) && worktimeExtentConceptId) {
+      afRequestBody.worktimeExtent = worktimeExtentConceptId; // concept_id från version 16
+      console.log('✅ Added worktimeExtent (concept_id)');
     } else if (AF_RULES.forbidsWorktimeExtent.includes(job.af_employment_type_cid)) {
       console.log('⚠️ WorktimeExtent excluded (forbidden for this employment type)');
     }
     
-    // ✅ Workplaces måste ALLTID finnas enligt AF dokumentation (använd legacy_id för municipality)
+    // ✅ Workplaces med concept_id för municipality (version 1)
     afRequestBody.workplaces = [
       {
         name: String(job.companies?.name || ""),
-        municipality: municipalityLegacyId, // ✅ KRITISKT: Använd legacy_id istället för concept_id
-        country: "i46j_HmG_v64", // ✅ Sverige (required enligt AF docs)
+        municipality: municipalityConceptId, // concept_id från version 1
+        country: "i46j_HmG_v64", // Sverige
         postalAddress: {
           street: String(job.companies?.address || ""),
           postalCode: String(job.companies?.postal_code || ""),
@@ -470,13 +455,13 @@ serve(async (req) => {
     afRequestBody.eures = false;
     afRequestBody.keywords = ["OPEN_TO_ALL"];
 
-    // Debug: Visa legacy IDs (det som Partner API faktiskt förväntar sig)
-    console.log("🔍 Final AF payload taxonomy (LEGACY_IDs för Partner API):", {
-      occupation: afRequestBody.occupation,
-      employmentType: afRequestBody.employmentType,
-      worktimeExtent: afRequestBody.worktimeExtent || 'not set',
-      duration: afRequestBody.duration,
-      municipality: afRequestBody.workplaces[0].municipality
+    // Debug: Visa taxonomy IDs (SSYK för occupation, concept_id för resten)
+    console.log("🔍 Final AF payload taxonomy IDs:", {
+      occupation: `${afRequestBody.occupation} (SSYK)`,
+      employmentType: `${afRequestBody.employmentType} (concept_id v1)`,
+      worktimeExtent: afRequestBody.worktimeExtent ? `${afRequestBody.worktimeExtent} (concept_id v16)` : 'not set',
+      duration: `${afRequestBody.duration} (concept_id v1)`,
+      municipality: `${afRequestBody.workplaces[0].municipality} (concept_id v1)`
     });
 
     // 🔥 VALIDERA ATT ALLA KRITISKA FÄLT ÄR STRÄNGAR (inte objekt)

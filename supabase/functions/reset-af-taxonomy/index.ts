@@ -631,9 +631,10 @@ function getFallbackData(type: string, version: number) {
     case 'occupation-name':
       return OCCUPATIONS.map(occ => ({
         concept_id: occ.id,
+        legacy_id: occ.ssyk || null,  // ✅ SSYK hamnar i legacy_id
         type: 'occupation-name',
         version: version,
-        code: occ.ssyk || null,
+        code: null,  // ✅ NULL för occupation-name
         label: occ.label,
         lang: 'sv',
         updated_at: new Date().toISOString()

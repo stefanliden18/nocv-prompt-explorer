@@ -540,7 +540,7 @@ Deno.serve(async (req) => {
           
           allFreshData.push({
             concept_id: concept['taxonomy/id'],
-            legacy_id: concept['taxonomy/deprecated-legacy-id'] || null,  // ✅ KRITISKT: Hämta legacy_id för Partner API
+            legacy_id: concept['legacy-ams-taxonomy-id'] || null,  // ✅ KRITISKT: Hämta legacy_id (SSYK-kod) för Partner API
             type: type,
             version: 16,
             code: concept['legacy-ams-taxonomy-id'] || null,

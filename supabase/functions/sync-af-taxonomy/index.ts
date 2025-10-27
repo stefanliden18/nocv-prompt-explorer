@@ -380,7 +380,7 @@ async function fetchTaxonomy(type: string, version: number) {
     
     return data.map((concept: any) => ({
       concept_id: concept['taxonomy/id'],
-      legacy_id: concept['taxonomy/deprecated-legacy-id'] || null,  // ✅ KRITISKT: Hämta legacy_id för Partner API
+      legacy_id: concept['legacy-ams-taxonomy-id'] || null,  // ✅ KRITISKT: Hämta legacy_id (SSYK-kod) för Partner API
       type: type,
       version: version,
       code: concept['legacy-ams-taxonomy-id'] || concept.code || null,

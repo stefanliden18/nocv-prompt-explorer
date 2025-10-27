@@ -779,10 +779,10 @@ Deno.serve(async (req) => {
           
           allFreshData.push({
             concept_id: concept['taxonomy/id'],
-            legacy_id: legacyId,  // ✅ Använd legacy_id från API ELLER SSYK-mappning
+            legacy_id: legacyId,  // ✅ SSYK för occupation
             type: type,
             version: version,  // ✅ Använd rätt version för varje taxonomi-typ
-            code: concept['legacy-ams-taxonomy-id'] || null,
+            code: type === 'occupation-name' ? null : (concept['legacy-ams-taxonomy-id'] || null),  // ✅ Ta bort dubblett för occupation
             label: label,
             lang: 'sv',
             updated_at: new Date().toISOString()

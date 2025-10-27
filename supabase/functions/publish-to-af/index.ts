@@ -85,14 +85,14 @@ serve(async (req) => {
       validationErrors.push('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Tillsvidareanställning');
     }
     
-    console.log('[VALIDATION] Using taxonomy version 16 for all validations');
+    console.log('[VALIDATION] Validating with correct versions: occupation(v16), municipality(v1), employment-type(v1), duration(v1), worktime-extent(v16)');
     
     // SEDAN: Validera concept IDs (endast om de finns)
     const validations = await Promise.all([
       validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),
-      validateConceptId(job.af_municipality_cid, 'municipality', 16, 'Municipality'),
-      validateConceptId(job.af_employment_type_cid, 'employment-type', 16, 'Employment Type'),
-      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'employment-duration', 16, 'Duration') : Promise.resolve({ valid: true }),  // ✅ AF använder "employment-duration"
+      validateConceptId(job.af_municipality_cid, 'municipality', 1, 'Municipality'),
+      validateConceptId(job.af_employment_type_cid, 'employment-type', 1, 'Employment Type'),
+      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'employment-duration', 1, 'Duration') : Promise.resolve({ valid: true }),
       job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 16, 'Worktime Extent') : Promise.resolve({ valid: true })
     ]);
 

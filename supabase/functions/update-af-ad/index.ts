@@ -72,13 +72,13 @@ serve(async (req) => {
       return { valid: true };
     };
 
-    // Validate all concept IDs (VERSION 16 = current AF taxonomy)
-    console.log('🔍 Validating concept IDs against af_taxonomy...');
+    // Validate all concept IDs with correct versions
+    console.log('🔍 Validating with correct versions: occupation(v16), municipality(v1), employment-type(v1), duration(v1), worktime-extent(v16)');
     const validations = await Promise.all([
       validateConceptId(job.af_occupation_cid, 'occupation-name', 16, 'Occupation'),
-      validateConceptId(job.af_municipality_cid, 'municipality', 16, 'Municipality'),
-      validateConceptId(job.af_employment_type_cid, 'employment-type', 16, 'Employment Type'),
-      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'duration', 16, 'Duration') : Promise.resolve({ valid: true }),
+      validateConceptId(job.af_municipality_cid, 'municipality', 1, 'Municipality'),
+      validateConceptId(job.af_employment_type_cid, 'employment-type', 1, 'Employment Type'),
+      job.af_duration_cid ? validateConceptId(job.af_duration_cid, 'employment-duration', 1, 'Duration') : Promise.resolve({ valid: true }),
       job.af_worktime_extent_cid ? validateConceptId(job.af_worktime_extent_cid, 'worktime-extent', 16, 'Worktime Extent') : Promise.resolve({ valid: true })
     ]);
 

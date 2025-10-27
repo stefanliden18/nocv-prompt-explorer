@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, Database, CheckCircle, AlertCircle } from 'lucide-react';
+import { RefreshCw, Database, CheckCircle, AlertCircle, Search } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function TaxonomyManager() {
@@ -12,6 +12,8 @@ export default function TaxonomyManager() {
   const [lastResult, setLastResult] = useState<any>(null);
   const [taxonomyStats, setTaxonomyStats] = useState<any>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [isDiagnosing, setIsDiagnosing] = useState(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
 
   const loadTaxonomyStats = async () => {
     setIsLoadingStats(true);
@@ -39,6 +41,45 @@ export default function TaxonomyManager() {
       });
     } finally {
       setIsLoadingStats(false);
+    }
+  };
+
+  const handleDiagnose = async () => {
+    setIsDiagnosing(true);
+    setDiagnosisResult(null);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/diagnose-af-taxonomy`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Okänt fel');
+      }
+
+      setDiagnosisResult(result);
+      
+      toast({
+        title: "🔍 Diagnos klar!",
+        description: `${result.summary.successfulTests}/${result.summary.totalTests} tester lyckades`,
+      });
+    } catch (error: any) {
+      console.error('Error diagnosing taxonomy:', error);
+      toast({
+        title: "Fel vid diagnos",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsDiagnosing(false);
     }
   };
 
@@ -96,6 +137,85 @@ export default function TaxonomyManager() {
           Hantera Arbetsförmedlingens taxonomi-data (yrken, kommuner, anställningstyper, etc.)
         </p>
       </div>
+
+      {/* Diagnose Card */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Diagnostisera AF API
+          </CardTitle>
+          <CardDescription>
+            Kolla exakt vad AF Taxonomy API returnerar och om legacy-ams-taxonomy-id finns
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            onClick={handleDiagnose}
+            disabled={isDiagnosing}
+            variant="outline"
+            className="w-full"
+          >
+            {isDiagnosing ? (
+              <>
+                <Search className="mr-2 h-4 w-4 animate-spin" />
+                Diagnostiserar...
+              </>
+            ) : (
+              <>
+                <Search className="mr-2 h-4 w-4" />
+                Kör Diagnos
+              </>
+            )}
+          </Button>
+
+          {diagnosisResult && (
+            <div className="space-y-3">
+              <Alert className={diagnosisResult.summary.testsWithLegacyId > 0 ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}>
+                <AlertDescription className={diagnosisResult.summary.testsWithLegacyId > 0 ? "text-green-800" : "text-yellow-800"}>
+                  <div className="font-semibold mb-2">
+                    {diagnosisResult.summary.conclusion}
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <div>Lyckade tester: {diagnosisResult.summary.successfulTests}/{diagnosisResult.summary.totalTests}</div>
+                    <div>Med legacy-ams-taxonomy-id: {diagnosisResult.summary.testsWithLegacyId}/{diagnosisResult.summary.successfulTests}</div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {diagnosisResult.tests.map((test: any, idx: number) => (
+                  <div key={idx} className="p-3 border rounded-lg bg-card">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">{test.test}</span>
+                      {test.success ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-red-600" />
+                      )}
+                    </div>
+                    {test.success && (
+                      <div className="text-xs space-y-1 text-muted-foreground">
+                        <div>Legacy ID: {test.hasLegacyId ? (
+                          <span className="text-green-600 font-mono">{test.legacyIdValue || 'null'}</span>
+                        ) : (
+                          <span className="text-red-600">❌ Saknas</span>
+                        )}</div>
+                        <div>Fält: {test.fields.join(', ')}</div>
+                      </div>
+                    )}
+                    {test.error && (
+                      <div className="text-xs text-red-600 mt-1">
+                        Error: {test.error}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
         {/* Reset Card */}

@@ -722,26 +722,26 @@ Deno.serve(async (req) => {
     const allFreshData: any[] = [];
     
     for (const taxonomyConfig of TAXONOMY_TYPES) {
-      const { type, version } = taxonomyConfig;
-      console.log(`  📥 Fetching ${type} (version ${version})...`);
+      const { type, version: expectedVersion } = taxonomyConfig;
+      console.log(`  📥 Fetching ${type} (version ${expectedVersion})...`);
       
       // Use embedded municipality data (AF API not reliable)
       if (type === 'municipality') {
-        const fallbackData = getFallbackData(type, version);
+        const fallbackData = getFallbackData(type, expectedVersion);
         allFreshData.push(...fallbackData);
         console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from EMBEDDED DATA`);
         continue;
       }
       
       // ✅ KRITISKT: Använd /versioned/concepts med specifik version enligt AF Partner API docs
-      const url = `${AF_API_BASE}/versioned/concepts/${version}?type=${type}&offset=0&limit=500`;
+      const url = `${AF_API_BASE}/versioned/concepts/${expectedVersion}?type=${type}&offset=0&limit=500`;
       
       try {
         const response = await fetch(url);
         
         if (!response.ok) {
           console.error(`❌ API failed for ${type} (${response.status}) - using fallback`);
-          const fallbackData = getFallbackData(type, version);
+          const fallbackData = getFallbackData(type, expectedVersion);
           allFreshData.push(...fallbackData);
           console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
           continue;
@@ -752,7 +752,7 @@ Deno.serve(async (req) => {
         // AF versioned endpoint returns ROOT ARRAY directly
         if (!Array.isArray(data)) {
           console.error(`❌ Invalid response for ${type} - using fallback`);
-          const fallbackData = getFallbackData(type, version);
+          const fallbackData = getFallbackData(type, expectedVersion);
           allFreshData.push(...fallbackData);
           console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
           continue;
@@ -760,13 +760,14 @@ Deno.serve(async (req) => {
         
         if (data.length === 0) {
           console.warn(`⚠️ API returned 0 items for ${type} - using fallback`);
-          const fallbackData = getFallbackData(type, version);
+          const fallbackData = getFallbackData(type, expectedVersion);
           allFreshData.push(...fallbackData);
           console.log(`  ✅ ${type}: Loaded ${fallbackData.length} items from FALLBACK`);
           continue;
         }
 
         console.log(`  ✅ ${type}: Found ${data.length} items from API`);
+        console.log(`  📝 Saving with FORCED version ${expectedVersion} (ignoring any API version metadata)`);
         
         // Transform API data
         for (const concept of data) {
@@ -781,7 +782,7 @@ Deno.serve(async (req) => {
             concept_id: concept['taxonomy/id'],
             legacy_id: legacyId,  // ✅ SSYK för occupation
             type: type,
-            version: version,  // ✅ Använd rätt version för varje taxonomi-typ
+            version: expectedVersion,  // ✅ TVINGA version från TAXONOMY_TYPES, ignorera AF API version
             code: type === 'occupation-name' ? null : (concept['legacy-ams-taxonomy-id'] || null),  // ✅ Ta bort dubblett för occupation
             label: label,
             lang: 'sv',

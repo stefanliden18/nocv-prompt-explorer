@@ -146,6 +146,7 @@ export type Database = {
           concept_id: string
           label: string
           lang: string | null
+          legacy_id: string | null
           type: string
           updated_at: string | null
           version: number
@@ -155,6 +156,7 @@ export type Database = {
           concept_id: string
           label: string
           lang?: string | null
+          legacy_id?: string | null
           type: string
           updated_at?: string | null
           version: number
@@ -164,6 +166,7 @@ export type Database = {
           concept_id?: string
           label?: string
           lang?: string | null
+          legacy_id?: string | null
           type?: string
           updated_at?: string | null
           version?: number

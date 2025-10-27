@@ -357,24 +357,30 @@ serve(async (req) => {
 
     console.log('🔍 Looking up legacy_ids for AF Partner API...');
     
-    // ✅ KRITISKT: Looka upp legacy_id för varje concept_id (Partner API förväntar sig legacy_id)
+    // ✅ ENDAST occupation-name behöver lookup av legacy_id (SSYK)
     const lookupLegacyId = async (conceptId: string | null, type: string): Promise<string | null> => {
       if (!conceptId) return null;
       
-      const { data, error } = await supabase
-        .from('af_taxonomy')
-        .select('legacy_id, concept_id')
-        .eq('concept_id', conceptId)
-        .eq('type', type)
-        .single();
-      
-      if (error || !data) {
-        console.warn(`⚠️ No legacy_id found for ${type} concept_id ${conceptId}, using concept_id as fallback`);
-        return conceptId; // Fallback till concept_id om legacy_id saknas
+      // ✅ ENDAST occupation-name behöver lookup av legacy_id (SSYK)
+      if (type === 'occupation-name') {
+        const { data, error } = await supabase
+          .from('af_taxonomy')
+          .select('legacy_id, concept_id')
+          .eq('concept_id', conceptId)
+          .eq('type', type)
+          .single();
+        
+        if (error || !data || !data.legacy_id) {
+          throw new Error(`❌ Occupation saknar SSYK-kod (legacy_id) för concept_id: ${conceptId}`);
+        }
+        
+        console.log(`✅ ${type}: concept_id=${conceptId} → legacy_id=${data.legacy_id}`);
+        return data.legacy_id; // Returnera SSYK-kod
       }
       
-      console.log(`✅ ${type}: concept_id=${conceptId} → legacy_id=${data.legacy_id || 'NONE'}`);
-      return data.legacy_id || conceptId; // Använd legacy_id om den finns, annars concept_id
+      // ✅ Alla andra typer: använd concept_id direkt (inget lookup behövs)
+      console.log(`✅ ${type}: använder concept_id direkt = ${conceptId}`);
+      return conceptId;
     };
     
     const [

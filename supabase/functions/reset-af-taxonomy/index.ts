@@ -751,10 +751,10 @@ Deno.serve(async (req) => {
         for (const concept of data) {
           const label = concept['taxonomy/preferred-label'] || concept['taxonomy/definition'] || 'Unknown';
           
-          // ✅ KRITISKT: Använd SSYK-mappning som fallback för occupation-name
-          const legacyId = concept['legacy-ams-taxonomy-id'] || 
-                          (type === 'occupation-name' ? SSYK_MAPPING[label] : null) || 
-                          null;
+          // ✅ ENDAST occupation-name behöver legacy_id (SSYK), övriga använder concept_id direkt
+          const legacyId = type === 'occupation-name' 
+            ? (concept['legacy-ams-taxonomy-id'] || SSYK_MAPPING[label] || null)
+            : null;  // municipality, employment-type, duration, worktime-extent använder concept_id direkt
           
           allFreshData.push({
             concept_id: concept['taxonomy/id'],

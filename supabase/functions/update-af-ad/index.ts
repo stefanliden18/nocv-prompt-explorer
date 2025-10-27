@@ -319,19 +319,12 @@ serve(async (req) => {
 
     console.log('🔍 Preparing AF Partner API payload with correct taxonomy IDs...');
     
-    // ✅ ENDAST occupation behöver lookup av legacy_id (SSYK-kod)
-    const { data: occupationData, error: occupationError } = await supabase
-      .from('af_taxonomy')
-      .select('legacy_id, concept_id')
-      .eq('concept_id', job.af_occupation_cid)
-      .eq('type', 'occupation-name')
-      .single();
-    
-    if (occupationError || !occupationData || !occupationData.legacy_id) {
-      throw new Error(`❌ Occupation saknar SSYK-kod (legacy_id) för concept_id: ${job.af_occupation_cid}`);
+    // ✅ Occupation: använd concept_id direkt (inte SSYK)
+    const occupationConceptId = job.af_occupation_cid;
+
+    if (!occupationConceptId) {
+      throw new Error(`❌ Occupation concept_id saknas`);
     }
-    
-    const occupationLegacyId = occupationData.legacy_id; // SSYK-kod för occupation
     
     // ✅ Alla andra fält: använd concept_id direkt från job-objektet
     const employmentTypeConceptId = job.af_employment_type_cid;
@@ -339,16 +332,16 @@ serve(async (req) => {
     const durationConceptId = job.af_duration_cid || validatedDuration;
     const worktimeExtentConceptId = job.af_worktime_extent_cid;
 
-    console.log('🔍 AF payload taxonomy IDs (legacy_id för occupation, concept_id för resten):', {
-      occupation: `${occupationLegacyId} (SSYK legacy_id)`,
-      employmentType: `${employmentTypeConceptId} (concept_id)`,
-      municipality: `${municipalityConceptId} (concept_id)`,
-      duration: `${durationConceptId} (concept_id)`,
-      worktimeExtent: `${worktimeExtentConceptId || 'not set'} (concept_id)`
+    console.log('🔍 AF payload taxonomy IDs (ALLA använder concept_id):', {
+      occupation: `${occupationConceptId} (concept_id v16)`,
+      employmentType: `${employmentTypeConceptId} (concept_id v1)`,
+      municipality: `${municipalityConceptId} (concept_id v1)`,
+      duration: `${durationConceptId} (concept_id v1)`,
+      worktimeExtent: `${worktimeExtentConceptId || 'not set'} (concept_id v16)`
     });
     
     // Validera att alla required fields finns
-    if (!occupationLegacyId || !employmentTypeConceptId || !municipalityConceptId || !durationConceptId) {
+    if (!occupationConceptId || !employmentTypeConceptId || !municipalityConceptId || !durationConceptId) {
       throw new Error('Missing required taxonomy IDs');
     }
 
@@ -364,8 +357,8 @@ serve(async (req) => {
       lastPublishDate: job.last_application_date,
       totalJobOpenings: job.total_positions || 1,
       
-      // ✅ Taxonomy IDs: SSYK för occupation, concept_id för alla andra
-      occupation: occupationLegacyId, // SSYK-kod (4 siffror)
+      // ✅ Taxonomy IDs: ALLA använder concept_id
+      occupation: occupationConceptId, // concept_id från version 16
       employmentType: employmentTypeConceptId, // concept_id från version 1
       wageType: job.af_wage_type_code || "oG8G_9cW_nRf",
       duration: durationConceptId, // concept_id från version 1
@@ -417,9 +410,9 @@ serve(async (req) => {
     afRequestBody.eures = false;
     afRequestBody.keywords = ["OPEN_TO_ALL"];
 
-    // Debug: Visa taxonomy IDs (SSYK för occupation, concept_id för resten)
+    // Debug: Visa taxonomy IDs (ALLA använder concept_id)
     console.log("🔍 Final AF payload taxonomy IDs:", {
-      occupation: `${afRequestBody.occupation} (SSYK)`,
+      occupation: `${afRequestBody.occupation} (concept_id v16)`,
       employmentType: `${afRequestBody.employmentType} (concept_id v1)`,
       worktimeExtent: afRequestBody.worktimeExtent ? `${afRequestBody.worktimeExtent} (concept_id v16)` : 'not set',
       duration: `${afRequestBody.duration} (concept_id v1)`,

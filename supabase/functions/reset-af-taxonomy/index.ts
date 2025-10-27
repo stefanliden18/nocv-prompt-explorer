@@ -604,6 +604,25 @@ const SSYK_MAPPING: Record<string, string> = {
   'Djurvårdare': '5164'
 };
 
+// Helper function to get SSYK code from OCCUPATIONS or SSYK_MAPPING
+function getSSYKCode(conceptId: string, label: string): string | null {
+  // 1. Try exact concept_id match first (most reliable)
+  const occupation = OCCUPATIONS.find(o => o.id === conceptId);
+  if (occupation?.ssyk) {
+    return occupation.ssyk;
+  }
+  
+  // 2. Try label match with normalization
+  const normalizedLabel = label.trim();
+  if (SSYK_MAPPING[normalizedLabel]) {
+    return SSYK_MAPPING[normalizedLabel];
+  }
+  
+  // 3. No match found
+  console.warn(`⚠️ No SSYK code found for: ${conceptId} / ${label}`);
+  return null;
+}
+
 // Helper function to get fallback data
 function getFallbackData(type: string, version: number) {
   console.log(`⚠️ Using fallback data for ${type} (version ${version})`);
@@ -755,7 +774,7 @@ Deno.serve(async (req) => {
           
           // ✅ ENDAST occupation-name behöver legacy_id (SSYK), övriga använder concept_id direkt
           const legacyId = type === 'occupation-name' 
-            ? (concept['legacy-ams-taxonomy-id'] || SSYK_MAPPING[label] || null)
+            ? (concept['legacy-ams-taxonomy-id'] || getSSYKCode(concept['taxonomy/id'], label))
             : null;  // municipality, employment-type, duration, worktime-extent använder concept_id direkt
           
           allFreshData.push({

@@ -6,6 +6,7 @@ interface TaxonomyItem {
   type: string;
   version: number;
   label: string;
+  is_common?: boolean;
 }
 
 export const useAFTaxonomy = () => {
@@ -16,7 +17,7 @@ export const useAFTaxonomy = () => {
       
       const { data, error } = await supabase
         .from('af_taxonomy')
-        .select('concept_id, type, version, label')
+        .select('concept_id, type, version, label, is_common')
         .order('label');
 
       if (error) {
@@ -42,10 +43,14 @@ export const useAFTaxonomy = () => {
       }
     });
     
-    // Sort alphabetically by label using Swedish locale
-    return Array.from(uniqueMap.values()).sort((a, b) => 
-      a.label.localeCompare(b.label, 'sv-SE')
-    );
+    // Sort: common items first, then alphabetically using Swedish locale
+    return Array.from(uniqueMap.values()).sort((a, b) => {
+      // Prioritize is_common
+      if (a.is_common && !b.is_common) return -1;
+      if (!a.is_common && b.is_common) return 1;
+      // Then alphabetically
+      return a.label.localeCompare(b.label, 'sv-SE');
+    });
   };
 
   // Filter by type and get latest versions

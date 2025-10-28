@@ -8,12 +8,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface SearchableSelectProps {
   value: string;
   onValueChange: (value: string) => void;
-  options: Array<{ concept_id: string; label: string }>;
+  options: Array<{ concept_id: string; label: string; is_common?: boolean }>;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyText?: string;
@@ -41,6 +40,17 @@ export function SearchableSelect({
     );
   }, [options, search]);
 
+  // Sort to show common items first, then alphabetically
+  const sortedOptions = React.useMemo(() => {
+    return [...filteredOptions].sort((a, b) => {
+      // Common items first
+      if (a.is_common && !b.is_common) return -1;
+      if (!a.is_common && b.is_common) return 1;
+      // Then alphabetically
+      return a.label.localeCompare(b.label, 'sv-SE');
+    });
+  }, [filteredOptions]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -64,14 +74,14 @@ export function SearchableSelect({
               className="h-9"
             />
           </div>
-          <ScrollArea className="h-[300px]">
-            {filteredOptions.length === 0 ? (
+          <div className="max-h-[300px] overflow-y-auto">
+            {sortedOptions.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 {emptyText}
               </div>
             ) : (
               <div className="p-1">
-                {filteredOptions.map((option) => (
+                {sortedOptions.map((option) => (
                   <button
                     key={option.concept_id}
                     onClick={() => {
@@ -91,11 +101,16 @@ export function SearchableSelect({
                       )}
                     />
                     {option.label}
+                    {option.is_common && (
+                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                        Vanlig
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

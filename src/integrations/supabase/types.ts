@@ -47,6 +47,7 @@ export type Database = {
       af_taxonomy: {
         Row: {
           concept_id: string
+          is_common: boolean | null
           label: string
           type: string
           updated_at: string | null
@@ -54,6 +55,7 @@ export type Database = {
         }
         Insert: {
           concept_id: string
+          is_common?: boolean | null
           label: string
           type: string
           updated_at?: string | null
@@ -61,6 +63,7 @@ export type Database = {
         }
         Update: {
           concept_id?: string
+          is_common?: boolean | null
           label?: string
           type?: string
           updated_at?: string | null

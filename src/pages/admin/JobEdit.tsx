@@ -1279,19 +1279,12 @@ export default function JobEdit() {
                       <Select
                         value={afEmploymentTypeCid || ''}
                         onValueChange={async (value) => {
-                          const selected = employmentTypeCodes.find(e => e.concept_id === value);
-                          if (selected) {
-                            setAfEmploymentTypeCode(selected.code || '');
-                            setAfEmploymentTypeCid(selected.concept_id);
-                            await updateJobField('af_employment_type_cid', selected.concept_id);
-                            await updateJobField('af_employment_type_code', selected.code || '');
-                          }
+                          setAfEmploymentTypeCid(value);
+                          await updateJobField('af_employment_type_cid', value);
                           // Auto-clear worktimeExtent om behovsanställning väljs
                           if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {
-                            setAfWorktimeExtentCode('');
                             setAfWorktimeExtentCid('');
                             await updateJobField('af_worktime_extent_cid', null);
-                            await updateJobField('af_worktime_extent_code', null);
                             toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
                           }
                         }}
@@ -1327,7 +1320,6 @@ export default function JobEdit() {
                           worktimeExtentCodes: worktimeExtentCodes,
                           afEmploymentTypeCid,
                           afWorktimeExtentCid,
-                          afWorktimeExtentCode,
                           isHidden: afEmploymentTypeCid === '1paU_aCR_nGn'
                         });
                         return null;
@@ -1342,8 +1334,7 @@ export default function JobEdit() {
                             console.log('   - Current value:', afWorktimeExtentCid);
                             console.log('   - Available options:', worktimeExtentCodes.map(c => ({
                               concept_id: c.concept_id,
-                              label: c.label,
-                              code: c.code
+                              label: c.label
                             })));
                             return null;
                           })()}
@@ -1352,16 +1343,10 @@ export default function JobEdit() {
                             value={afWorktimeExtentCid || ''}
                             onValueChange={async (value) => {
                               console.log('🔄 JobEdit: Arbetstidsomfattning onValueChange triggered:', value);
-                              const selected = directWorktimeData.find(w => w.concept_id === value);
-                              console.log('   - Selected item (DIRECT):', selected);
-                              if (selected) {
-                                setAfWorktimeExtentCode(selected.code || '');
-                                setAfWorktimeExtentCid(selected.concept_id);
-                                console.log('   - Updating database fields...');
-                                await updateJobField('af_worktime_extent_cid', selected.concept_id);
-                                await updateJobField('af_worktime_extent_code', selected.code || '');
-                                console.log('   - Database update complete');
-                              }
+                              setAfWorktimeExtentCid(value);
+                              console.log('   - Updating database fields...');
+                              await updateJobField('af_worktime_extent_cid', value);
+                              console.log('   - Database update complete');
                             }}
                           >
                             <SelectTrigger>

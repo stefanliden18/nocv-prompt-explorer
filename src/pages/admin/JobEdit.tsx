@@ -24,7 +24,6 @@ import { cn } from '@/lib/utils';
 import { stockholmToUTC, utcToStockholm, nowInStockholm, nowUTC } from '@/lib/timezone';
 import { useDebugMode } from '@/hooks/useDebugMode';
 import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
-import { useAFTaxonomyDirect } from '@/hooks/useAFTaxonomyDirect';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -55,17 +54,8 @@ export default function JobEdit() {
   const { data: durationCodes = [], isLoading: durationLoading } = useAFTaxonomy('employment-duration');
   const { data: worktimeExtentCodes = [], isLoading: worktimeLoading } = useAFTaxonomy('worktime-extent');
   const taxonomyLoading = occupationLoading || municipalityLoading || employmentTypeLoading || durationLoading || worktimeLoading;
-  const { data: directWorktimeData, loading: directLoading } = useAFTaxonomyDirect();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
-
-  // DEBUG COMPARISON LOG
-  console.log('🆚 COMPARISON:', {
-    reactQuery: worktimeExtentCodes,
-    directFetch: directWorktimeData,
-    taxonomyLoading,
-    directLoading
-  });
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobLoading, setJobLoading] = useState(true);
   
@@ -169,6 +159,12 @@ export default function JobEdit() {
       }
     }
   }, [afEmploymentTypeCid, worktimeExtentCodes.length, afWorktimeExtentCid, taxonomyLoading, id]);
+
+  // Invalidera cache för att säkerställa fresh data
+  useEffect(() => {
+    console.log('🔄 JobEdit: Invalidating AF taxonomy cache...');
+    queryClient.invalidateQueries({ queryKey: ['af-taxonomy'] });
+  }, [queryClient]);
 
   // Funktion för att uppdatera enskilda fält direkt i databasen
   const updateJobField = async (field: string, value: any) => {
@@ -1247,12 +1243,8 @@ export default function JobEdit() {
                     <SearchableSelect
                       value={afMunicipalityCid || ''}
                       onValueChange={async (value) => {
-                        console.log('🏘️ Kommun onValueChange:', value);
-                        console.log('   - Setting state to:', value);
                         setAfMunicipalityCid(value);
-                        console.log('   - Calling updateJobField...');
                         await updateJobField('af_municipality_cid', value);
-                        console.log('   - Update complete!');
                       }}
                       options={municipalityCodes}
                       placeholder="Välj kommun"
@@ -1298,40 +1290,15 @@ export default function JobEdit() {
                         )}
                       </Label>
                       
-                      {(() => {
-                        console.log('🔍 JobEdit: Arbetstidsomfattning render state:', {
-                          taxonomyLoading,
-                          worktimeExtentCodesLength: worktimeExtentCodes.length,
-                          worktimeExtentCodes: worktimeExtentCodes,
-                          afEmploymentTypeCid,
-                          afWorktimeExtentCid,
-                          isHidden: afEmploymentTypeCid === '1paU_aCR_nGn'
-                        });
-                        return null;
-                      })()}
-                      
                       {taxonomyLoading ? (
                         <p className="text-sm text-muted-foreground">Laddar alternativ...</p>
                       ) : (
                         <div className="relative">
-                          {(() => {
-                            console.log('🎨 JobEdit: Rendering Select component for Arbetstidsomfattning');
-                            console.log('   - Current value:', afWorktimeExtentCid);
-                            console.log('   - Available options:', worktimeExtentCodes.map(c => ({
-                              concept_id: c.concept_id,
-                              label: c.label
-                            })));
-                            return null;
-                          })()}
-                          
                           <SearchableSelect
                             value={afWorktimeExtentCid || ''}
                             onValueChange={async (value) => {
-                              console.log('🔄 JobEdit: Arbetstidsomfattning onValueChange triggered:', value);
                               setAfWorktimeExtentCid(value);
-                              console.log('   - Updating database fields...');
                               await updateJobField('af_worktime_extent_cid', value);
-                              console.log('   - Database update complete');
                             }}
                             options={worktimeExtentCodes}
                             placeholder="Välj omfattning"

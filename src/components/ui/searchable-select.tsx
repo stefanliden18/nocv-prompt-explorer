@@ -51,6 +51,20 @@ export function SearchableSelect({
     (option.value || option.concept_id) === value
   );
 
+  // Early return if no options
+  if (options.length === 0) {
+    return (
+      <Button
+        variant="outline"
+        className={cn("w-full justify-between", className)}
+        disabled={true}
+      >
+        {placeholder}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+    );
+  }
+
   // Filter based on search - NO SORTING (already sorted from hook)
   const filteredOptions = React.useMemo(() => {
     if (!searchQuery) return options;

@@ -43,12 +43,12 @@ export const useAFTaxonomy = () => {
       }
     });
     
-    // Sort: common items first, then alphabetically using Swedish locale
+    // Sort: common items first, then alphabetically
     return Array.from(uniqueMap.values()).sort((a, b) => {
       // Prioritize is_common
       if (a.is_common && !b.is_common) return -1;
       if (!a.is_common && b.is_common) return 1;
-      // Then alphabetically
+      // Then alphabetically using Swedish locale
       return a.label.localeCompare(b.label, 'sv-SE');
     });
   };

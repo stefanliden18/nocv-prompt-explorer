@@ -42,7 +42,10 @@ export const useAFTaxonomy = () => {
       }
     });
     
-    return Array.from(uniqueMap.values());
+    // Sort alphabetically by label using Swedish locale
+    return Array.from(uniqueMap.values()).sort((a, b) => 
+      a.label.localeCompare(b.label, 'sv-SE')
+    );
   };
 
   // Filter by type and get latest versions

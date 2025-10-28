@@ -1263,7 +1263,7 @@ export default function JobEdit() {
                       Anställningstyp * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
                     <div className="relative">
-                      <Select
+                      <SearchableSelect
                         value={afEmploymentTypeCid || ''}
                         onValueChange={async (value) => {
                           setAfEmploymentTypeCid(value);
@@ -1275,18 +1275,11 @@ export default function JobEdit() {
                             toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
                           }
                         }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj typ" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" side="bottom" sideOffset={4}>
-                          {employmentTypeCodes.map((code: any) => (
-                            <SelectItem key={code.concept_id} value={code.concept_id}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={employmentTypeCodes}
+                        placeholder="Välj typ"
+                        searchPlaceholder="Sök anställningstyp..."
+                        emptyText="Ingen anställningstyp hittades"
+                      />
                     </div>
                   </div>
 
@@ -1326,7 +1319,7 @@ export default function JobEdit() {
                             return null;
                           })()}
                           
-                          <Select
+                          <SearchableSelect
                             value={afWorktimeExtentCid || ''}
                             onValueChange={async (value) => {
                               console.log('🔄 JobEdit: Arbetstidsomfattning onValueChange triggered:', value);
@@ -1335,21 +1328,11 @@ export default function JobEdit() {
                               await updateJobField('af_worktime_extent_cid', value);
                               console.log('   - Database update complete');
                             }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Välj omfattning" />
-                            </SelectTrigger>
-                            <SelectContent position="popper" side="bottom" sideOffset={4}>
-                              {directWorktimeData.map((code: any) => {
-                                console.log('   - Rendering SelectItem (DIRECT):', code.label, code.concept_id);
-                                return (
-                                  <SelectItem key={code.concept_id} value={code.concept_id}>
-                                    {code.label}
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
+                            options={worktimeExtentCodes}
+                            placeholder="Välj omfattning"
+                            searchPlaceholder="Sök omfattning..."
+                            emptyText="Ingen omfattning hittades"
+                          />
                         </div>
                       )}
                     </div>
@@ -1368,25 +1351,17 @@ export default function JobEdit() {
                       Varaktighet *
                     </Label>
                     <div className="relative">
-                      <Select
+                      <SearchableSelect
                         value={afDurationCid || ''}
                         onValueChange={async (value) => {
                           setAfDurationCid(value);
                           await updateJobField('af_duration_cid', value);
                         }}
-                        disabled={afEmploymentTypeCid === 'kpPX_CNN_gDU'}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj varaktighet" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" side="bottom" sideOffset={4}>
-                          {durationCodes.map((code: any) => (
-                            <SelectItem key={code.concept_id} value={code.concept_id}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={durationCodes}
+                        placeholder="Välj varaktighet"
+                        searchPlaceholder="Sök varaktighet..."
+                        emptyText="Ingen varaktighet hittades"
+                      />
                     </div>
                     {afEmploymentTypeCid === 'kpPX_CNN_gDU' ? (
                       <p className="text-xs text-blue-600 mt-1">

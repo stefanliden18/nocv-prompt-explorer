@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/RichTextEditor';
 import DOMPurify from 'dompurify';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -448,47 +449,33 @@ export default function JobForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="af_occupation_cid">Yrke *</Label>
-                    <Select
+                    <SearchableSelect
                       value={afOccupationCid}
                       onValueChange={setAfOccupationCid}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj yrke" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {occupationCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={occupationCodes}
+                      placeholder="Välj yrke"
+                      searchPlaceholder="Sök yrke..."
+                      emptyText="Inget yrke hittades"
+                    />
                   </div>
 
                   <div>
                     <Label htmlFor="af_municipality_cid">Kommun *</Label>
-                    <Select
+                    <SearchableSelect
                       value={afMunicipalityCid}
                       onValueChange={setAfMunicipalityCid}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj kommun" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {municipalityCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={municipalityCodes}
+                      placeholder="Välj kommun"
+                      searchPlaceholder="Sök kommun..."
+                      emptyText="Ingen kommun hittades"
+                    />
                   </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="af_employment_type_cid">Anställningstyp *</Label>
-                    <Select
+                    <SearchableSelect
                       value={afEmploymentTypeCid}
                       onValueChange={(value) => {
                         setAfEmploymentTypeCid(value);
@@ -503,18 +490,11 @@ export default function JobForm() {
                           toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
                         }
                       }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj typ" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employmentTypeCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={employmentTypeCodes}
+                      placeholder="Välj typ"
+                      searchPlaceholder="Sök anställningstyp..."
+                      emptyText="Ingen anställningstyp hittades"
+                    />
                   </div>
 
                   {afEmploymentTypeCid !== '1paU_aCR_nGn' && (
@@ -522,21 +502,14 @@ export default function JobForm() {
                       <Label htmlFor="af_worktime_extent_cid">
                         Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
                       </Label>
-                      <Select
+                      <SearchableSelect
                         value={afWorktimeExtentCid}
                         onValueChange={setAfWorktimeExtentCid}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj omfattning" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {worktimeExtentCodes.map((code: any) => (
-                            <SelectItem key={code.concept_id} value={code.concept_id}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        options={worktimeExtentCodes}
+                        placeholder="Välj omfattning"
+                        searchPlaceholder="Sök omfattning..."
+                        emptyText="Ingen omfattning hittades"
+                      />
                       {afEmploymentTypeCid === 'PFZr_Syz_cUq' && (
                         <p className="text-xs text-muted-foreground mt-1">
                           Obligatoriskt för vanlig anställning
@@ -554,22 +527,14 @@ export default function JobForm() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="af_duration_cid">Varaktighet *</Label>
-                    <Select
+                    <SearchableSelect
                       value={afDurationCid}
                       onValueChange={setAfDurationCid}
-                      disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Välj varaktighet" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {durationCodes.map((code: any) => (
-                          <SelectItem key={code.concept_id} value={code.concept_id}>
-                            {code.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={durationCodes}
+                      placeholder="Välj varaktighet"
+                      searchPlaceholder="Sök varaktighet..."
+                      emptyText="Ingen varaktighet hittades"
+                    />
                     {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? (
                       <p className="text-xs text-blue-600 mt-1">
                         ℹ️ Vanlig anställning är automatiskt tillsvidareanställning

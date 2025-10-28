@@ -435,7 +435,7 @@ export default function TaxonomyManager() {
                 <AlertDescription className="text-green-800">
                   <div className="font-semibold mb-2">✅ Framgång!</div>
                   <div className="text-sm space-y-1">
-                    <div>Totalt inserterade: {lastResult.totalInserted}</div>
+                    <div>Totalt inserterade: {lastResult.total}</div>
                     <div className="grid grid-cols-2 gap-1 mt-2">
                       {Object.entries(lastResult.summary).map(([type, count]) => (
                         <div key={type} className="text-xs">

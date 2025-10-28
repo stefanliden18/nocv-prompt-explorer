@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
     console.log('🔍 Step 4: Verifying inserted data...');
     const summary: Record<string, number> = {};
 
-    for (const type of TAXONOMY_TYPES) {
+    for (const { type } of TAXONOMY_TYPES) {
       const { count, error } = await supabase
         .from('af_taxonomy')
         .select('*', { count: 'exact', head: true })

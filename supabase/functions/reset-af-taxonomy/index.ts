@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const AF_API_BASE = 'https://api.arbetsformedlingen.se';
+const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy';
 
 // Taxonomy types to fetch
 const TAXONOMY_TYPES = [
@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
     const allTaxonomyData = [];
 
     for (const type of TAXONOMY_TYPES) {
-      const url = `${AF_API_BASE}/taxonomy/v1/${type}?offset=0&limit=500`;
+      const url = `${AF_API_BASE}/main/concepts?type=${type}&offset=0&limit=500`;
       console.log(`Fetching ${type} from ${url}...`);
 
       try {
@@ -62,14 +62,14 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
-        if (!data.concepts || !Array.isArray(data.concepts) || data.concepts.length === 0) {
+        if (!Array.isArray(data) || data.length === 0) {
           throw new Error(`Invalid or empty response for ${type}`);
         }
 
-        console.log(`✅ Fetched ${data.concepts.length} items for ${type}`);
+        console.log(`✅ Fetched ${data.length} items for ${type}`);
 
         // Map to simplified format - only concept_id, type, version, label
-        const mappedData = data.concepts.map((item: any) => ({
+        const mappedData = data.map((item: any) => ({
           concept_id: item['taxonomy/id'],
           type: type,
           version: 1,

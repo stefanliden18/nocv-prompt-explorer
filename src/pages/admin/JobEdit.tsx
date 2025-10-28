@@ -27,6 +27,7 @@ import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
 import { useAFTaxonomyDirect } from '@/hooks/useAFTaxonomyDirect';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
+import { ComboboxField } from '@/components/ui/combobox';
 
 interface Company {
   id: string;
@@ -1221,52 +1222,34 @@ export default function JobEdit() {
                     <Label htmlFor="af_occupation_code" className="text-red-600">
                       Yrke * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <div className="relative">
-                      <Select
-                        value={afOccupationCid || ''}
-                        onValueChange={async (value) => {
-                          setAfOccupationCid(value);
-                          await updateJobField('af_occupation_cid', value);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj yrke" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" side="bottom" sideOffset={4}>
-                          {occupationCodes.map((code: any) => (
-                            <SelectItem key={code.concept_id} value={code.concept_id}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ComboboxField
+                      value={afOccupationCid || ''}
+                      onValueChange={async (value) => {
+                        setAfOccupationCid(value);
+                        await updateJobField('af_occupation_cid', value);
+                      }}
+                      options={occupationCodes}
+                      placeholder="Välj yrke"
+                      searchPlaceholder="Sök yrke..."
+                      emptyText="Inget yrke hittades"
+                    />
                   </div>
 
                   <div>
                     <Label htmlFor="af_municipality_code" className="text-red-600">
                       Kommun * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <div className="relative">
-                      <Select
-                        value={afMunicipalityCid || ''}
-                        onValueChange={async (value) => {
-                          setAfMunicipalityCid(value);
-                          await updateJobField('af_municipality_cid', value);
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Välj kommun" />
-                        </SelectTrigger>
-                        <SelectContent position="popper" side="bottom" sideOffset={4}>
-                          {municipalityCodes.map((code: any) => (
-                            <SelectItem key={code.concept_id} value={code.concept_id}>
-                              {code.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <ComboboxField
+                      value={afMunicipalityCid || ''}
+                      onValueChange={async (value) => {
+                        setAfMunicipalityCid(value);
+                        await updateJobField('af_municipality_cid', value);
+                      }}
+                      options={municipalityCodes}
+                      placeholder="Välj kommun"
+                      searchPlaceholder="Sök kommun..."
+                      emptyText="Ingen kommun hittades"
+                    />
                   </div>
                 </div>
 

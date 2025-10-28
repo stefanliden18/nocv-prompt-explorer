@@ -59,9 +59,10 @@ export function ComboboxField({
               {options.map((option) => (
                 <CommandItem
                   key={option.concept_id}
-                  value={option.label}
-                  onSelect={() => {
-                    onValueChange(option.concept_id);
+                  value={`${option.concept_id}|${option.label}`}
+                  onSelect={(currentValue) => {
+                    const conceptId = currentValue.split('|')[0];
+                    onValueChange(conceptId);
                     setOpen(false);
                   }}
                 >

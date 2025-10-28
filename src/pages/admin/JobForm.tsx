@@ -26,7 +26,11 @@ interface Company {
 export default function JobForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes } = useAFTaxonomy();
+  const { data: occupationCodes = [] } = useAFTaxonomy('occupation-name');
+  const { data: municipalityCodes = [] } = useAFTaxonomy('municipality');
+  const { data: employmentTypeCodes = [] } = useAFTaxonomy('employment-type');
+  const { data: durationCodes = [] } = useAFTaxonomy('employment-duration');
+  const { data: worktimeExtentCodes = [] } = useAFTaxonomy('worktime-extent');
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);
   

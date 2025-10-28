@@ -1,85 +1,65 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-interface TaxonomyItem {
+export type TaxonomyType = 
+  | "occupation-name"
+  | "municipality" 
+  | "employment-type"
+  | "employment-duration"
+  | "worktime-extent";
+
+export interface TaxonomyItem {
   concept_id: string;
+  label: string;
   type: string;
   version: number;
-  label: string;
   is_common?: boolean;
 }
 
-export const useAFTaxonomy = () => {
-  const { data: taxonomyData = [], isLoading } = useQuery({
-    queryKey: ['af-taxonomy'],
+export const useAFTaxonomy = (type: TaxonomyType) => {
+  return useQuery({
+    queryKey: ["af-taxonomy", type],
     queryFn: async () => {
-      console.log('🔍 Fetching AF taxonomy data...');
-      
+      console.log(`Fetching taxonomy for type: ${type}`);
+
+      // Fetch WITHOUT ordering from Supabase - let React handle sorting
       const { data, error } = await supabase
         .from('af_taxonomy')
-        .select('concept_id, type, version, label, is_common')
-        .order('label');
+        .select('concept_id, type, version, label, is_common');
 
       if (error) {
-        console.error('❌ Error fetching taxonomy:', error);
+        console.error("Error fetching taxonomy:", error);
         throw error;
       }
 
-      console.log('✅ Fetched taxonomy items:', data?.length);
-      return data as TaxonomyItem[];
-    },
-    staleTime: 0,
-    refetchOnMount: true,
-  });
-
-  // Helper to get latest version for each type
-  const getLatestVersion = (items: TaxonomyItem[]) => {
-    const uniqueMap = new Map<string, TaxonomyItem>();
-    
-    items.forEach(item => {
-      const existing = uniqueMap.get(item.label);
-      if (!existing || item.version > existing.version) {
-        uniqueMap.set(item.label, item);
+      if (!data) {
+        return [];
       }
-    });
-    
-    // Sort: common items first, then alphabetically
-    return Array.from(uniqueMap.values()).sort((a, b) => {
-      // Prioritize is_common
-      if (a.is_common && !b.is_common) return -1;
-      if (!a.is_common && b.is_common) return 1;
-      // Then alphabetically using Swedish locale
-      return a.label.localeCompare(b.label, 'sv-SE');
-    });
-  };
 
-  // Filter by type and get latest versions
-  const occupationCodes = getLatestVersion(
-    taxonomyData.filter(item => item.type === 'occupation-name')
-  );
+      // Filter by type
+      const filtered = data.filter(item => item.type === type);
 
-  const municipalityCodes = getLatestVersion(
-    taxonomyData.filter(item => item.type === 'municipality')
-  );
+      // Remove duplicates based on concept_id
+      const uniqueMap = new Map<string, TaxonomyItem>();
+      filtered.forEach(item => {
+        if (!uniqueMap.has(item.concept_id)) {
+          uniqueMap.set(item.concept_id, item as TaxonomyItem);
+        }
+      });
 
-  const employmentTypeCodes = getLatestVersion(
-    taxonomyData.filter(item => item.type === 'employment-type')
-  );
+      // Sort ONCE with correct Swedish locale
+      const sorted = Array.from(uniqueMap.values()).sort((a, b) => {
+        // 1. Prioritize common items first
+        if (a.is_common && !b.is_common) return -1;
+        if (!a.is_common && b.is_common) return 1;
+        
+        // 2. Then alphabetically with Swedish locale (Å, Ä, Ö in correct places)
+        return a.label.localeCompare(b.label, 'sv-SE');
+      });
 
-  const durationCodes = getLatestVersion(
-    taxonomyData.filter(item => item.type === 'employment-duration')
-  );
-
-  const worktimeExtentCodes = getLatestVersion(
-    taxonomyData.filter(item => item.type === 'worktime-extent')
-  );
-
-  return {
-    occupationCodes,
-    municipalityCodes,
-    employmentTypeCodes,
-    durationCodes,
-    worktimeExtentCodes,
-    isLoading,
-  };
+      console.log(`Loaded ${sorted.length} items for ${type}`);
+      return sorted;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 };

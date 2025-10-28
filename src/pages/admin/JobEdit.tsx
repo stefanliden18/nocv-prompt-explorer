@@ -49,7 +49,12 @@ export default function JobEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isDebugEnabled } = useDebugMode();
-  const { occupationCodes, municipalityCodes, employmentTypeCodes, durationCodes, worktimeExtentCodes, isLoading: taxonomyLoading } = useAFTaxonomy();
+  const { data: occupationCodes = [], isLoading: occupationLoading } = useAFTaxonomy('occupation-name');
+  const { data: municipalityCodes = [], isLoading: municipalityLoading } = useAFTaxonomy('municipality');
+  const { data: employmentTypeCodes = [], isLoading: employmentTypeLoading } = useAFTaxonomy('employment-type');
+  const { data: durationCodes = [], isLoading: durationLoading } = useAFTaxonomy('employment-duration');
+  const { data: worktimeExtentCodes = [], isLoading: worktimeLoading } = useAFTaxonomy('worktime-extent');
+  const taxonomyLoading = occupationLoading || municipalityLoading || employmentTypeLoading || durationLoading || worktimeLoading;
   const { data: directWorktimeData, loading: directLoading } = useAFTaxonomyDirect();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);

@@ -14,6 +14,8 @@ export default function TaxonomyManager() {
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isDiagnosing, setIsDiagnosing] = useState(false);
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
+  const [isTestingPartner, setIsTestingPartner] = useState(false);
+  const [partnerTestResult, setPartnerTestResult] = useState<any>(null);
 
   const loadTaxonomyStats = async () => {
     setIsLoadingStats(true);
@@ -83,6 +85,46 @@ export default function TaxonomyManager() {
     }
   };
 
+  const handleTestPartnerAPI = async () => {
+    setIsTestingPartner(true);
+    setPartnerTestResult(null);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/test-af-partner-concepts`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Okänt fel');
+      }
+
+      setPartnerTestResult(result);
+      
+      toast({
+        title: result.success ? "✅ Test lyckades!" : "❌ Test misslyckades",
+        description: result.conclusion,
+        variant: result.success ? "default" : "destructive",
+      });
+    } catch (error: any) {
+      console.error('Error testing partner API:', error);
+      toast({
+        title: "Fel vid test av Partner API",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsTestingPartner(false);
+    }
+  };
+
   const handleResetTaxonomy = async () => {
     if (!confirm('Är du säker på att du vill återställa all taxonomi-data? Detta kommer radera all befintlig data och ladda ny.')) {
       return;
@@ -137,6 +179,91 @@ export default function TaxonomyManager() {
           Hantera Arbetsförmedlingens taxonomi-data (yrken, kommuner, anställningstyper, etc.)
         </p>
       </div>
+
+      {/* Partner API Test Card - PRIORITERAD */}
+      <Card className="mb-6 border-2 border-primary">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <AlertCircle className="h-5 w-5" />
+            STEG 4: Testa Partner API med AF:s Dokumentations-concept_id:n
+          </CardTitle>
+          <CardDescription>
+            Testar publikation till AF Partner API med EXAKTA concept_id:n från AF:s egen dokumentation (Direct_Transferred_Job_Posting-4.pdf, sida 88-102).
+            Om detta test misslyckas betyder det att AF:s dokumentation inte matchar deras Partner API.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert className="bg-blue-50 border-blue-200">
+            <AlertDescription className="text-blue-800">
+              <div className="font-semibold mb-2">🧪 Vad testas?</div>
+              <div className="text-sm space-y-1">
+                <div>• <strong>occupation</strong>: XMbW_XR6_Zeh (från AF doc exempel)</div>
+                <div>• <strong>employmentType</strong>: PFZr_Syz_cUq (från AF doc exempel)</div>
+                <div>• <strong>duration</strong>: a7uU_j21_mkL (från AF doc exempel)</div>
+                <div>• <strong>municipality</strong>: jNrY_Gve_R9n (vår concept_id för Vallentuna)</div>
+              </div>
+            </AlertDescription>
+          </Alert>
+
+          <Button
+            onClick={handleTestPartnerAPI}
+            disabled={isTestingPartner}
+            className="w-full"
+            size="lg"
+          >
+            {isTestingPartner ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Testar Partner API...
+              </>
+            ) : (
+              <>
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Kör Partner API Test
+              </>
+            )}
+          </Button>
+
+          {partnerTestResult && (
+            <div className="space-y-3">
+              <Alert className={partnerTestResult.success ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"}>
+                <AlertDescription className={partnerTestResult.success ? "text-green-800" : "text-red-800"}>
+                  <div className="font-semibold mb-2">
+                    {partnerTestResult.conclusion}
+                  </div>
+                  <div className="text-sm space-y-1 mt-3">
+                    <div><strong>Status:</strong> {partnerTestResult.status}</div>
+                    {partnerTestResult.afAdId && (
+                      <div><strong>AF Ad ID:</strong> {partnerTestResult.afAdId}</div>
+                    )}
+                  </div>
+                </AlertDescription>
+              </Alert>
+
+              {partnerTestResult.fieldErrors && (
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-red-600">Fältfel från AF Partner API:</div>
+                  {partnerTestResult.fieldErrors.map((err: any, idx: number) => (
+                    <div key={idx} className="p-3 border border-red-200 rounded-lg bg-red-50">
+                      <div className="text-xs space-y-1">
+                        <div><strong>Fält:</strong> <code className="font-mono">{err.field}</code></div>
+                        <div><strong>Meddelande:</strong> {err.message}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <details className="text-xs">
+                <summary className="cursor-pointer font-semibold mb-2">Visa full testdata</summary>
+                <pre className="bg-muted p-3 rounded overflow-auto max-h-96">
+                  {JSON.stringify(partnerTestResult, null, 2)}
+                </pre>
+              </details>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Diagnose Card */}
       <Card className="mb-6">

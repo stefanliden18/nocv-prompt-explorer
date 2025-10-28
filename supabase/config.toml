@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.diagnose-af-taxonomy]
 verify_jwt = false
+
+[functions.test-af-partner-concepts]
+verify_jwt = false

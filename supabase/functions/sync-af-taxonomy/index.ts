@@ -6,21 +6,38 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Define all taxonomy types we need to fetch
-const TAXONOMY_TYPES = [
-  { type: "occupation-name", version: 16 },
-  { type: "employment-type", version: 1 },
-  { type: "municipality", version: 1 },
-  { type: "wage-type", version: 1 },
-  { type: "country", version: 1 },
-  { type: "worktime-extent", version: 16 },
-  { type: "employment-duration", version: 1 },
-  { type: "skill", version: 16 },
-  { type: "language", version: 1 },
-  { type: "driving-licence", version: 1 },
-  { type: "sun-education-level-1", version: 1 },
-  { type: "sun-education-field-2", version: 1 },
-  { type: "occupation-experience-year", version: 16 },
+// Define all taxonomy types and their corresponding tables
+const TAXONOMY_CONFIG = [
+  {
+    type: "occupation-name",
+    version: 16,
+    table: "af_occupation_codes",
+    url: "https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts?type=occupation-name&version=16",
+  },
+  {
+    type: "employment-type",
+    version: 1,
+    table: "af_employment_type_codes",
+    url: "https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts?type=employment-type&version=1",
+  },
+  {
+    type: "municipality",
+    version: 1,
+    table: "af_municipality_codes",
+    url: "https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts?type=municipality&version=1",
+  },
+  {
+    type: "worktime-extent",
+    version: 16,
+    table: "af_worktime_extent_codes",
+    url: "https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts?type=worktime-extent&version=16",
+  },
+  {
+    type: "employment-duration",
+    version: 1,
+    table: "af_duration_codes",
+    url: "https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts?type=employment-duration&version=1",
+  },
 ];
 
 serve(async (req) => {
@@ -31,28 +48,24 @@ serve(async (req) => {
   try {
     const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "");
 
-    console.log("Starting AF taxonomy sync for all types...");
+    console.log("Starting comprehensive AF taxonomy sync...");
 
-    let totalSynced = 0;
     const results = [];
+    let totalSynced = 0;
 
-    // Fetch each taxonomy type
-    for (const taxonomyType of TAXONOMY_TYPES) {
-      console.log(`Fetching ${taxonomyType.type} version ${taxonomyType.version}...`);
+    // Sync each taxonomy type to its corresponding table
+    for (const config of TAXONOMY_CONFIG) {
+      console.log(`\n=== Syncing ${config.type} to ${config.table} ===`);
 
       try {
-        const url =
-          taxonomyType.type === "language"
-            ? `https://taxonomy.api.jobtechdev.se/v1/taxonomy/specific/concepts/${taxonomyType.type}?version=${taxonomyType.version}`
-            : `https://taxonomy.api.jobtechdev.se/v1/taxonomy/main/concepts?type=${taxonomyType.type}&version=${taxonomyType.version}`;
-
-        const response = await fetch(url);
+        // Fetch data from AF API
+        const response = await fetch(config.url);
 
         if (!response.ok) {
-          console.error(`Failed to fetch ${taxonomyType.type}: ${response.statusText}`);
+          console.error(`Failed to fetch ${config.type}: ${response.statusText}`);
           results.push({
-            type: taxonomyType.type,
-            version: taxonomyType.version,
+            type: config.type,
+            table: config.table,
             status: "error",
             message: response.statusText,
           });
@@ -63,48 +76,55 @@ serve(async (req) => {
         const concepts = data.concepts || data;
 
         if (!Array.isArray(concepts)) {
-          console.error(`Invalid response format for ${taxonomyType.type}`);
+          console.error(`Invalid response format for ${config.type}`);
           results.push({
-            type: taxonomyType.type,
-            version: taxonomyType.version,
+            type: config.type,
+            table: config.table,
             status: "error",
             message: "Invalid response format",
           });
           continue;
         }
 
-        console.log(`Found ${concepts.length} concepts for ${taxonomyType.type}`);
+        console.log(`Found ${concepts.length} ${config.type} concepts`);
 
-        // Prepare data for insertion
-        const taxonomyData = concepts.map((concept: any) => ({
-          concept_id: concept.id,
-          type: taxonomyType.type,
-          version: taxonomyType.version.toString(),
-          label: concept.label || concept.term || concept.preferred_label,
-          code: concept.code || null,
-        }));
-
-        // Delete existing entries for this type and version
+        // Delete old data from table (but not all rows to avoid deleting dummy UUID)
         const { error: deleteError } = await supabase
-          .from("af_taxonomy")
+          .from(config.table)
           .delete()
-          .eq("type", taxonomyType.type)
-          .eq("version", taxonomyType.version.toString());
+          .neq("id", "00000000-0000-0000-0000-000000000000");
 
         if (deleteError) {
-          console.error(`Error deleting old ${taxonomyType.type} data:`, deleteError);
+          console.error(`Error deleting old data from ${config.table}:`, deleteError);
         }
 
-        // Insert new data in batches
+        // Prepare records for insertion
+        const records = concepts.map((concept: any) => {
+          const record: any = {
+            code: concept.id,
+            label: concept.label || concept.term || concept.preferred_label,
+          };
+
+          // Add popularity_score for occupations
+          if (config.table === "af_occupation_codes") {
+            record.popularity_score = 0;
+          }
+
+          return record;
+        });
+
+        // Insert data in batches (for large datasets like occupations)
         const batchSize = 100;
         let inserted = 0;
 
-        for (let i = 0; i < taxonomyData.length; i += batchSize) {
-          const batch = taxonomyData.slice(i, i + batchSize);
-          const { error: insertError } = await supabase.from("af_taxonomy").insert(batch);
+        for (let i = 0; i < records.length; i += batchSize) {
+          const batch = records.slice(i, i + batchSize);
+
+          const { error: insertError } = await supabase.from(config.table).insert(batch);
 
           if (insertError) {
-            console.error(`Error inserting batch for ${taxonomyType.type}:`, insertError);
+            console.error(`Error inserting batch into ${config.table}:`, insertError);
+            // Continue with next batch even if one fails
           } else {
             inserted += batch.length;
           }
@@ -112,30 +132,32 @@ serve(async (req) => {
 
         totalSynced += inserted;
         results.push({
-          type: taxonomyType.type,
-          version: taxonomyType.version,
+          type: config.type,
+          table: config.table,
           status: "success",
           count: inserted,
         });
 
-        console.log(`Successfully synced ${inserted} ${taxonomyType.type} concepts`);
+        console.log(`✓ Successfully synced ${inserted} ${config.type} to ${config.table}`);
       } catch (error) {
-        console.error(`Error processing ${taxonomyType.type}:`, error);
+        console.error(`Error processing ${config.type}:`, error);
         results.push({
-          type: taxonomyType.type,
-          version: taxonomyType.version,
+          type: config.type,
+          table: config.table,
           status: "error",
           message: error.message,
         });
       }
     }
 
-    console.log(`Sync completed. Total concepts synced: ${totalSynced}`);
+    console.log(`\n=== Sync completed ===`);
+    console.log(`Total concepts synced: ${totalSynced}`);
+    console.log("Results:", JSON.stringify(results, null, 2));
 
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Successfully synced ${totalSynced} taxonomy concepts`,
+        message: `Successfully synced ${totalSynced} taxonomy concepts across all tables`,
         totalSynced,
         results,
       }),

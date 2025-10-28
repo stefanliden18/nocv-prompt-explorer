@@ -51,7 +51,17 @@ export function SearchableSelect({
     (option.value || option.concept_id) === value
   );
 
-  // Early return if no options
+  // Filter based on search - NO SORTING (already sorted from hook)
+  const filteredOptions = React.useMemo(() => {
+    if (!searchQuery) return options;
+    
+    const query = searchQuery.toLowerCase();
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(query)
+    );
+  }, [options, searchQuery]);
+
+  // Handle empty options - render disabled button
   if (options.length === 0) {
     return (
       <Button
@@ -64,16 +74,6 @@ export function SearchableSelect({
       </Button>
     );
   }
-
-  // Filter based on search - NO SORTING (already sorted from hook)
-  const filteredOptions = React.useMemo(() => {
-    if (!searchQuery) return options;
-    
-    const query = searchQuery.toLowerCase();
-    return options.filter((option) =>
-      option.label.toLowerCase().includes(query)
-    );
-  }, [options, searchQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

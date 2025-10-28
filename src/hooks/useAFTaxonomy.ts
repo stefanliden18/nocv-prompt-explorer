@@ -5,77 +5,66 @@ interface TaxonomyItem {
   concept_id: string;
   type: string;
   version: number;
-  code: string | null;
   label: string;
 }
 
 export const useAFTaxonomy = () => {
   const { data: taxonomyData = [], isLoading } = useQuery({
     queryKey: ['af-taxonomy'],
-    staleTime: 0, // Tvinga alltid fresh data
-    refetchOnMount: true, // Refetch när komponenten mountar
     queryFn: async () => {
-      console.log('🔄 useAFTaxonomy: Fetching taxonomy data...');
+      console.log('🔍 Fetching AF taxonomy data...');
+      
       const { data, error } = await supabase
         .from('af_taxonomy')
-        .select('*')
-        .order('type, label');
-      
+        .select('concept_id, type, version, label')
+        .order('label');
+
       if (error) {
-        console.error('❌ useAFTaxonomy: Error fetching data:', error);
+        console.error('❌ Error fetching taxonomy:', error);
         throw error;
       }
-      
-      // NYA LOGS - Kolla RAW data INNAN return
-      console.log('🔍 RAW DATA från Supabase:', {
-        totalRows: data?.length,
-        firstRow: data?.[0],
-        worktimeRows: data?.filter(d => d.type === 'worktime-extent'),
-        uniqueTypes: [...new Set(data?.map(d => d.type))]
-      });
-      
-      console.log('✅ useAFTaxonomy: Data fetched:', data?.length, 'items');
+
+      console.log('✅ Fetched taxonomy items:', data?.length);
       return data as TaxonomyItem[];
-    }
+    },
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
-  // EXTRA LOG - Kolla vad taxonomyData innehåller EFTER React Query
-  console.log('📦 taxonomyData EFTER React Query:', {
-    length: taxonomyData.length,
-    isArray: Array.isArray(taxonomyData),
-    sample: taxonomyData[0],
-    worktimeCount: taxonomyData.filter(t => t.type === 'worktime-extent').length
-  });
-
-  // Hjälpfunktion: Filtrera för att endast visa senaste versionen
+  // Helper to get latest version for each type
   const getLatestVersion = (items: TaxonomyItem[]) => {
-    const grouped = items.reduce((acc, item) => {
-      const key = item.label;
-      if (!acc[key] || item.version > acc[key].version) {
-        acc[key] = item;
+    const uniqueMap = new Map<string, TaxonomyItem>();
+    
+    items.forEach(item => {
+      const existing = uniqueMap.get(item.label);
+      if (!existing || item.version > existing.version) {
+        uniqueMap.set(item.label, item);
       }
-      return acc;
-    }, {} as Record<string, TaxonomyItem>);
-    return Object.values(grouped);
+    });
+    
+    return Array.from(uniqueMap.values());
   };
 
-  // Gruppera per typ och filtrera för senaste version
-  const occupationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'occupation-name'));
-  const municipalityCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'municipality'));
-  const employmentTypeCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'employment-type'));
-  const durationCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'employment-duration'));  // ✅ AF använder "employment-duration"
-  const worktimeExtentCodes = getLatestVersion(taxonomyData.filter(t => t.type === 'worktime-extent'));
+  // Filter by type and get latest versions
+  const occupationCodes = getLatestVersion(
+    taxonomyData.filter(item => item.type === 'occupation-name')
+  );
 
-  console.log('📊 useAFTaxonomy: Filtered data:', {
-    occupationCodes: occupationCodes.length,
-    municipalityCodes: municipalityCodes.length,
-    employmentTypeCodes: employmentTypeCodes.length,
-    durationCodes: durationCodes.length,
-    worktimeExtentCodes: worktimeExtentCodes.length,
-    isLoading
-  });
+  const municipalityCodes = getLatestVersion(
+    taxonomyData.filter(item => item.type === 'municipality')
+  );
 
-  console.log('🔍 useAFTaxonomy: worktimeExtentCodes details:', worktimeExtentCodes);
+  const employmentTypeCodes = getLatestVersion(
+    taxonomyData.filter(item => item.type === 'employment-type')
+  );
+
+  const durationCodes = getLatestVersion(
+    taxonomyData.filter(item => item.type === 'employment-duration')
+  );
+
+  const worktimeExtentCodes = getLatestVersion(
+    taxonomyData.filter(item => item.type === 'worktime-extent')
+  );
 
   return {
     occupationCodes,
@@ -83,6 +72,6 @@ export const useAFTaxonomy = () => {
     employmentTypeCodes,
     durationCodes,
     worktimeExtentCodes,
-    isLoading
+    isLoading,
   };
 };

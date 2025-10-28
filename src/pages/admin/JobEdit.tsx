@@ -97,11 +97,6 @@ export default function JobEdit() {
   const [contactPersonName, setContactPersonName] = useState('');
   const [contactPersonEmail, setContactPersonEmail] = useState('');
   const [contactPersonPhone, setContactPersonPhone] = useState('');
-  const [afOccupationCode, setAfOccupationCode] = useState('');
-  const [afMunicipalityCode, setAfMunicipalityCode] = useState('');
-  const [afEmploymentTypeCode, setAfEmploymentTypeCode] = useState('');
-  const [afDurationCode, setAfDurationCode] = useState('');
-  const [afWorktimeExtentCode, setAfWorktimeExtentCode] = useState('');
   const [afOccupationCid, setAfOccupationCid] = useState('');
   const [afMunicipalityCid, setAfMunicipalityCid] = useState('');
   const [afEmploymentTypeCid, setAfEmploymentTypeCid] = useState('');
@@ -130,10 +125,8 @@ export default function JobEdit() {
       if (afDurationCid !== 'a7uU_j21_mkL') {
         const tillsvidare = durationCodes.find(d => d.concept_id === 'a7uU_j21_mkL');
         if (tillsvidare) {
-          setAfDurationCode(tillsvidare.code || '');
           setAfDurationCid(tillsvidare.concept_id);
           updateJobField('af_duration_cid', 'a7uU_j21_mkL');
-          updateJobField('af_duration_code', tillsvidare.code || '');
           toast.info('Varaktighet automatiskt satt till "Tills vidare"');
         }
       }
@@ -157,15 +150,11 @@ export default function JobEdit() {
       const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
         console.log('✅ Found Heltid:', heltid.concept_id, heltid.label);
-        setAfWorktimeExtentCode(heltid.code || '');
         setAfWorktimeExtentCid(heltid.concept_id);
         
         // Spara direkt till databas
         updateJobField('af_worktime_extent_cid', heltid.concept_id).then(() => {
           console.log('✅ Saved af_worktime_extent_cid to database');
-        });
-        updateJobField('af_worktime_extent_code', heltid.code || '').then(() => {
-          console.log('✅ Saved af_worktime_extent_code to database');
         });
         
         toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
@@ -245,15 +234,10 @@ export default function JobEdit() {
       setContactPersonName(job.contact_person_name || '');
       setContactPersonEmail(job.contact_person_email || '');
       setContactPersonPhone(job.contact_person_phone || '');
-      setAfOccupationCode(job.af_occupation_code || '');
       setAfOccupationCid(job.af_occupation_cid || null);
-      setAfMunicipalityCode(job.af_municipality_code || '');
       setAfMunicipalityCid(job.af_municipality_cid || null);
-      setAfEmploymentTypeCode(job.af_employment_type_code || '');
       setAfEmploymentTypeCid(job.af_employment_type_cid || null);
-      setAfDurationCode(job.af_duration_code || '');
       setAfDurationCid(job.af_duration_cid || null);
-      setAfWorktimeExtentCode(job.af_worktime_extent_code || '');
       setAfWorktimeExtentCid(job.af_worktime_extent_cid || null);
       // Convert UTC time from database to Stockholm time for display
       if (job.publish_at) {
@@ -299,9 +283,9 @@ export default function JobEdit() {
     // STRIKT validering om AF-publicering är aktiverad
     if (afPublished) {
       const afErrors = [];
-      if (!afOccupationCode) afErrors.push('Yrke måste väljas för AF-publicering');
-      if (!afMunicipalityCode) afErrors.push('Kommun måste väljas för AF-publicering');
-      if (!afEmploymentTypeCode) afErrors.push('Anställningstyp måste väljas för AF-publicering');
+      if (!afOccupationCid) afErrors.push('Yrke måste väljas för AF-publicering');
+      if (!afMunicipalityCid) afErrors.push('Kommun måste väljas för AF-publicering');
+      if (!afEmploymentTypeCid) afErrors.push('Anställningstyp måste väljas för AF-publicering');
       if (!contactPersonName?.trim()) afErrors.push('Kontaktperson namn krävs för AF-publicering');
       if (!contactPersonEmail?.trim()) afErrors.push('Kontaktperson e-post krävs för AF-publicering');
       if (!contactPersonPhone?.trim()) afErrors.push('Kontaktperson telefon krävs för AF-publicering');
@@ -392,15 +376,10 @@ export default function JobEdit() {
         contact_person_name: contactPersonName.trim() || null,
         contact_person_email: contactPersonEmail.trim() || null,
         contact_person_phone: contactPersonPhone.trim() || null,
-        af_occupation_code: afOccupationCode || null,
         af_occupation_cid: afOccupationCid || null,
-        af_municipality_code: afMunicipalityCode || null,
         af_municipality_cid: afMunicipalityCid || null,
-        af_employment_type_code: afEmploymentTypeCode || null,
         af_employment_type_cid: afEmploymentTypeCid || null,
-        af_duration_code: afDurationCode || null,
         af_duration_cid: afDurationCid || null,
-        af_worktime_extent_code: afWorktimeExtentCode || null,
         af_worktime_extent_cid: afWorktimeExtentCid || null,
         // Convert Stockholm time to UTC for database storage
         publish_at: (() => {
@@ -1246,13 +1225,8 @@ export default function JobEdit() {
                       <Select
                         value={afOccupationCid || ''}
                         onValueChange={async (value) => {
-                          const selected = occupationCodes.find(o => o.concept_id === value);
-                          if (selected) {
-                            setAfOccupationCode(selected.code || '');
-                            setAfOccupationCid(selected.concept_id);
-                            await updateJobField('af_occupation_cid', selected.concept_id);
-                            await updateJobField('af_occupation_code', selected.code || '');
-                          }
+                          setAfOccupationCid(value);
+                          await updateJobField('af_occupation_cid', value);
                         }}
                       >
                         <SelectTrigger>
@@ -1277,13 +1251,8 @@ export default function JobEdit() {
                       <Select
                         value={afMunicipalityCid || ''}
                         onValueChange={async (value) => {
-                          const selected = municipalityCodes.find(m => m.concept_id === value);
-                          if (selected) {
-                            setAfMunicipalityCode(selected.code || '');
-                            setAfMunicipalityCid(selected.concept_id);
-                            await updateJobField('af_municipality_cid', selected.concept_id);
-                            await updateJobField('af_municipality_code', selected.code || '');
-                          }
+                          setAfMunicipalityCid(value);
+                          await updateJobField('af_municipality_cid', value);
                         }}
                       >
                         <SelectTrigger>
@@ -1430,13 +1399,8 @@ export default function JobEdit() {
                       <Select
                         value={afDurationCid || ''}
                         onValueChange={async (value) => {
-                          const selected = durationCodes.find(d => d.concept_id === value);
-                          if (selected) {
-                            setAfDurationCode(selected.code || '');
-                            setAfDurationCid(selected.concept_id);
-                            await updateJobField('af_duration_cid', selected.concept_id);
-                            await updateJobField('af_duration_code', selected.code || '');
-                          }
+                          setAfDurationCid(value);
+                          await updateJobField('af_duration_cid', value);
                         }}
                         disabled={afEmploymentTypeCid === 'kpPX_CNN_gDU'}
                       >

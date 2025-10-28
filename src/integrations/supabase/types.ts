@@ -44,153 +44,27 @@ export type Database = {
         }
         Relationships: []
       }
-      af_duration_codes: {
-        Row: {
-          code: string
-          created_at: string | null
-          id: string
-          label: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          id?: string
-          label: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          id?: string
-          label?: string
-        }
-        Relationships: []
-      }
-      af_employment_type_codes: {
-        Row: {
-          code: string
-          created_at: string | null
-          id: string
-          label: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          id?: string
-          label: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          id?: string
-          label?: string
-        }
-        Relationships: []
-      }
-      af_municipality_codes: {
-        Row: {
-          code: string
-          concept_id: string | null
-          county: string | null
-          created_at: string | null
-          id: string
-          label: string
-        }
-        Insert: {
-          code: string
-          concept_id?: string | null
-          county?: string | null
-          created_at?: string | null
-          id?: string
-          label: string
-        }
-        Update: {
-          code?: string
-          concept_id?: string | null
-          county?: string | null
-          created_at?: string | null
-          id?: string
-          label?: string
-        }
-        Relationships: []
-      }
-      af_occupation_codes: {
-        Row: {
-          code: string
-          created_at: string | null
-          id: string
-          label_en: string | null
-          label_sv: string
-          ssyk_code: string | null
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          id?: string
-          label_en?: string | null
-          label_sv: string
-          ssyk_code?: string | null
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          id?: string
-          label_en?: string | null
-          label_sv?: string
-          ssyk_code?: string | null
-        }
-        Relationships: []
-      }
       af_taxonomy: {
         Row: {
-          code: string | null
           concept_id: string
           label: string
-          lang: string | null
-          legacy_id: string | null
           type: string
           updated_at: string | null
           version: number
         }
         Insert: {
-          code?: string | null
           concept_id: string
           label: string
-          lang?: string | null
-          legacy_id?: string | null
           type: string
           updated_at?: string | null
           version: number
         }
         Update: {
-          code?: string | null
           concept_id?: string
           label?: string
-          lang?: string | null
-          legacy_id?: string | null
           type?: string
           updated_at?: string | null
           version?: number
-        }
-        Relationships: []
-      }
-      af_worktime_extent_codes: {
-        Row: {
-          code: string
-          created_at: string | null
-          id: string
-          label: string
-        }
-        Insert: {
-          code: string
-          created_at?: string | null
-          id?: string
-          label: string
-        }
-        Update: {
-          code?: string
-          created_at?: string | null
-          id?: string
-          label?: string
         }
         Relationships: []
       }
@@ -405,20 +279,15 @@ export type Database = {
         Row: {
           af_ad_id: string | null
           af_duration_cid: string | null
-          af_duration_code: string | null
           af_employment_type_cid: string | null
-          af_employment_type_code: string | null
           af_error: string | null
           af_last_sync: string | null
           af_municipality_cid: string | null
-          af_municipality_code: string | null
           af_occupation_cid: string | null
-          af_occupation_code: string | null
           af_published: boolean | null
           af_published_at: string | null
           af_wage_type_code: string | null
           af_worktime_extent_cid: string | null
-          af_worktime_extent_code: string | null
           category: string | null
           city: string | null
           company_id: string
@@ -446,20 +315,15 @@ export type Database = {
         Insert: {
           af_ad_id?: string | null
           af_duration_cid?: string | null
-          af_duration_code?: string | null
           af_employment_type_cid?: string | null
-          af_employment_type_code?: string | null
           af_error?: string | null
           af_last_sync?: string | null
           af_municipality_cid?: string | null
-          af_municipality_code?: string | null
           af_occupation_cid?: string | null
-          af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
           af_wage_type_code?: string | null
           af_worktime_extent_cid?: string | null
-          af_worktime_extent_code?: string | null
           category?: string | null
           city?: string | null
           company_id: string
@@ -487,20 +351,15 @@ export type Database = {
         Update: {
           af_ad_id?: string | null
           af_duration_cid?: string | null
-          af_duration_code?: string | null
           af_employment_type_cid?: string | null
-          af_employment_type_code?: string | null
           af_error?: string | null
           af_last_sync?: string | null
           af_municipality_cid?: string | null
-          af_municipality_code?: string | null
           af_occupation_cid?: string | null
-          af_occupation_code?: string | null
           af_published?: boolean | null
           af_published_at?: string | null
           af_wage_type_code?: string | null
           af_worktime_extent_cid?: string | null
-          af_worktime_extent_code?: string | null
           category?: string | null
           city?: string | null
           company_id?: string

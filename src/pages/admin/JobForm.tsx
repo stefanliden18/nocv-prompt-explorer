@@ -48,15 +48,10 @@ export default function JobForm() {
   const [contactPersonName, setContactPersonName] = useState('');
   const [contactPersonEmail, setContactPersonEmail] = useState('');
   const [contactPersonPhone, setContactPersonPhone] = useState('');
-  const [afOccupationCode, setAfOccupationCode] = useState('');
   const [afOccupationCid, setAfOccupationCid] = useState('');
-  const [afMunicipalityCode, setAfMunicipalityCode] = useState('');
   const [afMunicipalityCid, setAfMunicipalityCid] = useState('');
-  const [afEmploymentTypeCode, setAfEmploymentTypeCode] = useState('');
   const [afEmploymentTypeCid, setAfEmploymentTypeCid] = useState('');
-  const [afDurationCode, setAfDurationCode] = useState('');
   const [afDurationCid, setAfDurationCid] = useState('');
-  const [afWorktimeExtentCode, setAfWorktimeExtentCode] = useState('');
   const [afWorktimeExtentCid, setAfWorktimeExtentCid] = useState('');
 
   // Fetch companies
@@ -97,7 +92,6 @@ export default function JobForm() {
     if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
       const heltid = worktimeExtentCodes.find(w => w.concept_id === '6YE1_gAC_R2G');
       if (heltid) {
-        setAfWorktimeExtentCode(heltid.code || '');
         setAfWorktimeExtentCid(heltid.concept_id);
         toast.info('Arbetstidsomfattning automatiskt satt till "Heltid" (kan ändras)');
       }
@@ -201,15 +195,10 @@ export default function JobForm() {
           contact_person_name: contactPersonName.trim() || null,
           contact_person_email: contactPersonEmail.trim() || null,
           contact_person_phone: contactPersonPhone.trim() || null,
-          af_occupation_code: afOccupationCode || null,
           af_occupation_cid: afOccupationCid || null,
-          af_municipality_code: afMunicipalityCode || null,
           af_municipality_cid: afMunicipalityCid || null,
-          af_employment_type_code: afEmploymentTypeCode || null,
           af_employment_type_cid: afEmploymentTypeCid || null,
-          af_duration_code: afDurationCode || null,
           af_duration_cid: afDurationCid || null,
-          af_worktime_extent_code: afWorktimeExtentCode || null,
           af_worktime_extent_cid: finalAfWorktimeExtentCid || null,
         });
 
@@ -458,16 +447,10 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_occupation_code">Yrke *</Label>
+                    <Label htmlFor="af_occupation_cid">Yrke *</Label>
                     <Select
                       value={afOccupationCid}
-                      onValueChange={(value) => {
-                        const selected = occupationCodes.find(o => o.concept_id === value);
-                        if (selected) {
-                          setAfOccupationCode(selected.code || '');
-                          setAfOccupationCid(selected.concept_id);
-                        }
-                      }}
+                      onValueChange={setAfOccupationCid}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Välj yrke" />
@@ -483,16 +466,10 @@ export default function JobForm() {
                   </div>
 
                   <div>
-                    <Label htmlFor="af_municipality_code">Kommun *</Label>
+                    <Label htmlFor="af_municipality_cid">Kommun *</Label>
                     <Select
                       value={afMunicipalityCid}
-                      onValueChange={(value) => {
-                        const selected = municipalityCodes.find(m => m.concept_id === value);
-                        if (selected) {
-                          setAfMunicipalityCode(selected.code || '');
-                          setAfMunicipalityCid(selected.concept_id);
-                        }
-                      }}
+                      onValueChange={setAfMunicipalityCid}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Välj kommun" />
@@ -510,24 +487,18 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_employment_type_code">Anställningstyp *</Label>
+                    <Label htmlFor="af_employment_type_cid">Anställningstyp *</Label>
                     <Select
                       value={afEmploymentTypeCid}
                       onValueChange={(value) => {
-                        const selected = employmentTypeCodes.find(e => e.concept_id === value);
-                        if (selected) {
-                          setAfEmploymentTypeCode(selected.code || '');
-                          setAfEmploymentTypeCid(selected.concept_id);
-                        }
+                        setAfEmploymentTypeCid(value);
                         // Auto-clear duration om vanlig anställning väljs
                         if (value === 'PFZr_Syz_cUq' && afDurationCid) {
-                          setAfDurationCode('');
                           setAfDurationCid('');
                           toast.info("Varaktighet automatiskt borttagen: Vanlig anställning är redan tillsvidareanställning");
                         }
                         // Auto-clear worktimeExtent om behovsanställning väljs
                         if (value === '1paU_aCR_nGn' && afWorktimeExtentCid) {
-                          setAfWorktimeExtentCode('');
                           setAfWorktimeExtentCid('');
                           toast.info("Arbetstidsomfattning automatiskt borttagen: Inte tillåtet för behovsanställning");
                         }
@@ -548,18 +519,12 @@ export default function JobForm() {
 
                   {afEmploymentTypeCid !== '1paU_aCR_nGn' && (
                     <div>
-                      <Label htmlFor="af_worktime_extent_code">
+                      <Label htmlFor="af_worktime_extent_cid">
                         Arbetstidsomfattning {afEmploymentTypeCid === 'PFZr_Syz_cUq' ? '*' : ''}
                       </Label>
                       <Select
                         value={afWorktimeExtentCid}
-                        onValueChange={(value) => {
-                          const selected = worktimeExtentCodes.find(w => w.concept_id === value);
-                          if (selected) {
-                            setAfWorktimeExtentCode(selected.code || '');
-                            setAfWorktimeExtentCid(selected.concept_id);
-                          }
-                        }}
+                        onValueChange={setAfWorktimeExtentCid}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Välj omfattning" />
@@ -588,16 +553,10 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_duration_code">Varaktighet *</Label>
+                    <Label htmlFor="af_duration_cid">Varaktighet *</Label>
                     <Select
                       value={afDurationCid}
-                      onValueChange={(value) => {
-                        const selected = durationCodes.find(d => d.concept_id === value);
-                        if (selected) {
-                          setAfDurationCode(selected.code || '');
-                          setAfDurationCid(selected.concept_id);
-                        }
-                      }}
+                      onValueChange={setAfDurationCid}
                       disabled={afEmploymentTypeCid === 'PFZr_Syz_cUq'}
                     >
                       <SelectTrigger>

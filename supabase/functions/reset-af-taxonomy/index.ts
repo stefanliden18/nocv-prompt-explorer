@@ -7,20 +7,20 @@ const corsHeaders = {
 
 const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se/v1/taxonomy';
 
-// Taxonomy types to fetch
+// Taxonomy types to fetch with their versions
 const TAXONOMY_TYPES = [
-  'occupation-name',
-  'municipality',
-  'employment-type',
-  'employment-duration',
-  'worktime-extent',
-];
+  { type: 'occupation-name', version: 16 },
+  { type: 'municipality', version: 1 },
+  { type: 'employment-type', version: 1 },
+  { type: 'employment-duration', version: 1 },
+  { type: 'worktime-extent', version: 16 },
+] as const;
 
 const MAX_PAGES_PER_TYPE = 10; // Safety limit
 const PAGE_SIZE = 500;
 
 // Helper function to fetch all pages for a taxonomy type
-async function fetchAllPages(type: string): Promise<any[]> {
+async function fetchAllPages(type: string, version: number): Promise<any[]> {
   const allItems: any[] = [];
   let offset = 0;
   let pageNumber = 1;
@@ -28,7 +28,7 @@ async function fetchAllPages(type: string): Promise<any[]> {
   console.log(`📥 Starting paginated fetch for ${type}...`);
   
   while (pageNumber <= MAX_PAGES_PER_TYPE) {
-    const url = `${AF_API_BASE}/main/concepts?type=${type}&offset=${offset}&limit=${PAGE_SIZE}`;
+    const url = `${AF_API_BASE}/main/concepts?type=${type}&version=${version}&offset=${offset}&limit=${PAGE_SIZE}`;
     console.log(`  📄 Fetching page ${pageNumber} (offset=${offset})...`);
     
     try {
@@ -109,30 +109,31 @@ Deno.serve(async (req) => {
     console.log('📥 Step 2: Fetching fresh taxonomy data from AF API (paginated)...');
     const allTaxonomyData = [];
 
-    for (const type of TAXONOMY_TYPES) {
+    for (const { type, version } of TAXONOMY_TYPES) {
       try {
-        // Fetch all pages for this type
-        const items = await fetchAllPages(type);
+        // Fetch all pages for this type with explicit version
+        const items = await fetchAllPages(type, version);
         
         if (items.length === 0) {
-          console.warn(`⚠️ No items found for ${type}`);
+          console.warn(`⚠️ No items found for ${type} v${version}`);
           continue;
         }
 
-        // Map to simplified format - only concept_id, type, version, label
+        // Map to simplified format - use explicit version from TAXONOMY_TYPES
         const mappedData = items.map((item: any) => ({
           concept_id: item['taxonomy/id'],
           type: type,
-          version: item['taxonomy/version'] || 1,
+          version: version,
           label: item['taxonomy/preferred-label'],
           updated_at: new Date().toISOString(),
         }));
 
         allTaxonomyData.push(...mappedData);
+        console.log(`✅ Mapped ${items.length} items for ${type} v${version}`);
         
       } catch (error) {
-        console.error(`❌ Failed to fetch ${type}:`, error);
-        throw new Error(`Failed to fetch taxonomy ${type}: ${error.message}`);
+        console.error(`❌ Failed to fetch ${type} v${version}:`, error);
+        throw new Error(`Failed to fetch taxonomy ${type} v${version}: ${error.message}`);
       }
     }
 

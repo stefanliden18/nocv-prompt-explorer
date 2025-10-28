@@ -159,15 +159,17 @@ Deno.serve(async (req) => {
       console.log(`  ✅ Inserted batch ${Math.floor(i / batchSize) + 1} (${batch.length} items)`);
     }
 
-    // Step 4: Verify data
+    // Step 4: Verify data (with delay to ensure DB consistency)
     console.log('🔍 Step 4: Verifying inserted data...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
     const summary: Record<string, number> = {};
 
-    for (const { type } of TAXONOMY_TYPES) {
+    for (const { type, version } of TAXONOMY_TYPES) {
       const { count, error } = await supabase
         .from('af_taxonomy')
         .select('*', { count: 'exact', head: true })
-        .eq('type', type);
+        .eq('type', type)
+        .eq('version', version);
 
       if (error) {
         console.error(`❌ Failed to count ${type}:`, error);

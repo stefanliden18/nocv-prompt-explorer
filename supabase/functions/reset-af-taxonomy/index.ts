@@ -5,7 +5,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se';
+const AF_API_BASE = 'https://api.arbetsformedlingen.se';
 
 // Taxonomy types to fetch
 const TAXONOMY_TYPES = [

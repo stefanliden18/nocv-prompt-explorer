@@ -16,6 +16,8 @@ export default function TaxonomyManager() {
   const [diagnosisResult, setDiagnosisResult] = useState<any>(null);
   const [isTestingPartner, setIsTestingPartner] = useState(false);
   const [partnerTestResult, setPartnerTestResult] = useState<any>(null);
+  const [isMappingJobs, setIsMappingJobs] = useState(false);
+  const [mappingResult, setMappingResult] = useState<any>(null);
 
   const loadTaxonomyStats = async () => {
     setIsLoadingStats(true);
@@ -122,6 +124,49 @@ export default function TaxonomyManager() {
       });
     } finally {
       setIsTestingPartner(false);
+    }
+  };
+
+  const handleMapJobs = async () => {
+    if (!confirm('Vill du mappa alla jobb till AF concept IDs? Detta kan ta några sekunder.')) {
+      return;
+    }
+
+    setIsMappingJobs(true);
+    setMappingResult(null);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/map-job-concept-ids`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Okänt fel');
+      }
+
+      setMappingResult(result);
+      
+      toast({
+        title: "✅ Mappning klar!",
+        description: `${result.jobsMapped} jobb mappade`,
+      });
+    } catch (error: any) {
+      console.error('Error mapping jobs:', error);
+      toast({
+        title: "Fel vid mappning",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsMappingJobs(false);
     }
   };
 
@@ -464,6 +509,71 @@ export default function TaxonomyManager() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Job Mapping Card */}
+      <Card className="border-2 border-blue-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-600">
+            <Database className="h-5 w-5" />
+            Mappa Jobb till Concept IDs
+          </CardTitle>
+          <CardDescription>
+            Mappar befintliga jobb till AF concept_ids från taxonomi-tabellen
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Detta mappar textfält (kategori, stad, anställningstyp) till AF concept_ids.
+              Kör detta efter att taxonomi-data har återställts.
+            </AlertDescription>
+          </Alert>
+
+          <Button
+            onClick={handleMapJobs}
+            disabled={isMappingJobs}
+            className="w-full"
+            size="lg"
+            variant="default"
+          >
+            {isMappingJobs ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Mappar jobb...
+              </>
+            ) : (
+              <>
+                <Database className="mr-2 h-4 w-4" />
+                Mappa Jobb till Concept IDs
+              </>
+            )}
+          </Button>
+
+          {mappingResult && (
+            <Alert className="bg-green-50 border-green-200">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription className="text-green-800">
+                <div className="font-semibold mb-2">✅ Mappning klar!</div>
+                <div className="text-sm space-y-1">
+                  <div>Jobb mappade: {mappingResult.jobsMapped}</div>
+                  {mappingResult.failures?.length > 0 && (
+                    <div className="text-orange-600 mt-2">
+                      Varningar: {mappingResult.failures.length} jobb kunde inte mappas helt
+                    </div>
+                  )}
+                </div>
+                <details className="text-xs mt-3">
+                  <summary className="cursor-pointer font-semibold">Visa detaljer</summary>
+                  <pre className="bg-white p-2 rounded mt-2 overflow-auto max-h-48">
+                    {JSON.stringify(mappingResult, null, 2)}
+                  </pre>
+                </details>
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Info Card */}
       <Card>

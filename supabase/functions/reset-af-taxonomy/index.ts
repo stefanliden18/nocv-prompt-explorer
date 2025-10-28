@@ -7,13 +7,13 @@ const corsHeaders = {
 
 const AF_API_BASE = 'https://taxonomy.api.jobtechdev.se';
 
-// Taxonomy types to fetch with their versions
+// Taxonomy types to fetch
 const TAXONOMY_TYPES = [
-  { type: 'occupation-name', version: 16 },
-  { type: 'municipality', version: 1 },
-  { type: 'employment-type', version: 1 },
-  { type: 'employment-duration', version: 1 },
-  { type: 'worktime-extent', version: 16 },
+  'occupation-name',
+  'municipality',
+  'employment-type',
+  'employment-duration',
+  'worktime-extent',
 ];
 
 Deno.serve(async (req) => {
@@ -45,9 +45,9 @@ Deno.serve(async (req) => {
     console.log('📥 Step 2: Fetching fresh taxonomy data from AF API...');
     const allTaxonomyData = [];
 
-    for (const { type, version } of TAXONOMY_TYPES) {
-      const url = `${AF_API_BASE}/v1/taxonomy/versioned/concepts/${version}?type=${type}&offset=0&limit=500`;
-      console.log(`Fetching ${type} v${version} from ${url}...`);
+    for (const type of TAXONOMY_TYPES) {
+      const url = `${AF_API_BASE}/taxonomy/v1/${type}?offset=0&limit=500`;
+      console.log(`Fetching ${type} from ${url}...`);
 
       try {
         const response = await fetch(url, {
@@ -62,18 +62,18 @@ Deno.serve(async (req) => {
 
         const data = await response.json();
         
-        if (!Array.isArray(data) || data.length === 0) {
+        if (!data.concepts || !Array.isArray(data.concepts) || data.concepts.length === 0) {
           throw new Error(`Invalid or empty response for ${type}`);
         }
 
-        console.log(`✅ Fetched ${data.length} items for ${type} v${version}`);
+        console.log(`✅ Fetched ${data.concepts.length} items for ${type}`);
 
         // Map to simplified format - only concept_id, type, version, label
-        const mappedData = data.map((item: any) => ({
-          concept_id: item['taxonomy/id'] || item.id || item.concept_id,
+        const mappedData = data.concepts.map((item: any) => ({
+          concept_id: item['taxonomy/id'],
           type: type,
-          version: version,
-          label: item['taxonomy/preferred-label'] || item.term || item.label || item.name || 'Okänd',
+          version: 1,
+          label: item['taxonomy/preferred-label'],
           updated_at: new Date().toISOString(),
         }));
 
@@ -110,18 +110,17 @@ Deno.serve(async (req) => {
     console.log('🔍 Step 4: Verifying inserted data...');
     const summary: Record<string, number> = {};
 
-    for (const { type, version } of TAXONOMY_TYPES) {
+    for (const type of TAXONOMY_TYPES) {
       const { count, error } = await supabase
         .from('af_taxonomy')
         .select('*', { count: 'exact', head: true })
-        .eq('type', type)
-        .eq('version', version);
+        .eq('type', type);
 
       if (error) {
         console.error(`❌ Failed to count ${type}:`, error);
       } else {
-        summary[`${type} (v${version})`] = count || 0;
-        console.log(`  ${type} (v${version}): ${count} items`);
+        summary[type] = count || 0;
+        console.log(`  ${type}: ${count} items`);
       }
     }
 

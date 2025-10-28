@@ -72,7 +72,7 @@ export function ComboboxField({
               {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.concept_id}
-                  value={option.concept_id}
+                  value={option.label.toLowerCase()}
                   onSelect={() => {
                     onValueChange(option.concept_id);
                     setSearch("");

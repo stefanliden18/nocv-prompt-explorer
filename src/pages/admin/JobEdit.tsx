@@ -27,7 +27,7 @@ import { useAFTaxonomy } from '@/hooks/useAFTaxonomy';
 import { useAFTaxonomyDirect } from '@/hooks/useAFTaxonomyDirect';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
-import { ComboboxField } from '@/components/ui/combobox';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 interface Company {
   id: string;
@@ -1222,7 +1222,7 @@ export default function JobEdit() {
                     <Label htmlFor="af_occupation_code" className="text-red-600">
                       Yrke * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <ComboboxField
+                    <SearchableSelect
                       value={afOccupationCid || ''}
                       onValueChange={async (value) => {
                         setAfOccupationCid(value);
@@ -1239,7 +1239,7 @@ export default function JobEdit() {
                     <Label htmlFor="af_municipality_code" className="text-red-600">
                       Kommun * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
                     </Label>
-                    <ComboboxField
+                    <SearchableSelect
                       value={afMunicipalityCid || ''}
                       onValueChange={async (value) => {
                         console.log('🏘️ Kommun onValueChange:', value);

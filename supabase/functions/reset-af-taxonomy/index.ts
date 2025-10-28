@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
         const mappedData = items.map((item: any) => ({
           concept_id: item['taxonomy/id'],
           type: type,
-          version: 1,
+          version: item['taxonomy/version'] || 1,
           label: item['taxonomy/preferred-label'],
           updated_at: new Date().toISOString(),
         }));

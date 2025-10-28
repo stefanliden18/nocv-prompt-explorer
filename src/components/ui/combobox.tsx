@@ -34,8 +34,17 @@ export function ComboboxField({
   emptyText = "Inget resultat hittades.",
 }: ComboboxFieldProps) {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
 
   const selectedOption = options.find((option) => option.concept_id === value);
+  
+  const filteredOptions = React.useMemo(() => {
+    if (!search) return options;
+    const searchLower = search.toLowerCase();
+    return options.filter((option) =>
+      option.label.toLowerCase().includes(searchLower)
+    );
+  }, [options, search]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -51,18 +60,22 @@ export function ComboboxField({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[400px] p-0 z-50 bg-popover" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder={searchPlaceholder} 
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList className="max-h-[300px] overflow-y-auto">
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
+              {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.concept_id}
-                  value={`${option.concept_id}|${option.label}`}
-                  onSelect={(currentValue) => {
-                    const conceptId = currentValue.split('|')[0];
-                    onValueChange(conceptId);
+                  value={option.concept_id}
+                  onSelect={() => {
+                    onValueChange(option.concept_id);
+                    setSearch("");
                     setOpen(false);
                   }}
                 >

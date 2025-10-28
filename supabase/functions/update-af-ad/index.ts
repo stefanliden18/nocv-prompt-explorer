@@ -86,7 +86,7 @@ serve(async (req) => {
 
     if (validationErrors.length > 0) {
       console.error('[VALIDATION] Failed:', validationErrors);
-      const errorMessage = validationErrors.join('; ');
+      const errorMessage = `❌ Taxonomi-fel:\n${validationErrors.join('\n')}\n\n💡 Tips: Gå tillbaka till jobbet och välj om värden från dropdownlistorna. De gamla concept_id:s finns inte längre i den aktuella taxonomin.`;
       
       await supabase
         .from('jobs')

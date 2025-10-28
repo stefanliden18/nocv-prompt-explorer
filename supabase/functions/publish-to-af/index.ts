@@ -134,13 +134,38 @@ serve(async (req) => {
     console.log("AF Response:", afResponseText);
 
     if (!afResponse.ok) {
-      let errorMessage = "Failed to publish to Arbetsförmedlingen";
+      let errorMessage = "❌ Kunde inte publicera till Arbetsförmedlingen";
+      let detailedError = "";
+      
       try {
         const errorData = JSON.parse(afResponseText);
-        errorMessage = JSON.stringify(errorData, null, 2);
+        
+        // Kolla efter specifika AF API-fel
+        if (errorData.cause?.message?.errors) {
+          const errors = errorData.cause.message.errors;
+          detailedError = errors.map((e: any) => `• ${e.field || 'Okänt fält'}: ${e.message || e.reason}`).join('\n');
+          errorMessage = `❌ AF API-fel:\n${detailedError}\n\n💡 Tips: Kontrollera att alla fält är korrekt ifyllda och följer AF:s regler.`;
+        } else if (errorData.message) {
+          detailedError = errorData.message;
+          errorMessage = `❌ AF API-fel: ${detailedError}`;
+        } else {
+          detailedError = JSON.stringify(errorData, null, 2);
+          errorMessage = `❌ AF API-fel:\n${detailedError}`;
+        }
       } catch {
-        errorMessage = afResponseText;
+        detailedError = afResponseText;
+        errorMessage = `❌ AF API-fel: ${detailedError}`;
       }
+      
+      // Spara felmeddelandet i databasen
+      await supabase
+        .from("jobs")
+        .update({
+          af_error: errorMessage,
+          af_last_sync: new Date().toISOString()
+        })
+        .eq("id", jobId);
+      
       throw new Error(errorMessage);
     }
 

@@ -302,6 +302,9 @@ export default function JobEdit() {
       if (afMunicipalityCid && !municipalityCodes.find(m => m.concept_id === afMunicipalityCid)) {
         afErrors.push('⚠️ Kommun använder gammal taxonomi-version. Välj om från listan.');
       }
+      if (afEmploymentTypeCid && !employmentTypeCodes.find(e => e.concept_id === afEmploymentTypeCid)) {
+        afErrors.push('⚠️ Anställningstyp använder gammal taxonomi-version. Välj om från listan.');
+      }
       if (afDurationCid && !durationCodes.find(d => d.concept_id === afDurationCid)) {
         afErrors.push('⚠️ Varaktighet använder gammal taxonomi-version. Välj om från listan.');
       }
@@ -1471,6 +1474,151 @@ export default function JobEdit() {
               )}
             </CardContent>
           </Card>
+
+          {/* AF Taxonomy Debug Panel */}
+          {isDebugEnabled && (
+            <Card className="lg:col-span-2 border-4 border-purple-400 bg-purple-50">
+              <CardHeader className="bg-purple-100 border-b-2 border-purple-300">
+                <CardTitle className="text-purple-900 font-mono">
+                  🔍 AF TAXONOMY DEBUG PANEL
+                </CardTitle>
+                <CardDescription className="text-purple-700">
+                  Verifierar att valda concept_ids finns i aktuell taxonomy
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="font-mono text-xs space-y-4 pt-6">
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-purple-900">Valda Concept IDs</h4>
+                  <div className="bg-white p-3 rounded border space-y-1">
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                      <div>
+                        <span className="text-muted-foreground">Yrke:</span>{' '}
+                        <span className={cn("font-semibold", afOccupationCid && occupationCodes.find(o => o.concept_id === afOccupationCid) ? "text-green-600" : "text-red-600")}>
+                          {afOccupationCid || 'NULL'}
+                        </span>
+                        {afOccupationCid && !occupationCodes.find(o => o.concept_id === afOccupationCid) && (
+                          <span className="text-red-600 ml-2">❌ FINNS EJ</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Kommun:</span>{' '}
+                        <span className={cn("font-semibold", afMunicipalityCid && municipalityCodes.find(m => m.concept_id === afMunicipalityCid) ? "text-green-600" : "text-red-600")}>
+                          {afMunicipalityCid || 'NULL'}
+                        </span>
+                        {afMunicipalityCid && !municipalityCodes.find(m => m.concept_id === afMunicipalityCid) && (
+                          <span className="text-red-600 ml-2">❌ FINNS EJ</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Anställningstyp:</span>{' '}
+                        <span className={cn("font-semibold", afEmploymentTypeCid && employmentTypeCodes.find(e => e.concept_id === afEmploymentTypeCid) ? "text-green-600" : "text-red-600")}>
+                          {afEmploymentTypeCid || 'NULL'}
+                        </span>
+                        {afEmploymentTypeCid && !employmentTypeCodes.find(e => e.concept_id === afEmploymentTypeCid) && (
+                          <span className="text-red-600 ml-2">❌ FINNS EJ</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Varaktighet:</span>{' '}
+                        <span className={cn("font-semibold", afDurationCid ? (durationCodes.find(d => d.concept_id === afDurationCid) ? "text-green-600" : "text-red-600") : "text-gray-500")}>
+                          {afDurationCid || 'NULL'}
+                        </span>
+                        {afDurationCid && !durationCodes.find(d => d.concept_id === afDurationCid) && (
+                          <span className="text-red-600 ml-2">❌ FINNS EJ</span>
+                        )}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Arbetstidsomfattning:</span>{' '}
+                        <span className={cn("font-semibold", afWorktimeExtentCid ? (worktimeExtentCodes.find(w => w.concept_id === afWorktimeExtentCid) ? "text-green-600" : "text-red-600") : "text-gray-500")}>
+                          {afWorktimeExtentCid || 'NULL'}
+                        </span>
+                        {afWorktimeExtentCid && !worktimeExtentCodes.find(w => w.concept_id === afWorktimeExtentCid) && (
+                          <span className="text-red-600 ml-2">❌ FINNS EJ</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-sm text-purple-900">Tillgängliga Taxonomi-items</h4>
+                  <div className="bg-white p-3 rounded border space-y-1">
+                    <div>
+                      <span className="text-muted-foreground">Yrken:</span>{' '}
+                      <span className="font-semibold text-green-600">{occupationCodes.length} st</span>
+                      <span className="text-xs text-muted-foreground ml-2">
+                        (varav {occupationCodes.filter(o => o.is_common).length} vanliga)
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Kommuner:</span>{' '}
+                      <span className="font-semibold text-green-600">{municipalityCodes.length} st</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Anställningstyper:</span>{' '}
+                      <span className="font-semibold text-green-600">{employmentTypeCodes.length} st</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Varaktigheter:</span>{' '}
+                      <span className="font-semibold text-green-600">{durationCodes.length} st</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Arbetstidsomfattningar:</span>{' '}
+                      <span className="font-semibold text-green-600">{worktimeExtentCodes.length} st</span>
+                    </div>
+                  </div>
+                </div>
+
+                {(afOccupationCid || afMunicipalityCid || afEmploymentTypeCid) && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm text-purple-900">Valda värden (Labels)</h4>
+                    <div className="bg-white p-3 rounded border space-y-1">
+                      {afOccupationCid && (
+                        <div>
+                          <span className="text-muted-foreground">Yrke:</span>{' '}
+                          <span className="font-semibold">
+                            {occupationCodes.find(o => o.concept_id === afOccupationCid)?.label || '⚠️ SAKNAS'}
+                          </span>
+                        </div>
+                      )}
+                      {afMunicipalityCid && (
+                        <div>
+                          <span className="text-muted-foreground">Kommun:</span>{' '}
+                          <span className="font-semibold">
+                            {municipalityCodes.find(m => m.concept_id === afMunicipalityCid)?.label || '⚠️ SAKNAS'}
+                          </span>
+                        </div>
+                      )}
+                      {afEmploymentTypeCid && (
+                        <div>
+                          <span className="text-muted-foreground">Anställningstyp:</span>{' '}
+                          <span className="font-semibold">
+                            {employmentTypeCodes.find(e => e.concept_id === afEmploymentTypeCid)?.label || '⚠️ SAKNAS'}
+                          </span>
+                        </div>
+                      )}
+                      {afDurationCid && (
+                        <div>
+                          <span className="text-muted-foreground">Varaktighet:</span>{' '}
+                          <span className="font-semibold">
+                            {durationCodes.find(d => d.concept_id === afDurationCid)?.label || '⚠️ SAKNAS'}
+                          </span>
+                        </div>
+                      )}
+                      {afWorktimeExtentCid && (
+                        <div>
+                          <span className="text-muted-foreground">Arbetstidsomfattning:</span>{' '}
+                          <span className="font-semibold">
+                            {worktimeExtentCodes.find(w => w.concept_id === afWorktimeExtentCid)?.label || '⚠️ SAKNAS'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* 
             TIME DEBUG PANEL

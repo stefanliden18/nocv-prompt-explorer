@@ -199,7 +199,7 @@ export default function TaxonomyManager() {
       
       toast({
         title: "✅ Taxonomi återställd!",
-        description: `${result.totalInserted} items importerade`,
+        description: `${result.total} items importerade`,
       });
 
       // Reload stats

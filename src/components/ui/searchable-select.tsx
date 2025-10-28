@@ -3,53 +3,63 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
+
+export interface SelectOption {
+  value?: string;
+  concept_id?: string;
+  label: string;
+  is_common?: boolean;
+}
 
 interface SearchableSelectProps {
-  value: string;
+  options: SelectOption[];
+  value?: string;
   onValueChange: (value: string) => void;
-  options: Array<{ concept_id: string; label: string; is_common?: boolean }>;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyText?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
 export function SearchableSelect({
+  options,
   value,
   onValueChange,
-  options,
-  placeholder = "Välj...",
-  searchPlaceholder = "Sök...",
-  emptyText = "Inget resultat hittades.",
+  placeholder = "Select...",
+  searchPlaceholder = "Search...",
+  emptyText = "No results found.",
+  disabled = false,
+  className,
 }: SearchableSelectProps) {
   const [open, setOpen] = React.useState(false);
-  const [search, setSearch] = React.useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
 
-  const selectedOption = options.find((option) => option.concept_id === value);
-  
-  // Simple substring-matching without virtualization
+  // Find selected option
+  const selectedOption = options.find((option) => 
+    (option.value || option.concept_id) === value
+  );
+
+  // Filter based on search - NO SORTING (already sorted from hook)
   const filteredOptions = React.useMemo(() => {
-    if (!search) return options;
-    const searchLower = search.toLowerCase();
+    if (!searchQuery) return options;
+    
+    const query = searchQuery.toLowerCase();
     return options.filter((option) =>
-      option.label.toLowerCase().includes(searchLower)
+      option.label.toLowerCase().includes(query)
     );
-  }, [options, search]);
-
-  // Sort to show common items first, then alphabetically
-  const sortedOptions = React.useMemo(() => {
-    return [...filteredOptions].sort((a, b) => {
-      // Common items first
-      if (a.is_common && !b.is_common) return -1;
-      if (!a.is_common && b.is_common) return 1;
-      // Then alphabetically
-      return a.label.localeCompare(b.label, 'sv-SE');
-    });
-  }, [filteredOptions]);
+  }, [options, searchQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,60 +68,48 @@ export function SearchableSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className={cn("w-full justify-between", className)}
+          disabled={disabled}
         >
           {selectedOption ? selectedOption.label : placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0 z-[100] bg-popover" align="start">
-        <div className="flex flex-col">
-          <div className="border-b px-3 py-2 bg-background">
-            <Input
-              placeholder={searchPlaceholder}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-9"
-            />
-          </div>
-          <div className="max-h-[300px] overflow-y-auto overscroll-contain">
-            {sortedOptions.length === 0 ? (
-              <div className="py-6 text-center text-sm text-muted-foreground">
-                {emptyText}
-              </div>
-            ) : (
-              <div className="p-1">
-                {sortedOptions.map((option) => (
-                  <button
-                    key={option.concept_id}
-                    onClick={() => {
-                      onValueChange(option.concept_id);
-                      setSearch("");
-                      setOpen(false);
-                    }}
+      <PopoverContent className="w-full p-0" align="start">
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder={searchPlaceholder} 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandEmpty>{emptyText}</CommandEmpty>
+          <CommandGroup className="max-h-[300px] overflow-auto">
+            {filteredOptions.map((option) => {
+              const optionValue = option.value || option.concept_id || '';
+              return (
+                <CommandItem
+                  key={optionValue}
+                  value={optionValue}
+                  onSelect={() => {
+                    onValueChange(optionValue);
+                    setOpen(false);
+                    setSearchQuery("");
+                  }}
+                >
+                  <Check
                     className={cn(
-                      "relative flex w-full cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
-                      value === option.concept_id && "bg-accent"
+                      "mr-2 h-4 w-4",
+                      value === optionValue ? "opacity-100" : "opacity-0"
                     )}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value === option.concept_id ? "opacity-100" : "opacity-0"
-                      )}
-                    />
+                  />
+                  <span className={cn(option.is_common && "font-semibold")}>
                     {option.label}
-                    {option.is_common && (
-                      <span className="ml-auto text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                        Vanlig
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                  </span>
+                </CommandItem>
+              );
+            })}
+          </CommandGroup>
+        </Command>
       </PopoverContent>
     </Popover>
   );

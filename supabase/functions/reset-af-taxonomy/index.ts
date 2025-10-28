@@ -16,6 +16,70 @@ const TAXONOMY_TYPES = [
   'worktime-extent',
 ];
 
+const MAX_PAGES_PER_TYPE = 10; // Safety limit
+const PAGE_SIZE = 500;
+
+// Helper function to fetch all pages for a taxonomy type
+async function fetchAllPages(type: string): Promise<any[]> {
+  const allItems: any[] = [];
+  let offset = 0;
+  let pageNumber = 1;
+  
+  console.log(`📥 Starting paginated fetch for ${type}...`);
+  
+  while (pageNumber <= MAX_PAGES_PER_TYPE) {
+    const url = `${AF_API_BASE}/main/concepts?type=${type}&offset=${offset}&limit=${PAGE_SIZE}`;
+    console.log(`  📄 Fetching page ${pageNumber} (offset=${offset})...`);
+    
+    try {
+      const response = await fetch(url, {
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (!response.ok) {
+        throw new Error(`AF API returned ${response.status} for ${type}`);
+      }
+
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) {
+        throw new Error(`Invalid response format for ${type}`);
+      }
+
+      console.log(`  ✅ Page ${pageNumber}: ${data.length} items`);
+      
+      // If empty page, we're done
+      if (data.length === 0) {
+        console.log(`  🏁 Reached end of ${type} (empty page)`);
+        break;
+      }
+      
+      allItems.push(...data);
+      
+      // If we got fewer items than PAGE_SIZE, this is the last page
+      if (data.length < PAGE_SIZE) {
+        console.log(`  🏁 Last page for ${type} (${data.length} < ${PAGE_SIZE})`);
+        break;
+      }
+      
+      // Move to next page
+      offset += PAGE_SIZE;
+      pageNumber++;
+      
+    } catch (error) {
+      console.error(`  ❌ Failed to fetch page ${pageNumber} for ${type}:`, error);
+      throw new Error(`Failed to fetch ${type} at page ${pageNumber}: ${error.message}`);
+    }
+  }
+  
+  if (pageNumber > MAX_PAGES_PER_TYPE) {
+    console.warn(`⚠️ Hit max page limit (${MAX_PAGES_PER_TYPE}) for ${type}`);
+  }
+  
+  console.log(`✅ Total fetched for ${type}: ${allItems.length} items from ${pageNumber - 1} pages`);
+  return allItems;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -41,35 +105,22 @@ Deno.serve(async (req) => {
     }
     console.log('✅ Table cleared');
 
-    // Step 2: Fetch fresh data from AF API
-    console.log('📥 Step 2: Fetching fresh taxonomy data from AF API...');
+    // Step 2: Fetch fresh data from AF API with pagination
+    console.log('📥 Step 2: Fetching fresh taxonomy data from AF API (paginated)...');
     const allTaxonomyData = [];
 
     for (const type of TAXONOMY_TYPES) {
-      const url = `${AF_API_BASE}/main/concepts?type=${type}&offset=0&limit=500`;
-      console.log(`Fetching ${type} from ${url}...`);
-
       try {
-        const response = await fetch(url, {
-          headers: {
-            'Accept': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`AF API returned ${response.status} for ${type}`);
-        }
-
-        const data = await response.json();
+        // Fetch all pages for this type
+        const items = await fetchAllPages(type);
         
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error(`Invalid or empty response for ${type}`);
+        if (items.length === 0) {
+          console.warn(`⚠️ No items found for ${type}`);
+          continue;
         }
-
-        console.log(`✅ Fetched ${data.length} items for ${type}`);
 
         // Map to simplified format - only concept_id, type, version, label
-        const mappedData = data.map((item: any) => ({
+        const mappedData = items.map((item: any) => ({
           concept_id: item['taxonomy/id'],
           type: type,
           version: 1,
@@ -78,6 +129,7 @@ Deno.serve(async (req) => {
         }));
 
         allTaxonomyData.push(...mappedData);
+        
       } catch (error) {
         console.error(`❌ Failed to fetch ${type}:`, error);
         throw new Error(`Failed to fetch taxonomy ${type}: ${error.message}`);

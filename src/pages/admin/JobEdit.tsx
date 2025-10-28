@@ -293,9 +293,6 @@ export default function JobEdit() {
       if (!lastApplicationDate) afErrors.push('Sista ansökningsdag krävs för AF-publicering');
       
       // Validera att concept_id finns i aktuell taxonomy (version 16)
-      if (afEmploymentTypeCid && !employmentTypeCodes.find(e => e.concept_id === afEmploymentTypeCid)) {
-        afErrors.push('⚠️ Anställningstyp använder gammal taxonomi-version. Välj om från listan.');
-      }
       if (afOccupationCid && !occupationCodes.find(o => o.concept_id === afOccupationCid)) {
         afErrors.push('⚠️ Yrke använder gammal taxonomi-version. Välj om från listan.');
       }

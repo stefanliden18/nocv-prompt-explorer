@@ -1242,8 +1242,12 @@ export default function JobEdit() {
                     <ComboboxField
                       value={afMunicipalityCid || ''}
                       onValueChange={async (value) => {
+                        console.log('🏘️ Kommun onValueChange:', value);
+                        console.log('   - Setting state to:', value);
                         setAfMunicipalityCid(value);
+                        console.log('   - Calling updateJobField...');
                         await updateJobField('af_municipality_cid', value);
+                        console.log('   - Update complete!');
                       }}
                       options={municipalityCodes}
                       placeholder="Välj kommun"

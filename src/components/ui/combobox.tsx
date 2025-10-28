@@ -72,8 +72,8 @@ export function ComboboxField({
               {filteredOptions.map((option) => (
                 <CommandItem
                   key={option.concept_id}
-                  value={option.label.toLowerCase()}
                   onSelect={() => {
+                    console.log('🎯 ComboboxField onSelect:', option.concept_id, option.label);
                     onValueChange(option.concept_id);
                     setSearch("");
                     setOpen(false);

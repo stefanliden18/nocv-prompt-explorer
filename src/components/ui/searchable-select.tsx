@@ -74,7 +74,7 @@ export function SearchableSelect({
               className="h-9"
             />
           </div>
-          <div className="max-h-[300px] overflow-y-auto">
+          <div className="max-h-[300px] overflow-y-auto overscroll-contain">
             {sortedOptions.length === 0 ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 {emptyText}

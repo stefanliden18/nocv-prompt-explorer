@@ -382,6 +382,48 @@ export default function JobForm() {
                     placeholder="slug-genereras-automatiskt"
                   />
                 </div>
+
+                <Separator />
+
+                <div className="flex gap-2 flex-wrap">
+                  <Button 
+                    type="button"
+                    onClick={(e) => {
+                      const form = e.currentTarget.closest('form');
+                      if (form) {
+                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
+                        handleSubmit(formEvent as any, 'draft');
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    {loading ? 'Sparar...' : 'Spara som utkast'}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="default"
+                    onClick={(e) => {
+                      const form = e.currentTarget.closest('form');
+                      if (form) {
+                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
+                        handleSubmit(formEvent as any, 'demo');
+                      }
+                    }}
+                    disabled={loading}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                  >
+                    🎬 Spara som demo-jobb
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/admin/jobs')}
+                  >
+                    Avbryt
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
@@ -568,48 +610,6 @@ export default function JobForm() {
                     )}
                   </div>
                   </div>
-                </div>
-
-                <Separator />
-
-                <div className="flex gap-2 flex-wrap">
-                  <Button 
-                    type="button"
-                    onClick={(e) => {
-                      const form = e.currentTarget.closest('form');
-                      if (form) {
-                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
-                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
-                        handleSubmit(formEvent as any, 'draft');
-                      }
-                    }}
-                    disabled={loading}
-                  >
-                    {loading ? 'Sparar...' : 'Spara som utkast'}
-                  </Button>
-                  <Button 
-                    type="button"
-                    variant="default"
-                    onClick={(e) => {
-                      const form = e.currentTarget.closest('form');
-                      if (form) {
-                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
-                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
-                        handleSubmit(formEvent as any, 'demo');
-                      }
-                    }}
-                    disabled={loading}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
-                  >
-                    🎬 Spara som demo-jobb
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => navigate('/admin/jobs')}
-                  >
-                    Avbryt
-                  </Button>
                 </div>
               </form>
             </CardContent>

@@ -23,6 +23,12 @@ interface Company {
   name: string;
 }
 
+// Helper function to generate unique slug for demo jobs
+const generateDemoSlug = (baseSlug: string) => {
+  const timestamp = Date.now();
+  return `${baseSlug}-demo-${timestamp}`;
+};
+
 export default function JobForm() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -177,6 +183,11 @@ export default function JobForm() {
         }
       }
 
+      // Generate unique slug for demo jobs
+      const finalSlug = targetStatus === 'demo' 
+        ? generateDemoSlug(slug)
+        : slug;
+
       const { data: insertedJob, error } = await supabase
         .from('jobs')
         .insert({
@@ -191,7 +202,7 @@ export default function JobForm() {
           driver_license: driverLicense,
           language: language.trim() || null,
           status: targetStatus,
-          slug: slug,
+          slug: finalSlug,
           publish_at: null,
           created_by: user!.id,
           // AF fields - use concept_ids
@@ -381,6 +392,9 @@ export default function JobForm() {
                     onChange={(e) => setSlug(e.target.value)}
                     placeholder="slug-genereras-automatiskt"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    ℹ️ Demo-jobb får automatiskt ett unikt suffix (t.ex. -demo-1736780123456)
+                  </p>
                 </div>
 
                 <Separator />

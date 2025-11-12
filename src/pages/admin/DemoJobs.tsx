@@ -244,7 +244,11 @@ export default function DemoJobs() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(`/demo/${job.slug}`, '_blank')}
+                        onClick={() => {
+                          const demoUrl = `${window.location.origin}/demo/${job.slug}`;
+                          console.log('[DemoJobs] Opening demo job:', demoUrl);
+                          window.open(demoUrl, '_blank');
+                        }}
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />
                         Visa

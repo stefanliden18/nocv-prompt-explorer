@@ -133,7 +133,7 @@ const DemoJobDetail = () => {
           description: "Ingen slug hittades i URL:en",
           variant: "destructive"
         });
-        navigate('/');
+        navigate('/demo');
         return;
       }
 
@@ -168,19 +168,19 @@ const DemoJobDetail = () => {
           description: `Kunde inte hämta demo-jobb: ${error.message}`,
           variant: "destructive"
         });
-        navigate('/');
+        navigate('/demo');
         return;
       }
       
       if (!data) {
         console.error('[DemoJobDetail] ❌ ERROR: No job found with slug:', slug);
-        console.log('[DemoJobDetail] Redirecting to home...');
+        console.log('[DemoJobDetail] Redirecting to demo...');
         toast({
           title: "Demo-jobb hittades inte",
           description: `Inget demo-jobb finns med sluggen: ${slug}`,
           variant: "destructive"
         });
-        navigate('/');
+        navigate('/demo');
         return;
       }
 
@@ -202,7 +202,7 @@ const DemoJobDetail = () => {
         description: "Kunde inte ladda demo-jobbet. Kontrollera konsolen för mer info.",
         variant: "destructive"
       });
-      navigate('/');
+      navigate('/demo');
     } finally {
       setLoading(false);
     }

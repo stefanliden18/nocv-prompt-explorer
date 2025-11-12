@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
@@ -20,7 +20,7 @@ const NotFound = () => {
           <p className="mb-2 text-2xl font-semibold text-foreground">Sidan hittades inte</p>
           <p className="mb-8 text-muted-foreground">Tyvärr kunde vi inte hitta sidan du letar efter.</p>
           <Button asChild>
-            <a href="/">Tillbaka till startsidan</a>
+            <Link to="/">Tillbaka till startsidan</Link>
           </Button>
         </div>
       </div>

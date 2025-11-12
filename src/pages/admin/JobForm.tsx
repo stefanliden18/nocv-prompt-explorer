@@ -224,22 +224,39 @@ export default function JobForm() {
 
       if (targetStatus === 'demo' && insertedJob) {
         const demoUrl = `${window.location.origin}/demo/${insertedJob.slug}`;
+        
+        // Copy link automatically to clipboard
+        navigator.clipboard.writeText(demoUrl);
+        
         toast.success('Demo-jobb skapat!', {
-          description: `Länk: ${demoUrl}`,
-          duration: 10000,
+          description: (
+            <div className="space-y-2">
+              <p>Jobbet är nu tillgängligt som demo</p>
+              <code className="block p-2 bg-muted rounded text-xs break-all">
+                {demoUrl}
+              </code>
+              <p className="text-xs text-muted-foreground">Länk kopierad till urklipp</p>
+            </div>
+          ),
+          duration: 15000,
           action: {
-            label: 'Kopiera länk',
-            onClick: () => {
-              navigator.clipboard.writeText(demoUrl);
-              toast.success('Länk kopierad!');
-            }
+            label: 'Öppna demo-jobb',
+            onClick: () => window.open(demoUrl, '_blank')
           }
         });
+        
+        // Navigate to demo jobs list after 2 seconds
+        setTimeout(() => {
+          navigate('/admin/demo-jobs');
+        }, 2000);
       } else {
         toast.success('Jobb skapat!');
       }
       
-      navigate('/admin/jobs');
+      // For non-demo jobs, navigate immediately
+      if (targetStatus !== 'demo') {
+        navigate('/admin/jobs');
+      }
     } catch (error: any) {
       console.error('Error creating job:', error);
       toast.error(error.message || 'Kunde inte skapa jobb');

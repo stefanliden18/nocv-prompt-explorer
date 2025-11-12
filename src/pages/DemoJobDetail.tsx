@@ -123,9 +123,12 @@ const DemoJobDetail = () => {
     setLoading(true);
     try {
       if (!slug) {
+        console.log('[DemoJobDetail] No slug provided, redirecting to home');
         navigate('/');
         return;
       }
+
+      console.log('[DemoJobDetail] Fetching demo job with slug:', slug);
 
       const { data, error } = await supabase
         .from('jobs')
@@ -142,16 +145,21 @@ const DemoJobDetail = () => {
         .eq('slug', slug)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[DemoJobDetail] Error fetching job:', error);
+        throw error;
+      }
       
       if (!data) {
+        console.log('[DemoJobDetail] No job found with slug:', slug, 'redirecting to home');
         navigate('/');
         return;
       }
 
+      console.log('[DemoJobDetail] Job found:', data.title);
       setJob(data);
     } catch (error) {
-      console.error('Error fetching demo job:', error);
+      console.error('[DemoJobDetail] Error fetching demo job:', error);
       navigate('/');
     } finally {
       setLoading(false);

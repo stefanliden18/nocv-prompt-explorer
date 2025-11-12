@@ -11,7 +11,8 @@ import {
   LogOut,
   Kanban,
   Shield,
-  Database
+  Database,
+  Film
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Jobb", url: "/admin/jobs", icon: Briefcase },
+  { title: "Demo-jobb", url: "/admin/demo-jobs", icon: Film },
   { title: "Importera jobb", url: "/admin/jobs/import", icon: Upload },
   { title: "Ansökningar", url: "/admin/applications", icon: FileText },
   { title: "Rekryteringstavla", url: "/admin/recruitment-board", icon: Kanban },

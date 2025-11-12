@@ -20,7 +20,7 @@ interface Job {
   id: string;
   title: string;
   city: string;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'published' | 'archived' | 'demo';
   publish_at: string | null;
   created_at: string;
   companies: {
@@ -93,6 +93,10 @@ export default function AdminJobs() {
   };
 
   const getStatusBadge = (job: Job) => {
+    if (job.status === 'demo') {
+      return <Badge className="bg-yellow-500 text-black font-bold">🎬 DEMO</Badge>;
+    }
+    
     if (job.status === 'archived') {
       return <Badge variant="secondary">Arkiverad</Badge>;
     }

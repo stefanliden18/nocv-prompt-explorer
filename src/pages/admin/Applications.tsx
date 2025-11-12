@@ -32,6 +32,7 @@ export default function AdminApplications() {
   const [maxRating, setMaxRating] = useState<number>(5);
   const [selectedTags, setSelectedTags] = useState<any[]>([]);
   const [selectedApplications, setSelectedApplications] = useState<string[]>([]);
+  const [showDemoApplications, setShowDemoApplications] = useState<boolean>(false);
 
   useEffect(() => {
     fetchApplications();
@@ -91,6 +92,11 @@ export default function AdminApplications() {
   };
 
   const filteredApplications = applications.filter(app => {
+    // Demo filter
+    if (!showDemoApplications && app.is_demo) {
+      return false;
+    }
+
     // Status filter
     if (statusFilter !== 'all' && app.status !== statusFilter) {
       return false;
@@ -222,6 +228,28 @@ export default function AdminApplications() {
           }}
         />
 
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-yellow-500 text-black font-bold">🎬 DEMO</Badge>
+                <span className="text-sm font-medium">Visa demo-ansökningar</span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showDemoApplications}
+                  onChange={(e) => setShowDemoApplications(e.target.checked)}
+                  className="h-4 w-4 cursor-pointer"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {showDemoApplications ? 'Visas' : 'Dold'}
+                </span>
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
         {selectedApplications.length > 0 && (
           <Card className="bg-muted/50">
             <CardContent className="py-4">
@@ -308,7 +336,12 @@ export default function AdminApplications() {
                             {format(new Date(app.created_at), 'd MMM yyyy', { locale: sv })}
                           </TableCell>
                           <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
-                            {app.jobs?.title || 'Okänt jobb'}
+                            <div className="flex items-center gap-2">
+                              {app.is_demo && (
+                                <Badge className="bg-yellow-500 text-black font-bold text-xs">DEMO</Badge>
+                              )}
+                              <span>{app.jobs?.title || 'Okänt jobb'}</span>
+                            </div>
                           </TableCell>
                           <TableCell onClick={() => navigate(`/admin/applications/${app.id}`)}>
                             {app.candidate_name}
@@ -370,7 +403,12 @@ export default function AdminApplications() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate">{app.candidate_name}</h3>
-                          <p className="text-sm text-muted-foreground truncate">{app.jobs?.title}</p>
+                          <div className="flex items-center gap-2">
+                            {app.is_demo && (
+                              <Badge className="bg-yellow-500 text-black font-bold text-xs">DEMO</Badge>
+                            )}
+                            <p className="text-sm text-muted-foreground truncate">{app.jobs?.title}</p>
+                          </div>
                         </div>
                         <Checkbox
                           checked={selectedApplications.includes(app.id)}

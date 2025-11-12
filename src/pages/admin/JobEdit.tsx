@@ -72,7 +72,7 @@ export default function JobEdit() {
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
   const [kikuInterviewUrl, setKikuInterviewUrl] = useState('');
-  const [status, setStatus] = useState<'draft' | 'published' | 'archived'>('draft');
+  const [status, setStatus] = useState<'draft' | 'published' | 'archived' | 'demo'>('draft');
   const [publishAt, setPublishAt] = useState<Date | undefined>(undefined);
   const [publishHour, setPublishHour] = useState<string>('09');
   const [publishMinute, setPublishMinute] = useState<string>('00');

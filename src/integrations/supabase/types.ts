@@ -137,6 +137,7 @@ export type Database = {
           interview_link: string | null
           interview_notes: string | null
           interview_scheduled_at: string | null
+          is_demo: boolean
           job_id: string
           message: string | null
           notes: string | null
@@ -157,6 +158,7 @@ export type Database = {
           interview_link?: string | null
           interview_notes?: string | null
           interview_scheduled_at?: string | null
+          is_demo?: boolean
           job_id: string
           message?: string | null
           notes?: string | null
@@ -177,6 +179,7 @@ export type Database = {
           interview_link?: string | null
           interview_notes?: string | null
           interview_scheduled_at?: string | null
+          is_demo?: boolean
           job_id?: string
           message?: string | null
           notes?: string | null
@@ -574,7 +577,7 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       application_status: "new" | "viewed" | "booked" | "rejected"
-      job_status: "draft" | "published" | "archived"
+      job_status: "draft" | "published" | "archived" | "demo"
       profile_role: "recruiter" | "admin" | "user"
     }
     CompositeTypes: {
@@ -705,7 +708,7 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       application_status: ["new", "viewed", "booked", "rejected"],
-      job_status: ["draft", "published", "archived"],
+      job_status: ["draft", "published", "archived", "demo"],
       profile_role: ["recruiter", "admin", "user"],
     },
   },

@@ -19,6 +19,7 @@ interface KanbanCardProps {
     job_id: string;
     interview_scheduled_at?: string | null;
     interview_link?: string | null;
+    is_demo?: boolean;
     jobs?: {
       title: string;
       companies?: {
@@ -116,7 +117,12 @@ export function KanbanCard({ application, tags, stages, onMoveToStage }: KanbanC
         </div>
         
         <div className="flex-1 min-w-0">
-          <h4 className="font-semibold text-xs sm:text-sm mb-1 truncate">{application.candidate_name}</h4>
+          <div className="flex items-center gap-2 mb-1">
+            <h4 className="font-semibold text-xs sm:text-sm truncate">{application.candidate_name}</h4>
+            {application.is_demo && (
+              <Badge className="bg-yellow-500 text-black font-bold text-[10px]">DEMO</Badge>
+            )}
+          </div>
           
           <div className="mb-1.5 sm:mb-2">
             <StarRating 

@@ -50,6 +50,7 @@ export default function RecruitmentBoard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [ratingFilter, setRatingFilter] = useState<string[]>([]);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
+  const [showDemoApplications, setShowDemoApplications] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -210,6 +211,11 @@ export default function RecruitmentBoard() {
   };
 
   const filteredApplications = applications.filter(app => {
+    // Demo filter
+    if (!showDemoApplications && (app as any).is_demo) {
+      return false;
+    }
+
     // Fritextsökning (namn, jobb, företag)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();

@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
+import DemoJobDetail from "./pages/DemoJobDetail";
 import Candidates from "./pages/Candidates";
 import Companies from "./pages/Companies";
 import Contact from "./pages/Contact";
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/jobb/:slug" element={<JobDetail />} />
           <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/demo/:slug" element={<DemoJobDetail />} />
             <Route path="/candidates" element={<Candidates />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/contact" element={<Contact />} />

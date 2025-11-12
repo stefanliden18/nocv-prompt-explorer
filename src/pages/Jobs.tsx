@@ -124,7 +124,8 @@ const Jobs = () => {
           description_md,
           company_id,
           companies (
-            name
+            name,
+            logo_url
           )
         `, { count: 'exact' })
         .eq('status', 'published')
@@ -371,6 +372,17 @@ const Jobs = () => {
                     onClick={() => handleJobDetails(job.slug)}
                   >
                     <CardHeader className="pb-4">
+                      {/* Company Logo */}
+                      {job.companies?.logo_url && (
+                        <div className="mb-3 flex justify-center">
+                          <img 
+                            src={job.companies.logo_url} 
+                            alt={`${job.companies.name} logotyp`}
+                            className="h-12 w-auto object-contain"
+                          />
+                        </div>
+                      )}
+                      
                       <div className="flex justify-between items-start mb-2 gap-2">
                         <CardTitle className="text-xl font-semibold text-foreground font-heading line-clamp-2">
                           {job.title}

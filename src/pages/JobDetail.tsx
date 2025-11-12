@@ -451,6 +451,17 @@ const JobDetail = () => {
             Tillbaka till lediga jobb
           </Button>
           
+          {/* Company Logo */}
+          {job.companies?.logo_url && (
+            <div className="mb-6">
+              <img 
+                src={job.companies.logo_url} 
+                alt={`${job.companies.name} logotyp`}
+                className="h-20 w-auto object-contain bg-white rounded-lg p-3 shadow-md"
+              />
+            </div>
+          )}
+          
           <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3 mb-4">
               {job.category && (

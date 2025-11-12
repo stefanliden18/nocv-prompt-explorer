@@ -103,7 +103,7 @@ export default function JobForm() {
     }
   }, [afEmploymentTypeCid, worktimeExtentCodes]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, targetStatus: 'draft' | 'demo' = 'draft') => {
     e.preventDefault();
     
     // Validation
@@ -177,7 +177,7 @@ export default function JobForm() {
         }
       }
 
-      const { error } = await supabase
+      const { data: insertedJob, error } = await supabase
         .from('jobs')
         .insert({
           title: title.trim(),
@@ -190,7 +190,7 @@ export default function JobForm() {
           requirements_md: requirementsHtml.trim() || null,
           driver_license: driverLicense,
           language: language.trim() || null,
-          status: 'draft',
+          status: targetStatus,
           slug: slug,
           publish_at: null,
           created_by: user!.id,
@@ -205,11 +205,29 @@ export default function JobForm() {
           af_employment_type_cid: afEmploymentTypeCid || null,
           af_duration_cid: afDurationCid || null,
           af_worktime_extent_cid: finalAfWorktimeExtentCid || null,
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      toast.success('Jobb skapat!');
+      if (targetStatus === 'demo' && insertedJob) {
+        const demoUrl = `${window.location.origin}/demo/${insertedJob.slug}`;
+        toast.success('Demo-jobb skapat!', {
+          description: `Länk: ${demoUrl}`,
+          duration: 10000,
+          action: {
+            label: 'Kopiera länk',
+            onClick: () => {
+              navigator.clipboard.writeText(demoUrl);
+              toast.success('Länk kopierad!');
+            }
+          }
+        });
+      } else {
+        toast.success('Jobb skapat!');
+      }
+      
       navigate('/admin/jobs');
     } catch (error: any) {
       console.error('Error creating job:', error);
@@ -554,9 +572,36 @@ export default function JobForm() {
 
                 <Separator />
 
-                <div className="flex gap-2">
-                  <Button type="submit" disabled={loading}>
+                <div className="flex gap-2 flex-wrap">
+                  <Button 
+                    type="button"
+                    onClick={(e) => {
+                      const form = e.currentTarget.closest('form');
+                      if (form) {
+                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
+                        handleSubmit(formEvent as any, 'draft');
+                      }
+                    }}
+                    disabled={loading}
+                  >
                     {loading ? 'Sparar...' : 'Spara som utkast'}
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="default"
+                    onClick={(e) => {
+                      const form = e.currentTarget.closest('form');
+                      if (form) {
+                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
+                        handleSubmit(formEvent as any, 'demo');
+                      }
+                    }}
+                    disabled={loading}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                  >
+                    🎬 Spara som demo-jobb
                   </Button>
                   <Button
                     type="button"

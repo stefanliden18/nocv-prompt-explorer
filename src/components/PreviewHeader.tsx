@@ -3,7 +3,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Eye, X } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { AdminStatusButton } from "./AdminStatusButton";
 
 interface PreviewHeaderProps {
@@ -23,34 +23,34 @@ export const PreviewHeader = ({ jobId }: PreviewHeaderProps) => {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <a href="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <h2 className="text-2xl font-bold font-heading text-primary">
                   NOCV
                 </h2>
-              </a>
+              </Link>
             </div>
 
             {/* Navigation Links - Hidden on mobile, shown on desktop */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="/jobs" className="text-foreground hover:text-primary transition-colors font-medium">
+              <Link to="/jobs" className="text-foreground hover:text-primary transition-colors font-medium">
                 Lediga jobb
-              </a>
-              <a href="/candidates" className="text-foreground hover:text-primary transition-colors font-medium">
+              </Link>
+              <Link to="/candidates" className="text-foreground hover:text-primary transition-colors font-medium">
                 För jobbsökare
-              </a>
-              <a href="/companies" className="text-foreground hover:text-primary transition-colors font-medium">
+              </Link>
+              <Link to="/companies" className="text-foreground hover:text-primary transition-colors font-medium">
                 För företag
-              </a>
-              <a href="/om-oss" className="text-foreground hover:text-primary transition-colors font-medium">
+              </Link>
+              <Link to="/om-oss" className="text-foreground hover:text-primary transition-colors font-medium">
                 Om oss
-              </a>
-              <a href="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
+              </Link>
+              <Link to="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
                 Kontakt
-              </a>
+              </Link>
               {isAdmin && (
-                <a href="/admin" className="text-foreground hover:text-primary transition-colors font-medium">
+                <Link to="/admin" className="text-foreground hover:text-primary transition-colors font-medium">
                   Admin
-                </a>
+                </Link>
               )}
             </div>
 
@@ -75,49 +75,49 @@ export const PreviewHeader = ({ jobId }: PreviewHeaderProps) => {
                 </SheetTrigger>
                 <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                   <nav className="flex flex-col space-y-6 mt-6">
-                    <a 
-                      href="/jobs" 
+                    <Link 
+                      to="/jobs" 
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Lediga jobb
-                    </a>
-                    <a 
-                      href="/candidates" 
+                    </Link>
+                    <Link 
+                      to="/candidates" 
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       För jobbsökare
-                    </a>
-                    <a 
-                      href="/companies" 
+                    </Link>
+                    <Link 
+                      to="/companies" 
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       För företag
-                    </a>
-                    <a 
-                      href="/om-oss" 
+                    </Link>
+                    <Link 
+                      to="/om-oss" 
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Om oss
-                    </a>
-                    <a 
-                      href="/contact" 
+                    </Link>
+                    <Link 
+                      to="/contact" 
                       className="text-lg font-medium text-foreground hover:text-primary transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Kontakt
-                    </a>
+                    </Link>
                     {isAdmin && (
-                      <a 
-                        href="/admin" 
+                      <Link 
+                        to="/admin" 
                         className="text-lg font-medium text-foreground hover:text-primary transition-colors"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
                         Admin
-                      </a>
+                      </Link>
                     )}
                     <div className="pt-4 border-t border-border">
                       <AdminStatusButton />

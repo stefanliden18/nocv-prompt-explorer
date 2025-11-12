@@ -128,8 +128,8 @@ export default function JobForm() {
       return;
     }
 
-    // Validera AF-fält om några är ifyllda
-    if (afEmploymentTypeCid || afOccupationCid || contactPersonName) {
+    // Validera AF-fält endast om det INTE är ett demo-jobb OCH några AF-fält är ifyllda
+    if (targetStatus !== 'demo' && (afEmploymentTypeCid || afOccupationCid || contactPersonName)) {
       if (!contactPersonName.trim()) {
         toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
         return;

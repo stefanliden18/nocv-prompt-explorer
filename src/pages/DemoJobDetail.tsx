@@ -122,13 +122,22 @@ const DemoJobDetail = () => {
   const fetchJob = async () => {
     setLoading(true);
     try {
+      console.log('=== [DemoJobDetail] START ===');
+      console.log('[DemoJobDetail] Current URL:', window.location.href);
+      console.log('[DemoJobDetail] Slug from params:', slug);
+      
       if (!slug) {
-        console.log('[DemoJobDetail] No slug provided, redirecting to home');
+        console.error('[DemoJobDetail] ❌ ERROR: No slug provided');
+        toast({
+          title: "Fel",
+          description: "Ingen slug hittades i URL:en",
+          variant: "destructive"
+        });
         navigate('/');
         return;
       }
 
-      console.log('[DemoJobDetail] Fetching demo job with slug:', slug);
+      console.log('[DemoJobDetail] 🔍 Fetching demo job with slug:', slug);
 
       const { data, error } = await supabase
         .from('jobs')
@@ -143,23 +152,56 @@ const DemoJobDetail = () => {
         `)
         .eq('status', 'demo')
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
+
+      console.log('[DemoJobDetail] 📊 Query result:', { 
+        hasData: !!data, 
+        hasError: !!error,
+        dataTitle: data?.title,
+        errorMessage: error?.message 
+      });
 
       if (error) {
-        console.error('[DemoJobDetail] Error fetching job:', error);
-        throw error;
+        console.error('[DemoJobDetail] ❌ ERROR fetching job:', error);
+        toast({
+          title: "Databasfel",
+          description: `Kunde inte hämta demo-jobb: ${error.message}`,
+          variant: "destructive"
+        });
+        navigate('/');
+        return;
       }
       
       if (!data) {
-        console.log('[DemoJobDetail] No job found with slug:', slug, 'redirecting to home');
+        console.error('[DemoJobDetail] ❌ ERROR: No job found with slug:', slug);
+        console.log('[DemoJobDetail] Redirecting to home...');
+        toast({
+          title: "Demo-jobb hittades inte",
+          description: `Inget demo-jobb finns med sluggen: ${slug}`,
+          variant: "destructive"
+        });
         navigate('/');
         return;
       }
 
-      console.log('[DemoJobDetail] Job found:', data.title);
+      console.log('[DemoJobDetail] ✅ SUCCESS: Job found!');
+      console.log('[DemoJobDetail] Job title:', data.title);
+      console.log('[DemoJobDetail] Job company:', data.companies?.name);
+      console.log('=== [DemoJobDetail] END ===');
+      
       setJob(data);
-    } catch (error) {
-      console.error('[DemoJobDetail] Error fetching demo job:', error);
+    } catch (error: any) {
+      console.error('[DemoJobDetail] ⚠️ EXCEPTION caught:', error);
+      console.error('[DemoJobDetail] Error details:', {
+        message: error?.message,
+        name: error?.name,
+        stack: error?.stack
+      });
+      toast({
+        title: "Ett oväntat fel uppstod",
+        description: "Kunde inte ladda demo-jobbet. Kontrollera konsolen för mer info.",
+        variant: "destructive"
+      });
       navigate('/');
     } finally {
       setLoading(false);

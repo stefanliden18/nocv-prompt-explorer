@@ -245,9 +245,25 @@ export default function DemoJobs() {
                         variant="outline"
                         size="sm"
                         onClick={() => {
+                          console.log('=== [DemoJobs] CLICK on Visa ===');
+                          console.log('[DemoJobs] Job slug:', job.slug);
+                          console.log('[DemoJobs] Job title:', job.title);
+                          console.log('[DemoJobs] window.location.origin:', window.location.origin);
+                          
                           const demoUrl = `${window.location.origin}/demo/${job.slug}`;
-                          console.log('[DemoJobs] Opening demo job:', demoUrl);
-                          window.open(demoUrl, '_blank');
+                          console.log('[DemoJobs] Full demo URL:', demoUrl);
+                          console.log('[DemoJobs] Opening in new tab...');
+                          
+                          const newWindow = window.open(demoUrl, '_blank');
+                          
+                          if (!newWindow) {
+                            console.error('[DemoJobs] ❌ Failed to open new window');
+                            toast.error("Kunde inte öppna nytt fönster");
+                          } else {
+                            console.log('[DemoJobs] ✅ New window opened successfully');
+                          }
+                          
+                          console.log('=== [DemoJobs] END ===');
                         }}
                       >
                         <ExternalLink className="h-4 w-4 mr-1" />

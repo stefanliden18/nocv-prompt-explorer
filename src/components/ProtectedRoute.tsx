@@ -1,4 +1,4 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,10 +41,10 @@ export default function ProtectedRoute({ children, requireAdmin = false }: Prote
           </div>
           <div className="flex flex-col gap-3">
             <Button asChild>
-              <a href="/">Tillbaka till startsidan</a>
+              <Link to="/">Tillbaka till startsidan</Link>
             </Button>
             <Button variant="outline" asChild>
-              <a href="/auth">Logga in med annat konto</a>
+              <Link to="/auth">Logga in med annat konto</Link>
             </Button>
           </div>
         </div>

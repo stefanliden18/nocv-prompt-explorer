@@ -260,6 +260,10 @@ export default function JobEdit() {
   };
 
   const getStatusBadge = () => {
+    if (status === 'demo') {
+      return <Badge className="bg-yellow-500 text-black font-bold">🎬 DEMO</Badge>;
+    }
+    
     if (status === 'archived') {
       return <Badge variant="secondary">Arkiverad</Badge>;
     }
@@ -276,7 +280,7 @@ export default function JobEdit() {
     return <Badge variant="secondary">Utkast</Badge>;
   };
 
-  const updateJob = async (newStatus?: 'draft' | 'published' | 'archived') => {
+  const updateJob = async (newStatus?: 'draft' | 'published' | 'archived' | 'demo') => {
     if (!title.trim() || !city.trim() || !category.trim() || !descriptionHtml.trim() || !companyId) {
       toast.error('Fyll i alla obligatoriska fält');
       return;
@@ -427,6 +431,18 @@ export default function JobEdit() {
   };
   
   const handleArchive = () => updateJob('archived');
+
+  const handleSetDemo = () => {
+    if (window.confirm('Är du säker på att du vill sätta detta jobb som demo? Detta gör jobbet tillgängligt på /demo/{slug} och markerar alla ansökningar som demo-ansökningar.')) {
+      updateJob('demo');
+    }
+  };
+
+  const handleUnsetDemo = () => {
+    if (window.confirm('Är du säker på att du vill ta bort demo-status? Detta kommer inte ta bort befintliga demo-ansökningar.')) {
+      updateJob('draft');
+    }
+  };
 
   const handlePreview = () => {
     if (id) {
@@ -731,14 +747,17 @@ export default function JobEdit() {
     const isDraft = status === 'draft';
     const isPublished = status === 'published';
     const isArchived = status === 'archived';
+    const isDemo = status === 'demo';
 
     return {
       save: !isArchived,
       preview: true,
-      publish: !isPublished && !isArchived,
-      schedule: !isPublished && !isArchived,
+      publish: !isPublished && !isArchived && !isDemo,
+      schedule: !isPublished && !isArchived && !isDemo,
       unpublish: isPublished,
-      archive: !isArchived,
+      archive: !isArchived && !isDemo,
+      setDemo: !isDemo && !isArchived,
+      unsetDemo: isDemo,
     };
   };
 
@@ -840,6 +859,26 @@ export default function JobEdit() {
               <Archive className="h-4 w-4 mr-2" />
               Arkivera
             </Button>
+
+            {buttons.setDemo && (
+              <Button
+                onClick={handleSetDemo}
+                disabled={loading}
+                className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+              >
+                🎬 Sätt som demo
+              </Button>
+            )}
+
+            {buttons.unsetDemo && (
+              <Button
+                onClick={handleUnsetDemo}
+                disabled={loading}
+                variant="outline"
+              >
+                Ta bort demo-status
+              </Button>
+            )}
             
             {/* DEBUG BUTTON */}
             <Button

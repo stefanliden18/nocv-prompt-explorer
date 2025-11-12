@@ -5,6 +5,7 @@ import { StageManagementDialog } from '@/components/StageManagementDialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { MultiSelect, MultiSelectWithBadges, type MultiSelectOption } from '@/components/ui/multi-select';
 import { AIChat } from '@/components/AIChat';
 import { supabase } from '@/integrations/supabase/client';
@@ -387,6 +388,31 @@ export default function RecruitmentBoard() {
               </Button>
             )}
           </div>
+
+          {/* Demo-filter */}
+          <Card className="bg-muted/50">
+            <CardContent className="py-3 px-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="bg-yellow-500/10 text-yellow-700 border-yellow-500/20">
+                  🎬 DEMO
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Visa demo-ansökningar
+                </span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showDemoApplications}
+                  onChange={(e) => setShowDemoApplications(e.target.checked)}
+                  className="h-4 w-4 rounded border-border"
+                />
+                <span className="text-sm">
+                  {showDemoApplications ? 'Visa' : 'Dölj'}
+                </span>
+              </label>
+            </CardContent>
+          </Card>
         </div>
 
         <KanbanBoard

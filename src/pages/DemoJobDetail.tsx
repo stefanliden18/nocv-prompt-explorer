@@ -351,6 +351,11 @@ const DemoJobDetail = () => {
     }
   };
 
+  const handleBackNavigation = () => {
+    // Force navigation to /demo with replace to avoid back button issues
+    navigate('/demo', { replace: true });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
@@ -395,7 +400,7 @@ const DemoJobDetail = () => {
           <Button
             variant="ghost"
             className="mb-6 text-white hover:bg-white/10"
-            onClick={() => navigate("/demo")}
+            onClick={handleBackNavigation}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Tillbaka

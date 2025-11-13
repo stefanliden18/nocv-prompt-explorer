@@ -134,43 +134,8 @@ export default function JobForm() {
       return;
     }
 
-    // Validera AF-fält endast om det INTE är ett demo-jobb OCH några AF-fält är ifyllda
-    if (targetStatus !== 'demo' && (afEmploymentTypeCid || afOccupationCid || contactPersonName)) {
-      if (!contactPersonName.trim()) {
-        toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!contactPersonEmail.trim()) {
-        toast.error('Kontaktperson e-post är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!contactPersonPhone.trim()) {
-        toast.error('Kontaktperson telefon är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!lastApplicationDate) {
-        toast.error('Sista ansökningsdag är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!afOccupationCid) {
-        toast.error('Yrke är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!afMunicipalityCid) {
-        toast.error('Kommun är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!afEmploymentTypeCid) {
-        toast.error('Anställningstyp är obligatoriskt för AF-publicering');
-        return;
-      }
-      
-      // Extra validering för Vanlig anställning
-      if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
-        toast.error('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
-        return;
-      }
-    }
+    // AF-fält är helt valfria - ingen validering vid sparande
+    // Validering sker endast när man aktivt publicerar till AF
 
     setLoading(true);
     try {
@@ -462,16 +427,19 @@ export default function JobForm() {
           {/* AF Fields Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Arbetsförmedlingen (AF) - Fält</CardTitle>
-              <CardDescription>Fyll i information för publicering på AF</CardDescription>
+              <CardTitle>Arbetsförmedlingen (valfritt)</CardTitle>
+              <CardDescription>
+                Fyll endast i dessa fält om du planerar att publicera jobbet på Arbetsförmedlingen. 
+                Alla fält är valfria för vanliga jobb och demo-jobb.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Kontaktperson */}
                 <div className="space-y-4">
-                  <h4 className="font-semibold text-sm">Kontaktperson *</h4>
+                  <h4 className="font-semibold text-sm">Kontaktperson</h4>
                   <div>
-                    <Label htmlFor="contact_person_name">Namn *</Label>
+                    <Label htmlFor="contact_person_name">Namn</Label>
                     <Input
                       id="contact_person_name"
                       value={contactPersonName}
@@ -480,7 +448,7 @@ export default function JobForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact_person_email">E-post *</Label>
+                    <Label htmlFor="contact_person_email">E-post</Label>
                     <Input
                       id="contact_person_email"
                       type="email"
@@ -490,7 +458,7 @@ export default function JobForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact_person_phone">Telefon *</Label>
+                    <Label htmlFor="contact_person_phone">Telefon</Label>
                     <Input
                       id="contact_person_phone"
                       type="tel"
@@ -506,7 +474,7 @@ export default function JobForm() {
                 {/* Datum och antal platser */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="last_application_date">Sista ansökningsdag *</Label>
+                    <Label htmlFor="last_application_date">Sista ansökningsdag</Label>
                     <Input
                       id="last_application_date"
                       type="date"
@@ -515,7 +483,7 @@ export default function JobForm() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="total_positions">Antal platser *</Label>
+                    <Label htmlFor="total_positions">Antal platser</Label>
                     <Input
                       id="total_positions"
                       type="number"
@@ -543,7 +511,7 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_occupation_cid">Yrke *</Label>
+                    <Label htmlFor="af_occupation_cid">Yrke (endast vid AF-publicering)</Label>
                     <SearchableSelect
                       value={afOccupationCid}
                       onValueChange={setAfOccupationCid}
@@ -555,7 +523,7 @@ export default function JobForm() {
                   </div>
 
                   <div>
-                    <Label htmlFor="af_municipality_cid">Kommun *</Label>
+                    <Label htmlFor="af_municipality_cid">Kommun (endast vid AF-publicering)</Label>
                     <SearchableSelect
                       value={afMunicipalityCid}
                       onValueChange={setAfMunicipalityCid}
@@ -569,7 +537,7 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_employment_type_cid">Anställningstyp *</Label>
+                    <Label htmlFor="af_employment_type_cid">Anställningstyp (endast vid AF-publicering)</Label>
                     <SearchableSelect
                       value={afEmploymentTypeCid}
                       onValueChange={(value) => {
@@ -621,7 +589,7 @@ export default function JobForm() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_duration_cid">Varaktighet *</Label>
+                    <Label htmlFor="af_duration_cid">Varaktighet (endast vid AF-publicering)</Label>
                     <SearchableSelect
                       value={afDurationCid}
                       onValueChange={setAfDurationCid}

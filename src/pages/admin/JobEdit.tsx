@@ -323,43 +323,7 @@ export default function JobEdit() {
       }
     }
 
-    // Validera AF-fält om några är ifyllda (för vanlig publicering utan AF) OCH inte demo
-    if (!afPublished && newStatus !== 'demo' && status !== 'demo' && (afEmploymentTypeCid || afOccupationCid || contactPersonName)) {
-      if (!contactPersonName.trim()) {
-        toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!contactPersonEmail.trim()) {
-        toast.error('Kontaktperson e-post är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!contactPersonPhone.trim()) {
-        toast.error('Kontaktperson telefon är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!lastApplicationDate) {
-        toast.error('Sista ansökningsdag är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!afOccupationCid) {
-        toast.error('Yrke är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!afMunicipalityCid) {
-        toast.error('Kommun är obligatoriskt för AF-publicering');
-        return;
-      }
-      if (!afEmploymentTypeCid) {
-        toast.error('Anställningstyp är obligatoriskt för AF-publicering');
-        return;
-      }
-      
-      // Extra validering för Vanlig anställning
-      if (afEmploymentTypeCid === 'PFZr_Syz_cUq' && !afWorktimeExtentCid) {
-        toast.error('Arbetstidsomfattning (Heltid/Deltid) är obligatoriskt för Vanlig anställning');
-        return;
-      }
-    }
+    // AF-fält är helt valfria - validering sker endast vid faktisk publicering till AF
 
     setLoading(true);
     try {
@@ -1196,10 +1160,10 @@ export default function JobEdit() {
             <CardContent className="space-y-4">
               {/* Kontaktuppgifter */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm">Kontaktuppgifter *</h4>
+                <h4 className="font-semibold text-sm">Kontaktuppgifter</h4>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="contact_person_name">Kontaktperson *</Label>
+                    <Label htmlFor="contact_person_name">Kontaktperson</Label>
                     <Input
                       id="contact_person_name"
                       value={contactPersonName}
@@ -1208,7 +1172,7 @@ export default function JobEdit() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact_person_email">E-post *</Label>
+                    <Label htmlFor="contact_person_email">E-post</Label>
                     <Input
                       id="contact_person_email"
                       type="email"
@@ -1218,7 +1182,7 @@ export default function JobEdit() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="contact_person_phone">Telefon *</Label>
+                    <Label htmlFor="contact_person_phone">Telefon</Label>
                     <Input
                       id="contact_person_phone"
                       value={contactPersonPhone}
@@ -1232,7 +1196,7 @@ export default function JobEdit() {
               {/* Grundläggande AF-fält */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="last_application_date">Sista ansökningsdag *</Label>
+                  <Label htmlFor="last_application_date">Sista ansökningsdag (endast vid AF-publicering)</Label>
                   <Input
                     id="last_application_date"
                     type="date"
@@ -1241,7 +1205,7 @@ export default function JobEdit() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="total_positions">Antal platser *</Label>
+                  <Label htmlFor="total_positions">Antal platser (endast vid AF-publicering)</Label>
                   <Input
                     id="total_positions"
                     type="number"
@@ -1254,7 +1218,7 @@ export default function JobEdit() {
 
               {/* AF Taxonomi-dropdowns */}
               <div className="space-y-4">
-                <h4 className="font-semibold text-sm">Arbetsförmedlingens taxonomi *</h4>
+                <h4 className="font-semibold text-sm">Arbetsförmedlingens taxonomi (valfritt)</h4>
                 
                 <Alert className="mb-4">
                   <AlertDescription className="text-sm">
@@ -1269,8 +1233,8 @@ export default function JobEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_occupation_code" className="text-red-600">
-                      Yrke * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
+                    <Label htmlFor="af_occupation_code">
+                      Yrke <span className="text-xs text-muted-foreground">(endast vid AF-publicering)</span>
                     </Label>
                     <SearchableSelect
                       value={afOccupationCid || ''}
@@ -1286,8 +1250,8 @@ export default function JobEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="af_municipality_code" className="text-red-600">
-                      Kommun * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
+                    <Label htmlFor="af_municipality_code">
+                      Kommun <span className="text-xs text-muted-foreground">(endast vid AF-publicering)</span>
                     </Label>
                     <SearchableSelect
                       value={afMunicipalityCid || ''}
@@ -1305,8 +1269,8 @@ export default function JobEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="af_employment_type_code" className="text-red-600">
-                      Anställningstyp * <span className="text-xs text-muted-foreground">(Obligatoriskt för AF)</span>
+                    <Label htmlFor="af_employment_type_code">
+                      Anställningstyp <span className="text-xs text-muted-foreground">(endast vid AF-publicering)</span>
                     </Label>
                     <div className="relative">
                       <SearchableSelect
@@ -1332,10 +1296,10 @@ export default function JobEdit() {
                   {/* Arbetstidsomfattning - Dölj för behovsanställning */}
                   {afEmploymentTypeCid !== '1paU_aCR_nGn' && (
                     <div>
-                      <Label htmlFor="af_worktime_extent_code" className={afEmploymentTypeCid === 'kpPX_CNN_gDU' ? 'text-red-600' : ''}>
-                        Arbetstidsomfattning {afEmploymentTypeCid === 'kpPX_CNN_gDU' ? '*' : ''}
+                      <Label htmlFor="af_worktime_extent_code">
+                        Arbetstidsomfattning
                         {afEmploymentTypeCid === 'kpPX_CNN_gDU' && (
-                          <span className="text-xs text-muted-foreground ml-1">(Obligatoriskt för vanlig anställning)</span>
+                          <span className="text-xs text-muted-foreground ml-1">(endast vid AF-publicering)</span>
                         )}
                       </Label>
                       
@@ -1369,7 +1333,7 @@ export default function JobEdit() {
                   {/* Varaktighet - Visa alltid men disabled för vanlig anställning */}
                   <div>
                     <Label htmlFor="af_duration_code">
-                      Varaktighet *
+                      Varaktighet (endast vid AF-publicering)
                     </Label>
                     <div className="relative">
                       <SearchableSelect
@@ -1485,7 +1449,8 @@ export default function JobEdit() {
               {!afPublished && (
                 <Alert>
                   <AlertDescription className="text-sm">
-                    💡 <strong>Tips:</strong> Fyll i alla obligatoriska fält (*) innan du publicerar. 
+                    💡 <strong>Tips:</strong> AF-fälten behöver endast fyllas i om du vill publicera jobbet på Arbetsförmedlingen. 
+                    När du klickar på "Publicera på Arbetsförmedlingen" valideras alla nödvändiga fält automatiskt.
                     Annonsen måste vara publicerad i NOCV först.
                   </AlertDescription>
                 </Alert>

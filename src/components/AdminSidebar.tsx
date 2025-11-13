@@ -11,7 +11,6 @@ import {
   LogOut,
   Kanban,
   Shield,
-  Database,
   Film
 } from "lucide-react";
 import {
@@ -36,7 +35,6 @@ const menuItems = [
   { title: "Rekryteringstavla", url: "/admin/recruitment-board", icon: Kanban },
   { title: "Företag", url: "/admin/companies", icon: Building2 },
   { title: "Användare", url: "/admin/users", icon: Users },
-  { title: "Taxonomi-data", url: "/admin/taxonomy", icon: Database },
   { title: "Händelselogg", url: "/admin/activity", icon: Activity },
   { title: "Redigera Om oss", url: "/admin/about/edit", icon: FileEdit },
   { title: "Redigera Kontakt", url: "/admin/contact/edit", icon: FileEdit },

@@ -32,27 +32,3 @@ verify_jwt = false
 
 [functions.send-nocv-tip]
 verify_jwt = false
-
-[functions.sync-af-taxonomy]
-verify_jwt = true
-
-[functions.publish-to-af]
-verify_jwt = true
-
-[functions.update-af-ad]
-verify_jwt = true
-
-[functions.unpublish-af-ad]
-verify_jwt = true
-
-[functions.reset-af-taxonomy]
-verify_jwt = false
-
-[functions.fetch-af-taxonomy]
-verify_jwt = false
-
-[functions.diagnose-af-taxonomy]
-verify_jwt = false
-
-[functions.test-af-partner-concepts]
-verify_jwt = false

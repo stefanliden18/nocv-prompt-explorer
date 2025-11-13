@@ -3,18 +3,13 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Eye, Upload, RefreshCw } from 'lucide-react';
+import { Plus, Edit, Eye, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { utcToStockholm, nowInStockholm, stockholmToUTC } from '@/lib/timezone';
-
-interface TaxonomyResult {
-  type: string;
-  count: number;
-}
 
 interface Job {
   id: string;
@@ -64,33 +59,6 @@ export default function AdminJobs() {
     }
   };
 
-  const handleSyncTaxonomy = async () => {
-    const loadingToast = toast.loading('Synkroniserar AF-taxonomi version 16 från Jobtech API...');
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-af-taxonomy');
-      
-      if (error) throw error;
-      
-      const results = data.results as TaxonomyResult[];
-      
-      const occupations = results.find(r => r.type === 'occupation-name')?.count || 0;
-      const municipalities = results.find(r => r.type === 'municipality')?.count || 0;
-      const employmentTypes = results.find(r => r.type === 'employment-type')?.count || 0;
-      const durations = results.find(r => r.type === 'duration')?.count || 0;
-      const worktimeExtents = results.find(r => r.type === 'worktime-extent')?.count || 0;
-      
-      toast.success(
-        `✅ Taxonomi uppdaterad till version 16!\n\nYrkeskoder: ${occupations}\nKommunkoder: ${municipalities}\nAnställningstyper: ${employmentTypes} (inkl. "Tillsvidareanställning")\nVaraktighet: ${durations}\nArbetstid: ${worktimeExtents}`,
-        { id: loadingToast, duration: 6000 }
-      );
-      
-      // Refresh jobs list after sync to reflect any changes
-      fetchJobs();
-    } catch (error: any) {
-      console.error('Error syncing taxonomy:', error);
-      toast.error('Kunde inte synka taxonomi: ' + error.message, { id: loadingToast });
-    }
-  };
 
   const getStatusBadge = (job: Job) => {
     if (job.status === 'demo') {
@@ -122,10 +90,6 @@ export default function AdminJobs() {
             <p className="text-muted-foreground">Hantera jobbannonser</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleSyncTaxonomy}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Synka Taxonomy (Version 16)
-            </Button>
             <Button variant="outline" onClick={() => navigate('/admin/jobs/import')}>
               <Upload className="h-4 w-4 mr-2" />
               Importera CSV

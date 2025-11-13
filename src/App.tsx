@@ -34,7 +34,6 @@ import AboutEdit from "./pages/admin/AboutEdit";
 import ContactEdit from "./pages/admin/ContactEdit";
 import CompaniesEdit from "./pages/admin/CompaniesEdit";
 import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
-import TaxonomyManager from "./pages/admin/TaxonomyManager";
 
 const queryClient = new QueryClient();
 
@@ -197,14 +196,6 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <GDPRPolicyEdit />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/taxonomy" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <TaxonomyManager />
                 </ProtectedRoute>
               } 
             />

@@ -44,33 +44,6 @@ export type Database = {
         }
         Relationships: []
       }
-      af_taxonomy: {
-        Row: {
-          concept_id: string
-          is_common: boolean | null
-          label: string
-          type: string
-          updated_at: string | null
-          version: number
-        }
-        Insert: {
-          concept_id: string
-          is_common?: boolean | null
-          label: string
-          type: string
-          updated_at?: string | null
-          version: number
-        }
-        Update: {
-          concept_id?: string
-          is_common?: boolean | null
-          label?: string
-          type?: string
-          updated_at?: string | null
-          version?: number
-        }
-        Relationships: []
-      }
       application_tag_relations: {
         Row: {
           application_id: string
@@ -283,17 +256,6 @@ export type Database = {
       }
       jobs: {
         Row: {
-          af_ad_id: string | null
-          af_duration_cid: string | null
-          af_employment_type_cid: string | null
-          af_error: string | null
-          af_last_sync: string | null
-          af_municipality_cid: string | null
-          af_occupation_cid: string | null
-          af_published: boolean | null
-          af_published_at: string | null
-          af_wage_type_code: string | null
-          af_worktime_extent_cid: string | null
           category: string | null
           city: string | null
           company_id: string
@@ -319,17 +281,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          af_ad_id?: string | null
-          af_duration_cid?: string | null
-          af_employment_type_cid?: string | null
-          af_error?: string | null
-          af_last_sync?: string | null
-          af_municipality_cid?: string | null
-          af_occupation_cid?: string | null
-          af_published?: boolean | null
-          af_published_at?: string | null
-          af_wage_type_code?: string | null
-          af_worktime_extent_cid?: string | null
           category?: string | null
           city?: string | null
           company_id: string
@@ -355,17 +306,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          af_ad_id?: string | null
-          af_duration_cid?: string | null
-          af_employment_type_cid?: string | null
-          af_error?: string | null
-          af_last_sync?: string | null
-          af_municipality_cid?: string | null
-          af_occupation_cid?: string | null
-          af_published?: boolean | null
-          af_published_at?: string | null
-          af_wage_type_code?: string | null
-          af_worktime_extent_cid?: string | null
           category?: string | null
           city?: string | null
           company_id?: string
@@ -397,41 +337,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "companies"
             referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "jobs_duration_fk"
-            columns: ["af_duration_cid"]
-            isOneToOne: false
-            referencedRelation: "af_taxonomy"
-            referencedColumns: ["concept_id"]
-          },
-          {
-            foreignKeyName: "jobs_emp_type_fk"
-            columns: ["af_employment_type_cid"]
-            isOneToOne: false
-            referencedRelation: "af_taxonomy"
-            referencedColumns: ["concept_id"]
-          },
-          {
-            foreignKeyName: "jobs_muni_fk"
-            columns: ["af_municipality_cid"]
-            isOneToOne: false
-            referencedRelation: "af_taxonomy"
-            referencedColumns: ["concept_id"]
-          },
-          {
-            foreignKeyName: "jobs_occ_fk"
-            columns: ["af_occupation_cid"]
-            isOneToOne: false
-            referencedRelation: "af_taxonomy"
-            referencedColumns: ["concept_id"]
-          },
-          {
-            foreignKeyName: "jobs_wte_fk"
-            columns: ["af_worktime_extent_cid"]
-            isOneToOne: false
-            referencedRelation: "af_taxonomy"
-            referencedColumns: ["concept_id"]
           },
         ]
       }

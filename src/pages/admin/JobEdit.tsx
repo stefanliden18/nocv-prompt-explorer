@@ -286,8 +286,8 @@ export default function JobEdit() {
       return;
     }
 
-    // STRIKT validering om AF-publicering är aktiverad
-    if (afPublished) {
+    // STRIKT validering om AF-publicering är aktiverad OCH det inte är ett demo-jobb
+    if (afPublished && newStatus !== 'demo' && status !== 'demo') {
       const afErrors = [];
       if (!afOccupationCid) afErrors.push('Yrke måste väljas för AF-publicering');
       if (!afMunicipalityCid) afErrors.push('Kommun måste väljas för AF-publicering');
@@ -323,8 +323,8 @@ export default function JobEdit() {
       }
     }
 
-    // Validera AF-fält om några är ifyllda (för vanlig publicering utan AF)
-    if (!afPublished && (afEmploymentTypeCid || afOccupationCid || contactPersonName)) {
+    // Validera AF-fält om några är ifyllda (för vanlig publicering utan AF) OCH inte demo
+    if (!afPublished && newStatus !== 'demo' && status !== 'demo' && (afEmploymentTypeCid || afOccupationCid || contactPersonName)) {
       if (!contactPersonName.trim()) {
         toast.error('Kontaktperson namn är obligatoriskt för AF-publicering');
         return;
@@ -399,6 +399,15 @@ export default function JobEdit() {
 
       if (newStatus) {
         updateData.status = newStatus;
+        
+        // Om jobbet sätts som demo, rensa AF-kopplingar
+        if (newStatus === 'demo') {
+          updateData.af_published = false;
+          updateData.af_ad_id = null;
+          updateData.af_published_at = null;
+          updateData.af_error = null;
+          updateData.af_last_sync = null;
+        }
       }
 
       const { error } = await supabase
@@ -1169,11 +1178,12 @@ export default function JobEdit() {
             </CardContent>
           </Card>
 
-          {/* Arbetsförmedlingen Integration Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                📤 Arbetsförmedlingen
+          {/* Arbetsförmedlingen Integration Section - Dölj för demo-jobb */}
+          {status !== 'demo' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  📤 Arbetsförmedlingen
                 {afPublished && (
                   <Badge variant="default" className="bg-green-600">Publicerad</Badge>
                 )}
@@ -1482,6 +1492,7 @@ export default function JobEdit() {
               )}
             </CardContent>
           </Card>
+          )}
 
           {/* AF Taxonomy Debug Panel */}
           {isDebugEnabled && (

@@ -415,9 +415,6 @@ export function CompanyForm({ open, onOpenChange, onSuccess, company }: CompanyF
 
             <div className="border-t pt-4 mt-4">
               <h3 className="font-semibold mb-4">Adressinformation</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Krävs för publicering till Arbetsförmedlingen
-              </p>
               
               <div className="space-y-4">
                 <FormField

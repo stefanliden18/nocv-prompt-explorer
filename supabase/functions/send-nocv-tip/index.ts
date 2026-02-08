@@ -68,7 +68,7 @@ const getEmailContent = (
 
   if (category === "jobseeker") {
     return {
-      subject: `${senderName} tipsar om NOCV - hitta ditt nästa jobb`,
+      subject: `${senderName} tipsar: Slipp CV:t - testa dina kunskaper!`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -91,16 +91,16 @@ const getEmailContent = (
       ${personalMessageHtml}
       
       <div class="highlight-box">
-        <h2 style="margin-top: 0; color: #1a365d;">🎯 Vad är NOCV?</h2>
-        <p>NOCV är Sveriges modernaste sätt att söka jobb inom industri och teknik - helt utan CV.</p>
+        <h2 style="margin-top: 0; color: #1a365d;">🎯 Slipp CV:t - sök jobb genom kunskapsfrågor</h2>
+        <p>Sök jobb genom att svara på kunskapsfrågor under 5-10 minuter. Testa om du når över 50% rätt! :)</p>
       </div>
       
       <div class="benefits">
         <h3 style="margin-top: 0; color: #1a365d;">✨ Fördelar för dig:</h3>
-        <div class="benefit-item">✅ <strong>Sök jobb på 2 minuter</strong> - Inget CV behövs</div>
-        <div class="benefit-item">✅ <strong>Boka AI-intervju direkt</strong> - Med GetKiku-teknologi</div>
-        <div class="benefit-item">✅ <strong>Fokus på dina färdigheter</strong> - Inte papper</div>
-        <div class="benefit-item">✅ <strong>Snabb process</strong> - Från ansökan till jobb</div>
+        <div class="benefit-item">✅ <strong>Inga dokument</strong> - Glöm CV och personligt brev</div>
+        <div class="benefit-item">✅ <strong>Kunskapsfrågor</strong> - Visa vad du kan på 5-10 min</div>
+        <div class="benefit-item">✅ <strong>Testa dig själv</strong> - Nå över 50% och sök jobbet</div>
+        <div class="benefit-item">✅ <strong>Fokus på kunskap</strong> - Inte på papper</div>
       </div>
       
       <div style="text-align: center;">
@@ -128,7 +128,7 @@ const getEmailContent = (
 
   if (category === "recruiter") {
     return {
-      subject: `${senderName} tipsar om NOCV - modern rekryteringslösning`,
+      subject: `${senderName} tipsar: Rekrytera snabbare utan dokument`,
       html: `
 <!DOCTYPE html>
 <html>
@@ -151,17 +151,16 @@ const getEmailContent = (
       ${personalMessageHtml}
       
       <div class="highlight-box">
-        <h2 style="margin-top: 0; color: #1a365d;">🚀 NOCV för företag</h2>
-        <p>Revolutionera er rekrytering med CV-fritt och AI-driven matchning.</p>
+        <h2 style="margin-top: 0; color: #1a365d;">🚀 Rekrytera snabbare - helt utan dokument</h2>
+        <p>NOCV eliminerar CV-granskning och fokuserar på det som spelar roll: rätt kompetens för jobbet.</p>
       </div>
       
       <div class="benefits">
         <h3 style="margin-top: 0; color: #1a365d;">✨ Fördelar:</h3>
-        <div class="benefit-item">✅ <strong>Hitta rätt kandidater snabbare</strong> - AI-matchning</div>
-        <div class="benefit-item">✅ <strong>Minska time-to-hire</strong> - Upp till 40% snabbare</div>
-        <div class="benefit-item">✅ <strong>Automatiserad screening</strong> - Med GetKiku-teknologi</div>
-        <div class="benefit-item">✅ <strong>Fokus på kompetens</strong> - Inte bakgrund</div>
-        <div class="benefit-item">✅ <strong>Kanban-baserad pipeline</strong> - Enkel översikt</div>
+        <div class="benefit-item">✅ <strong>Inga CV att granska</strong> - Spara upp till 50% av tiden på varje rekrytering</div>
+        <div class="benefit-item">✅ <strong>Kunskapsbaserade frågor</strong> - Mäter verklig kompetens</div>
+        <div class="benefit-item">✅ <strong>Hög träffsäkerhet</strong> - Rätt kandidater redan från start</div>
+        <div class="benefit-item">✅ <strong>Snabbare till anställning</strong> - Ingen dokumenthantering</div>
       </div>
       
       <div style="text-align: center;">

@@ -48,6 +48,7 @@ export function CustomerInterviewForm() {
     salaryRange: ''
   });
   const [profileValues, setProfileValues] = useState<RequirementProfile['values']>({});
+  const [sectionNotes, setSectionNotes] = useState<Record<string, string>>({});
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['requirement-templates-active'],
@@ -82,6 +83,9 @@ export function CustomerInterviewForm() {
         if (data.profile?.values) {
           setProfileValues(data.profile.values);
         }
+        if (data.profile?.section_notes) {
+          setSectionNotes(data.profile.section_notes);
+        }
       } catch (e) {
         console.error('Error loading draft:', e);
       }
@@ -93,12 +97,14 @@ export function CustomerInterviewForm() {
     if (selectedTemplate) {
       const savedData = localStorage.getItem(STORAGE_KEY);
       let savedValues: RequirementProfile['values'] | null = null;
+      let savedNotes: Record<string, string> | null = null;
       
       if (savedData) {
         try {
           const data: InterviewData = JSON.parse(savedData);
           if (data.templateId === selectedTemplateId && data.profile?.values) {
             savedValues = data.profile.values;
+            savedNotes = data.profile.section_notes || null;
           }
         } catch (e) {
           console.error('Error parsing saved data:', e);
@@ -107,15 +113,19 @@ export function CustomerInterviewForm() {
 
       if (savedValues) {
         setProfileValues(savedValues);
+        setSectionNotes(savedNotes || {});
       } else {
         const initialValues: RequirementProfile['values'] = {};
+        const initialNotes: Record<string, string> = {};
         selectedTemplate.template_data.sections.forEach(section => {
           initialValues[section.key] = {};
+          initialNotes[section.key] = '';
           section.fields.forEach(field => {
             initialValues[section.key][field.key] = getDefaultValue(field);
           });
         });
         setProfileValues(initialValues);
+        setSectionNotes(initialNotes);
       }
     }
   }, [selectedTemplateId, selectedTemplate]);
@@ -162,7 +172,8 @@ export function CustomerInterviewForm() {
       profile: selectedTemplateId && selectedTemplate ? {
         template_id: selectedTemplateId,
         role_key: selectedTemplate.role_key,
-        values: profileValues
+        values: profileValues,
+        section_notes: sectionNotes
       } : null
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -179,6 +190,7 @@ export function CustomerInterviewForm() {
     });
     setSelectedTemplateId(null);
     setProfileValues({});
+    setSectionNotes({});
     toast.success('Utkast rensat');
   };
 
@@ -195,7 +207,8 @@ export function CustomerInterviewForm() {
     const profile: RequirementProfile = {
       template_id: selectedTemplateId,
       role_key: selectedTemplate.role_key,
-      values: profileValues
+      values: profileValues,
+      section_notes: sectionNotes
     };
 
     // Store in sessionStorage for JobForm to pick up
@@ -567,6 +580,22 @@ export function CustomerInterviewForm() {
                     {renderField(section.key, field)}
                   </div>
                 ))}
+                
+                {/* Section notes textarea */}
+                <div className="pt-4 mt-4 border-t border-border/50">
+                  <Label className="text-sm text-muted-foreground mb-2 block">
+                    Noteringar för {section.title.toLowerCase()}
+                  </Label>
+                  <Textarea
+                    value={sectionNotes[section.key] || ''}
+                    onChange={(e) => setSectionNotes(prev => ({
+                      ...prev,
+                      [section.key]: e.target.value
+                    }))}
+                    placeholder="Skriv eventuella specifika krav eller önskemål från kunden här..."
+                    className="min-h-[80px] text-sm print:border-foreground"
+                  />
+                </div>
               </CardContent>
             </Card>
           ))}

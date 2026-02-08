@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Briefcase, FileText, Building2, Users, Activity } from 'lucide-react';
+import { Briefcase, FileText, Building2, Users, Activity, Sparkles, TrendingUp } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,13 @@ interface DashboardStats {
   users: number;
 }
 
+interface AssessmentStats {
+  totalAssessments: number;
+  averageMatchScore: number;
+  screeningCount: number;
+  finalCount: number;
+}
+
 interface ActivityLog {
   id: string;
   event_type: string;
@@ -32,6 +39,12 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [stats, setStats] = useState<DashboardStats>({ jobs: 0, applications: 0, companies: 0, users: 0 });
+  const [assessmentStats, setAssessmentStats] = useState<AssessmentStats>({ 
+    totalAssessments: 0, 
+    averageMatchScore: 0, 
+    screeningCount: 0, 
+    finalCount: 0 
+  });
   const [activities, setActivities] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [spontanUrl, setSpontanUrl] = useState('');
@@ -39,6 +52,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchDashboardData();
     fetchSpontanUrl();
+    fetchAssessmentStats();
   }, []);
 
   const fetchSpontanUrl = async () => {
@@ -53,6 +67,30 @@ export default function AdminDashboard() {
       if (data) setSpontanUrl(data.content_html || '');
     } catch (error) {
       console.error('Error fetching spontan URL:', error);
+    }
+  };
+
+  const fetchAssessmentStats = async () => {
+    try {
+      const { data: assessments } = await supabase
+        .from('candidate_assessments')
+        .select('assessment_type, match_score');
+
+      if (assessments && assessments.length > 0) {
+        const validScores = assessments.filter(a => a.match_score !== null);
+        const avgScore = validScores.length > 0 
+          ? Math.round(validScores.reduce((sum, a) => sum + (a.match_score || 0), 0) / validScores.length)
+          : 0;
+
+        setAssessmentStats({
+          totalAssessments: assessments.length,
+          averageMatchScore: avgScore,
+          screeningCount: assessments.filter(a => a.assessment_type === 'screening').length,
+          finalCount: assessments.filter(a => a.assessment_type === 'final').length,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching assessment stats:', error);
     }
   };
 
@@ -220,6 +258,56 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* AI Assessment Stats */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <CardTitle>AI-bedömningar</CardTitle>
+            </div>
+            <CardDescription>Översikt över AI-matchningar av kandidater</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Totalt bedömningar</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold">{assessmentStats.totalAssessments}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Genomsnittlig matchning</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-2xl font-bold">{assessmentStats.averageMatchScore}%</p>
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Screeningar</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold">{assessmentStats.screeningCount}</p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Slutmatchningar</p>
+                {loading ? (
+                  <Skeleton className="h-8 w-16" />
+                ) : (
+                  <p className="text-2xl font-bold">{assessmentStats.finalCount}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

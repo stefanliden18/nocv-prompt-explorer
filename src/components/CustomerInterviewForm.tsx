@@ -64,14 +64,14 @@ export function CustomerInterviewForm() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
 
-  // Query for existing jobs
+  // Query for existing jobs (exclude demo jobs)
   const { data: jobs } = useQuery({
     queryKey: ['jobs-for-linking'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('jobs')
         .select('id, title, city, status, companies(name)')
-        .in('status', ['draft', 'published', 'demo'])
+        .in('status', ['draft', 'published'])
         .order('created_at', { ascending: false });
       
       if (error) throw error;

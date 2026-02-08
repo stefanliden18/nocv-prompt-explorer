@@ -146,14 +146,15 @@ export default function JobPreview() {
         {/* Job Content */}
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
-            {/* Description */}
-            {job.description_md && (
+            {(job.description_md || job.requirements_md) && (
               <div className="mb-12">
                 <h2 className="text-2xl font-bold mb-6">Om tjänsten</h2>
                 <div 
                   className="prose prose-lg max-w-none dark:prose-invert"
                   dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(job.description_md) 
+                    __html: DOMPurify.sanitize(
+                      (job.description_md || '') + (job.requirements_md || '')
+                    ) 
                   }}
                 />
               </div>

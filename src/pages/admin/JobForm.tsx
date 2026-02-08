@@ -43,7 +43,7 @@ export default function JobForm() {
   const [category, setCategory] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [descriptionHtml, setDescriptionHtml] = useState('');
-  const [requirementsHtml, setRequirementsHtml] = useState('');
+  
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
@@ -63,8 +63,14 @@ export default function JobForm() {
         console.log('Loading AI-generated job ad:', jobAdData);
         
         if (jobAdData.title) setTitle(jobAdData.title);
-        if (jobAdData.description_html) setDescriptionHtml(jobAdData.description_html);
-        if (jobAdData.requirements_html) setRequirementsHtml(jobAdData.requirements_html);
+        // Use ad_html (combined ad) from AI, fallback to separate fields for backward compatibility
+        if (jobAdData.ad_html) {
+          setDescriptionHtml(jobAdData.ad_html);
+        } else if (jobAdData.description_html) {
+          // Legacy: combine description and requirements if separate
+          const combined = jobAdData.description_html + (jobAdData.requirements_html || '');
+          setDescriptionHtml(combined);
+        }
         if (jobAdData.category) setCategory(jobAdData.category);
         if (jobAdData.employment_type) setEmploymentType(jobAdData.employment_type);
         
@@ -131,7 +137,7 @@ export default function JobForm() {
     }
   }, [title]);
 
-  const handleSubmit = async (e: React.FormEvent, targetStatus: 'draft' | 'demo' = 'draft') => {
+  const handleSubmit = async (e: React.FormEvent, targetStatus: 'draft' | 'published' | 'demo' = 'draft') => {
     e.preventDefault();
     
     // Validation
@@ -173,7 +179,7 @@ export default function JobForm() {
           category: category.trim(),
           employment_type: employmentType || null,
           description_md: descriptionHtml.trim(),
-          requirements_md: requirementsHtml.trim() || null,
+          requirements_md: null,
           driver_license: driverLicense,
           language: language.trim() || null,
           status: targetStatus,
@@ -336,22 +342,12 @@ export default function JobForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Beskrivning *</Label>
+                  <Label htmlFor="description">Annonstext *</Label>
                   <RichTextEditor
                     content={descriptionHtml}
                     onChange={setDescriptionHtml}
-                    placeholder="Beskriv jobbet..."
-                    minHeight="200px"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="requirements">Krav</Label>
-                  <RichTextEditor
-                    content={requirementsHtml}
-                    onChange={setRequirementsHtml}
-                    placeholder="Lista krav för jobbet..."
-                    minHeight="150px"
+                    placeholder="Beskriv tjänsten, arbetsuppgifter och krav..."
+                    minHeight="300px"
                   />
                 </div>
 
@@ -402,6 +398,7 @@ export default function JobForm() {
                 <div className="flex gap-2 flex-wrap">
                   <Button 
                     type="button"
+                    variant="outline"
                     onClick={(e) => {
                       const form = e.currentTarget.closest('form');
                       if (form) {
@@ -422,6 +419,22 @@ export default function JobForm() {
                       if (form) {
                         const formEvent = new Event('submit', { bubbles: true, cancelable: true });
                         Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
+                        handleSubmit(formEvent as any, 'published');
+                      }
+                    }}
+                    disabled={loading}
+                    className="bg-green-600 hover:bg-green-700 text-white font-bold"
+                  >
+                    ✅ Publicera på hemsidan
+                  </Button>
+                  <Button 
+                    type="button"
+                    variant="secondary"
+                    onClick={(e) => {
+                      const form = e.currentTarget.closest('form');
+                      if (form) {
+                        const formEvent = new Event('submit', { bubbles: true, cancelable: true });
+                        Object.defineProperty(formEvent, 'target', { value: form, enumerable: true });
                         handleSubmit(formEvent as any, 'demo');
                       }
                     }}
@@ -432,7 +445,7 @@ export default function JobForm() {
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     onClick={() => navigate('/admin/jobs')}
                   >
                     Avbryt
@@ -489,16 +502,6 @@ export default function JobForm() {
                     <div 
                       className="prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(descriptionHtml) }}
-                    />
-                  </div>
-                )}
-
-                {requirementsHtml && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Krav</h3>
-                    <div 
-                      className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(requirementsHtml) }}
                     />
                   </div>
                 )}

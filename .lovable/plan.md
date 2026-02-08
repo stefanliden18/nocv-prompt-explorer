@@ -1,60 +1,60 @@
 
-# Plan: Sammanslagen annons + Publicera riktiga jobb
+# Plan: Sammanslagen annons + Publicera riktiga jobb ✅ IMPLEMENTERAT
 
 ## Översikt
 
 Vi slår ihop beskrivning och krav till **ett enda textfält** i hela systemet. AI:n genererar en komplett platsannons, och du skapar jobbet som **utkast** som sedan kan publiceras på riktigt.
 
-## Ändringar
+## Ändringar ✅
 
-### 1. Edge function: Generera sammanslagen annons
+### 1. Edge function: Generera sammanslagen annons ✅
 
-Uppdatera `supabase/functions/generate-job-ad/index.ts`:
+Uppdaterat `supabase/functions/generate-job-ad/index.ts`:
 
-- Ändra AI-prompten så att den genererar EN sammanslagen annons-HTML istället för separata `description_html` och `requirements_html`
-- Returnera `ad_html` (hela annonsen) istället för två separata fält
-- Behåll title, category, employment_type som tidigare
+- AI-prompten genererar nu EN sammanslagen annons-HTML (`ad_html`) 
+- Returnerar `ad_html` istället för separata `description_html` och `requirements_html`
+- Behåller title, category, employment_type som tidigare
 
-### 2. Formulär: Ta bort separata fält
+### 2. Formulär: Ett fält för annonstext ✅
 
 **JobForm.tsx och JobEdit.tsx:**
 
-- Ta bort "Krav"-fältet från formuläret
-- Byt etikett från "Beskrivning" till "Annonstext" 
-- Uppdatera förifyllningslogik för att läsa `ad_html` istället för `description_html` + `requirements_html`
-- Ta bort `requirementsHtml` state och spara bara till `description_md` i databasen
+- Tagit bort "Krav"-fältet från formuläret
+- Bytt etikett till "Annonstext" 
+- Uppdaterat förifyllningslogik för att läsa `ad_html` (med fallback för legacy-fält)
+- Sparar endast till `description_md` i databasen
 
-### 3. Jobbvisning: Visa bara ett fält
+### 3. Jobbvisning: Sammanslagen visning ✅
 
 **JobDetail.tsx, DemoJobDetail.tsx, JobPreview.tsx:**
 
-- Ta bort separat "Krav"-sektion
-- Visa bara `description_md` som "Om tjänsten"
-- Befintliga jobb med data i `requirements_md` fortsätter fungera (bakåtkompatibelt)
+- Tagit bort separat "Krav"-sektion
+- Visar `description_md` + eventuell legacy `requirements_md` som "Om tjänsten"
+- Bakåtkompatibilitet med befintliga jobb
 
-### 4. CustomerInterviewForm: Exkludera demo-jobb
+### 4. CustomerInterviewForm: Exkluderar demo-jobb ✅
 
-- Filtrera bort `demo` från jobbdropdown så bara riktiga jobb (draft, published) visas
-- AI skapar jobbet som **utkast** (inte demo)
+- Filtrar bort `demo` från jobbdropdown (bara `draft`, `published` visas)
+- AI skapar jobb som **utkast** (inte demo)
 
-### 5. Lägg till "Publicera"-knapp i JobForm
+### 5. "Publicera"-knapp i JobForm ✅
 
-- Lägg till en ny knapp: "Publicera på hemsidan" som sätter status `published`
-- Byt ordning så "Spara som utkast" kommer först, sedan "Publicera", sedan "Demo"
+- Lagt till knapp: "✅ Publicera på hemsidan" som sätter status `published`
+- Ny knappordning: [Spara som utkast] [✅ Publicera på hemsidan] [🎬 Spara som demo-jobb] [Avbryt]
 
 ---
 
-## Filer som ändras
+## Filer som ändrats
 
 | Fil | Ändring |
 |-----|---------|
-| `supabase/functions/generate-job-ad/index.ts` | Generera `ad_html` (sammanslagen annons) istället för separata fält |
-| `src/pages/admin/JobForm.tsx` | Ta bort krav-fält, läs `ad_html`, lägg till "Publicera"-knapp |
-| `src/pages/admin/JobEdit.tsx` | Ta bort krav-fält, visa bara ett redigerings-fält |
-| `src/pages/JobDetail.tsx` | Ta bort separat "Krav"-sektion |
-| `src/pages/DemoJobDetail.tsx` | Ta bort separat "Krav"-sektion |
-| `src/pages/admin/JobPreview.tsx` | Ta bort separat "Krav"-sektion |
-| `src/components/CustomerInterviewForm.tsx` | Filtrera bort demo-jobb från dropdown |
+| `supabase/functions/generate-job-ad/index.ts` | ✅ Genererar `ad_html` |
+| `src/pages/admin/JobForm.tsx` | ✅ Ett fält, Publicera-knapp |
+| `src/pages/admin/JobEdit.tsx` | ✅ Ett fält, sammanslagen visning |
+| `src/pages/JobDetail.tsx` | ✅ Visar sammanslagen annons |
+| `src/pages/DemoJobDetail.tsx` | ✅ Visar sammanslagen annons |
+| `src/pages/admin/JobPreview.tsx` | ✅ Visar sammanslagen annons |
+| `src/components/CustomerInterviewForm.tsx` | ✅ Exkluderar demo-jobb |
 
 ---
 
@@ -72,39 +72,4 @@ Användaren redigerar
 Sparas som "utkast" eller "publicerat" (inte demo)
         ↓
 Jobbet visas på hemsidan (om publicerat)
-```
-
----
-
-## Bakåtkompatibilitet
-
-- Befintliga jobb med data i `requirements_md` kommer fortfarande fungera
-- Vid visning: Om `requirements_md` finns så visas den i "Om tjänsten"-sektionen (vi slår ihop vid läsning i frontend)
-- Nya jobb får bara `description_md` fyllt
-
----
-
-## Tekniska detaljer
-
-### AI-prompt ändring
-
-Istället för att be om två separata fält ber vi om:
-
-```javascript
-ad_html: {
-  type: "string",
-  description: "Komplett platsannons i HTML-format. Inkluderar beskrivning av tjänsten följt av kravsektion. Använd <h3>, <p>, <ul>, <li> för struktur."
-}
-```
-
-### JobForm knappordning
-
-```text
-[Spara som utkast] [✅ Publicera på hemsidan] [🎬 Spara som demo-jobb] [Avbryt]
-```
-
-### Dropdown-filter
-
-```javascript
-.in('status', ['draft', 'published'])  // Exkludera 'demo'
 ```

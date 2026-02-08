@@ -55,7 +55,7 @@ export default function JobEdit() {
   const [category, setCategory] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [descriptionHtml, setDescriptionHtml] = useState('');
-  const [requirementsHtml, setRequirementsHtml] = useState('');
+  
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
@@ -124,8 +124,10 @@ export default function JobEdit() {
         setRegion(job.region || '');
         setCategory(job.category || '');
         setEmploymentType(job.employment_type || '');
-        setDescriptionHtml(job.description_md || '');
-        setRequirementsHtml(job.requirements_md || '');
+        // Combine description and requirements for backward compatibility
+        const combinedDescription = job.description_md || '';
+        const legacyRequirements = job.requirements_md || '';
+        setDescriptionHtml(combinedDescription + (legacyRequirements ? legacyRequirements : ''));
         setDriverLicense(job.driver_license || false);
         setLanguage(job.language || '');
         setSlug(job.slug);
@@ -212,7 +214,7 @@ export default function JobEdit() {
         category: category.trim(),
         employment_type: employmentType || null,
         description_md: descriptionHtml.trim(),
-        requirements_md: requirementsHtml.trim() || null,
+        requirements_md: null,
         driver_license: driverLicense,
         language: language.trim() || null,
         slug: slug,
@@ -493,22 +495,12 @@ export default function JobEdit() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Jobbeskrivning *</Label>
+                <Label htmlFor="description">Annonstext *</Label>
                 <RichTextEditor
                   content={descriptionHtml}
                   onChange={setDescriptionHtml}
-                  placeholder="Beskriv jobbet och vad ni söker..."
-                  minHeight="200px"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="requirements">Krav</Label>
-                <RichTextEditor
-                  content={requirementsHtml}
-                  onChange={setRequirementsHtml}
-                  placeholder="Lista krav för jobbet..."
-                  minHeight="150px"
+                  placeholder="Beskriv tjänsten, arbetsuppgifter och krav..."
+                  minHeight="300px"
                 />
               </div>
 
@@ -728,16 +720,6 @@ export default function JobEdit() {
                     <div 
                       className="prose prose-sm max-w-none"
                       dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(descriptionHtml) }}
-                    />
-                  </div>
-                )}
-
-                {requirementsHtml && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Krav</h3>
-                    <div 
-                      className="prose prose-sm max-w-none"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(requirementsHtml) }}
                     />
                   </div>
                 )}

@@ -81,8 +81,8 @@ VIKTIGA REGLER:
 - Nämn ALDRIG kundens företagsnamn i annonsen (vi är ett bemanningsföretag)
 - Var positiv och säljande men professionell
 - Använd HTML-formatering för struktur
-- Håll beskrivningen koncis men informativ (2-3 stycken)
-- Skapa en tydlig punktlista för krav baserat på profilen
+- Skapa EN SAMMANSLAGEN annons som inkluderar både beskrivning och krav
+- Använd <h3> för rubriker, <p> för stycken, <ul>/<li> för punktlistor
 
 INFORMATION OM TJÄNSTEN:
 Roll: ${role_display_name}
@@ -93,7 +93,12 @@ Lön: ${customer_info.salaryRange || 'Enligt överenskommelse'}
 KRAVPROFIL:
 ${profileSummary}`;
 
-    const userPrompt = `Skriv en platsannons för rollen "${role_display_name}" baserat på kravprofilen ovan. 
+    const userPrompt = `Skriv en komplett platsannons för rollen "${role_display_name}" baserat på kravprofilen ovan. 
+
+Annonsen ska innehålla:
+1. En engagerande inledning om tjänsten och arbetsplatsen
+2. Beskrivning av arbetsuppgifter
+3. Krav och meriterande kvalifikationer i punktlistor
 
 Använd tool calling för att returnera strukturerad data.`;
 
@@ -122,13 +127,9 @@ Använd tool calling för att returnera strukturerad data.`;
                     type: "string",
                     description: "Kort, tydlig jobbtitel på svenska (t.ex. 'Bilmekaniker', 'CNC-operatör')"
                   },
-                  description_html: {
+                  ad_html: {
                     type: "string",
-                    description: "Engagerande beskrivning av tjänsten i HTML-format. Använd <p> för stycken. 2-3 stycken som beskriver arbetsuppgifter och arbetsplats."
-                  },
-                  requirements_html: {
-                    type: "string",
-                    description: "Kravlista i HTML-format. Använd <ul> och <li> för punktlista. Separera 'Krav' och 'Meriterande' med rubriker."
+                    description: "Komplett platsannons i HTML-format. Inkluderar beskrivning av tjänsten, arbetsuppgifter, samt krav och meriterande kvalifikationer. Använd <h3> för rubriker, <p> för stycken, <ul>/<li> för punktlistor."
                   },
                   category: {
                     type: "string",
@@ -139,7 +140,7 @@ Använd tool calling för att returnera strukturerad data.`;
                     description: "Anställningsform (t.ex. 'Heltid, Tillsvidare', 'Heltid, Visstid')"
                   }
                 },
-                required: ["title", "description_html", "requirements_html", "category", "employment_type"],
+                required: ["title", "ad_html", "category", "employment_type"],
                 additionalProperties: false
               }
             }

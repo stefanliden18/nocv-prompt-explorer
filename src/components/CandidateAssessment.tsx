@@ -10,6 +10,8 @@ interface CandidateAssessmentProps {
   applicationId: string;
   jobId: string;
   candidateName: string;
+  jobTitle?: string;
+  companyName?: string;
   onAssessmentComplete?: () => void;
 }
 
@@ -59,6 +61,8 @@ export function CandidateAssessment({
   applicationId, 
   jobId,
   candidateName,
+  jobTitle,
+  companyName,
   onAssessmentComplete 
 }: CandidateAssessmentProps) {
   const [roleProfiles, setRoleProfiles] = useState<RoleProfile[]>([]);
@@ -243,6 +247,8 @@ export function CandidateAssessment({
             <FinalAssessment
               applicationId={applicationId}
               candidateName={candidateName}
+              jobTitle={jobTitle}
+              companyName={companyName}
               roleProfiles={roleProfiles}
               existingAssessment={finalAssessment}
               presentation={presentation}

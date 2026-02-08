@@ -34,6 +34,7 @@ import AboutEdit from "./pages/admin/AboutEdit";
 import ContactEdit from "./pages/admin/ContactEdit";
 import CompaniesEdit from "./pages/admin/CompaniesEdit";
 import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
+import CandidatePresentation from "./pages/CandidatePresentation";
 
 const queryClient = new QueryClient();
 
@@ -199,6 +200,8 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            {/* Public candidate presentation route */}
+            <Route path="/presentation/:token" element={<CandidatePresentation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
         </Routes>

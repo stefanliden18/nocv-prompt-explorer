@@ -3,10 +3,44 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
+import { CandidatePresentationView, type PresentationData } from '@/components/CandidatePresentationView';
+import type { Json } from '@/integrations/supabase/types';
+
+interface PresentationRow {
+  id: string;
+  presentation_html: string | null;
+  status: string;
+  published_at: string | null;
+  recruiter_notes: string | null;
+  soft_values_notes: string | null;
+  skill_scores: Json;
+  applications: {
+    candidate_name: string;
+    jobs: {
+      title: string;
+      companies: {
+        name: string;
+      } | null;
+    } | null;
+  } | null;
+  candidate_assessments: {
+    match_score: number | null;
+    role_match_score: number | null;
+    job_match_score: number | null;
+    summary: string | null;
+    technical_assessment: string | null;
+    soft_skills_assessment: string | null;
+    strengths: Json;
+    concerns: Json;
+    role_profiles: {
+      display_name: string;
+    } | null;
+  } | null;
+}
 
 export default function CandidatePresentation() {
   const { token } = useParams();
-  const [presentation, setPresentation] = useState<any>(null);
+  const [presentation, setPresentation] = useState<PresentationRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,8 +63,28 @@ export default function CandidatePresentation() {
           presentation_html,
           status,
           published_at,
+          recruiter_notes,
+          soft_values_notes,
+          skill_scores,
           applications (
-            candidate_name
+            candidate_name,
+            jobs (
+              title,
+              companies (name)
+            )
+          ),
+          candidate_assessments:final_assessment_id (
+            match_score,
+            role_match_score,
+            job_match_score,
+            summary,
+            technical_assessment,
+            soft_skills_assessment,
+            strengths,
+            concerns,
+            role_profiles:role_profile_id (
+              display_name
+            )
           )
         `)
         .eq('share_token', token)
@@ -45,7 +99,7 @@ export default function CandidatePresentation() {
         return;
       }
 
-      setPresentation(data);
+      setPresentation(data as unknown as PresentationRow);
     } catch (err) {
       console.error('Error fetching presentation:', err);
       setError('Kunde inte ladda presentationen');
@@ -76,6 +130,56 @@ export default function CandidatePresentation() {
     );
   }
 
+  // Check if we have modern React data or need to fall back to HTML
+  const assessment = presentation?.candidate_assessments;
+  const hasModernData = assessment && assessment.match_score !== null;
+
+  const candidateName = presentation?.applications?.candidate_name || 'Kandidat';
+
+  // If we have modern data, render the React component
+  if (hasModernData) {
+    const parseJsonArray = <T,>(json: Json): T[] => {
+      if (Array.isArray(json)) return json as T[];
+      return [];
+    };
+
+    const parseSkillScores = (json: Json): Record<string, number> => {
+      if (json && typeof json === 'object' && !Array.isArray(json)) {
+        return json as Record<string, number>;
+      }
+      return {};
+    };
+
+    const presentationData: PresentationData = {
+      candidateName,
+      roleName: assessment.role_profiles?.display_name || 'Yrkesroll',
+      jobTitle: presentation?.applications?.jobs?.title || 'Tjänst',
+      companyName: presentation?.applications?.jobs?.companies?.name || 'Företag',
+      matchScore: assessment.match_score || 0,
+      roleMatchScore: assessment.role_match_score || 0,
+      jobMatchScore: assessment.job_match_score || 0,
+      summary: assessment.summary || '',
+      technicalAssessment: assessment.technical_assessment || '',
+      softSkillsAssessment: assessment.soft_skills_assessment || '',
+      strengths: parseJsonArray<{ point: string; evidence: string }>(assessment.strengths),
+      concerns: parseJsonArray<string>(assessment.concerns),
+      skillScores: parseSkillScores(presentation?.skill_scores || {}),
+      recruiterNotes: presentation?.recruiter_notes || undefined,
+      softValuesNotes: presentation?.soft_values_notes || undefined,
+    };
+
+    return (
+      <HelmetProvider>
+        <Helmet>
+          <title>Kandidatpresentation - {candidateName}</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <CandidatePresentationView data={presentationData} />
+      </HelmetProvider>
+    );
+  }
+
+  // Fallback to HTML rendering for backwards compatibility
   if (!presentation?.presentation_html) {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
@@ -86,8 +190,6 @@ export default function CandidatePresentation() {
       </div>
     );
   }
-
-  const candidateName = presentation.applications?.candidate_name || 'Kandidat';
 
   return (
     <HelmetProvider>

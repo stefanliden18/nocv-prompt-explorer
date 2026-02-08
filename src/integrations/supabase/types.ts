@@ -272,7 +272,10 @@ export type Database = {
           id: string
           presentation_html: string | null
           published_at: string | null
+          recruiter_notes: string | null
           share_token: string | null
+          skill_scores: Json | null
+          soft_values_notes: string | null
           status: Database["public"]["Enums"]["presentation_status"]
           updated_at: string
         }
@@ -283,7 +286,10 @@ export type Database = {
           id?: string
           presentation_html?: string | null
           published_at?: string | null
+          recruiter_notes?: string | null
           share_token?: string | null
+          skill_scores?: Json | null
+          soft_values_notes?: string | null
           status?: Database["public"]["Enums"]["presentation_status"]
           updated_at?: string
         }
@@ -294,7 +300,10 @@ export type Database = {
           id?: string
           presentation_html?: string | null
           published_at?: string | null
+          recruiter_notes?: string | null
           share_token?: string | null
+          skill_scores?: Json | null
+          soft_values_notes?: string | null
           status?: Database["public"]["Enums"]["presentation_status"]
           updated_at?: string
         }

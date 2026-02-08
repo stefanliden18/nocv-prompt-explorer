@@ -55,23 +55,26 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
 
   const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
 
-  // Initialize profile values when template changes
-  useEffect(() => {
-    if (selectedTemplate && (!value || value.template_id !== selectedTemplateId)) {
-      const initialValues: RequirementProfile['values'] = {};
-      selectedTemplate.template_data.sections.forEach(section => {
-        initialValues[section.key] = {};
-        section.fields.forEach(field => {
-          initialValues[section.key][field.key] = getDefaultValue(field);
-        });
-      });
-      onChange({
-        template_id: selectedTemplate.id,
-        role_key: selectedTemplate.role_key,
-        values: initialValues
-      });
-    }
-  }, [selectedTemplateId, selectedTemplate]);
+   // Initialize profile values when template changes
+   useEffect(() => {
+     if (selectedTemplate && (!value || value.template_id !== selectedTemplateId)) {
+       const initialValues: RequirementProfile['values'] = {};
+       const initialNotes: Record<string, string> = {};
+       selectedTemplate.template_data.sections.forEach(section => {
+         initialValues[section.key] = {};
+         initialNotes[section.key] = '';
+         section.fields.forEach(field => {
+           initialValues[section.key][field.key] = getDefaultValue(field);
+         });
+       });
+       onChange({
+         template_id: selectedTemplate.id,
+         role_key: selectedTemplate.role_key,
+         values: initialValues,
+         section_notes: initialNotes
+       });
+     }
+   }, [selectedTemplateId, selectedTemplate]);
 
   const getDefaultValue = (field: TemplateField) => {
     switch (field.type) {
@@ -108,11 +111,27 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
     });
   };
 
-  const getFieldValue = (sectionKey: string, fieldKey: string) => {
-    return value?.values?.[sectionKey]?.[fieldKey];
-  };
+   const getFieldValue = (sectionKey: string, fieldKey: string) => {
+     return value?.values?.[sectionKey]?.[fieldKey];
+   };
 
-  const handleClearProfile = () => {
+   const updateSectionNotes = (sectionKey: string, notes: string) => {
+     if (!value) return;
+     
+     onChange({
+       ...value,
+       section_notes: {
+         ...value.section_notes,
+         [sectionKey]: notes
+       }
+     });
+   };
+
+   const getSectionNotes = (sectionKey: string) => {
+     return value?.section_notes?.[sectionKey] || '';
+   };
+
+   const handleClearProfile = () => {
     setSelectedTemplateId(null);
     onChange(null);
   };
@@ -389,14 +408,27 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
                   {section.title}
                 </AccordionTrigger>
                 <AccordionContent>
-                  <div className="space-y-3 pt-2">
-                    {section.fields.map((field) => (
-                      <div key={field.key}>
-                        {renderField(section.key, field)}
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
+                   <div className="space-y-3 pt-2">
+                     {section.fields.map((field) => (
+                       <div key={field.key}>
+                         {renderField(section.key, field)}
+                       </div>
+                     ))}
+                     
+                     {/* Section notes textarea */}
+                     <div className="pt-2 mt-3 border-t border-border/50">
+                       <Label className="text-sm text-muted-foreground mb-2 block">
+                         Noteringar för {section.title.toLowerCase()}
+                       </Label>
+                       <Textarea
+                         value={getSectionNotes(section.key)}
+                         onChange={(e) => updateSectionNotes(section.key, e.target.value)}
+                         placeholder="Skriv eventuella specifika krav eller önskemål här..."
+                         className="min-h-[60px] text-sm"
+                       />
+                     </div>
+                   </div>
+                 </AccordionContent>
               </AccordionItem>
             ))}
           </Accordion>

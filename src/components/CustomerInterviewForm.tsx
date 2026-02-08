@@ -215,8 +215,9 @@ export function CustomerInterviewForm() {
     sessionStorage.setItem('prefill-requirement-profile', JSON.stringify(profile));
     sessionStorage.setItem('prefill-customer-info', JSON.stringify(customerInfo));
     
-    toast.success('Kravprofil kopierad! Navigerar till nytt jobb...');
-    navigate('/admin/jobs/new');
+    // Navigate directly without toast to avoid portal cleanup issues
+    // The toast would cause Radix UI portals to interfere with navigation
+    window.location.href = '/admin/jobs/new';
   };
 
   const renderField = (sectionKey: string, field: TemplateField) => {

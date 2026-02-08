@@ -11,7 +11,8 @@ import {
   LogOut,
   Kanban,
   Shield,
-  Film
+  Film,
+  ClipboardList
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ const menuItems = [
   { title: "Importera jobb", url: "/admin/jobs/import", icon: Upload },
   { title: "Ansökningar", url: "/admin/applications", icon: FileText },
   { title: "Rekryteringstavla", url: "/admin/recruitment-board", icon: Kanban },
+  { title: "Kravprofiler", url: "/admin/requirement-templates", icon: ClipboardList },
   { title: "Företag", url: "/admin/companies", icon: Building2 },
   { title: "Användare", url: "/admin/users", icon: Users },
   { title: "Händelselogg", url: "/admin/activity", icon: Activity },

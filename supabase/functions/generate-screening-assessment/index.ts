@@ -68,7 +68,7 @@ serve(async (req) => {
       );
     }
 
-    // Fetch application details
+    // Fetch application details including requirement_profile
     const { data: application, error: appError } = await supabase
       .from('applications')
       .select(`
@@ -80,6 +80,7 @@ serve(async (req) => {
           title,
           description_md,
           requirements_md,
+          requirement_profile,
           companies (name)
         )
       `)
@@ -94,7 +95,20 @@ serve(async (req) => {
       );
     }
 
-    // Build AI prompt
+    // Extract requirement profile if available
+    const requirementProfile = (application.jobs as any)?.requirement_profile;
+
+    // Build AI prompt with structured requirement profile if available
+    let requirementContext = '';
+    if (requirementProfile && requirementProfile.values) {
+      requirementContext = `
+KUNDSPECIFIKA KRAV (från kravprofil):
+${JSON.stringify(requirementProfile.values, null, 2)}
+
+Viktigt: Matcha kandidatens svar mot dessa specifika krav när du bedömer.
+`;
+    }
+
     const systemPrompt = `Du är en erfaren rekryteringsexpert inom fordonsbranschen. Din uppgift är att göra en INITIAL SCREENING av en kandidat baserat på en kort intervjutranskribering.
 
 Du bedömer om kandidaten ska gå vidare till en djupare intervju eller inte.
@@ -110,12 +124,12 @@ ${JSON.stringify(roleProfile.soft_skills, null, 2)}
 
 SCREENING-KRITERIER:
 ${JSON.stringify(roleProfile.screening_criteria, null, 2)}
-
+${requirementContext}
 JOBB: ${application.jobs?.title || 'Okänt'}
 FÖRETAG: ${application.jobs?.companies?.name || 'Okänt'}
 
 Analysera transkriberingen och ge:
-1. En match-score (0-100) baserat på hur väl kandidaten matchar screening-kriterierna
+1. En match-score (0-100) baserat på hur väl kandidaten matchar screening-kriterierna${requirementProfile ? ' och kundspecifika krav' : ''}
 2. Nyckelstyrkor som framkommer i intervjun (max 4 punkter)
 3. Eventuella orosmoln eller röda flaggor (max 3 punkter, kan vara tomt)
 4. En rekommendation: "proceed" (gå vidare), "maybe" (tveksam, behöver mer info), eller "reject" (passar ej)

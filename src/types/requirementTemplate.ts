@@ -68,3 +68,19 @@ export interface RequirementProfile {
     [sectionKey: string]: string;
   };
 }
+
+// Saved requirement profile (stored in database)
+export interface SavedRequirementProfile {
+  id: string;
+  created_by: string;
+  template_id: string;
+  company_name: string;
+  contact_person: string | null;
+  desired_start_date: string | null;
+  salary_range: string | null;
+  profile_data: RequirementProfile['values'];
+  section_notes: Record<string, string> | null;
+  linked_job_id: string | null;
+  created_at: string;
+  updated_at: string;
+}

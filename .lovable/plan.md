@@ -1,12 +1,16 @@
 
 # Plan: Kravprofilbibliotek med databassparning
 
-## Översikt
+## Status: ✅ IMPLEMENTERAT
 
-Just nu sparas kravprofiler endast i webbläsarens minne (localStorage), vilket innebär att:
-- Data försvinner om du rensar webbläsaren
-- Du kan inte se sparade profiler från andra enheter
-- Det finns inget bibliotek att bläddra i
+### Slutförda funktioner:
+- ✅ Ny databastabell `saved_requirement_profiles` med RLS-policies
+- ✅ Biblioteksvy med flikar (Ny kravprofil / Mina kravprofiler)
+- ✅ SavedProfilesList-komponent med sök, filter och åtgärder
+- ✅ CustomerInterviewForm sparar till databas istället för localStorage
+- ✅ Redigera/öppna befintliga profiler från biblioteket
+
+## Översikt
 
 Vi skapar ett **kravprofilbibliotek** där du kan:
 - Spara kravprofiler permanent i databasen

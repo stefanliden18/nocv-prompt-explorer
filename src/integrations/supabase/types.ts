@@ -676,6 +676,66 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_requirement_profiles: {
+        Row: {
+          company_name: string
+          contact_person: string | null
+          created_at: string
+          created_by: string
+          desired_start_date: string | null
+          id: string
+          linked_job_id: string | null
+          profile_data: Json
+          salary_range: string | null
+          section_notes: Json | null
+          template_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          contact_person?: string | null
+          created_at?: string
+          created_by: string
+          desired_start_date?: string | null
+          id?: string
+          linked_job_id?: string | null
+          profile_data?: Json
+          salary_range?: string | null
+          section_notes?: Json | null
+          template_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          contact_person?: string | null
+          created_at?: string
+          created_by?: string
+          desired_start_date?: string | null
+          id?: string
+          linked_job_id?: string | null
+          profile_data?: Json
+          salary_range?: string | null
+          section_notes?: Json | null
+          template_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_requirement_profiles_linked_job_id_fkey"
+            columns: ["linked_job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saved_requirement_profiles_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "requirement_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -360,6 +360,8 @@ export default function ApplicationDetail() {
               applicationId={application.id}
               jobId={application.job_id}
               candidateName={application.candidate_name}
+              jobTitle={application.jobs?.title}
+              companyName={application.jobs?.companies?.name}
               onAssessmentComplete={fetchApplication}
             />
           </div>

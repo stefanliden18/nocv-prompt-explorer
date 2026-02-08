@@ -14,6 +14,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ArrowLeft, Eye } from 'lucide-react';
+import { RequirementProfileForm } from '@/components/RequirementProfileForm';
+import type { RequirementProfile } from '@/types/requirementTemplate';
 
 interface Company {
   id: string;
@@ -44,6 +46,7 @@ export default function JobForm() {
   const [driverLicense, setDriverLicense] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
+  const [requirementProfile, setRequirementProfile] = useState<RequirementProfile | null>(null);
 
   // Fetch companies
   useEffect(() => {
@@ -127,7 +130,8 @@ export default function JobForm() {
           slug: finalSlug,
           publish_at: null,
           created_by: user!.id,
-        })
+          requirement_profile: requirementProfile as any,
+        } as any)
         .select()
         .single();
 
@@ -327,6 +331,14 @@ export default function JobForm() {
 
                 <Separator />
 
+                {/* Requirement Profile Form */}
+                <RequirementProfileForm 
+                  value={requirementProfile}
+                  onChange={setRequirementProfile}
+                />
+
+                <Separator />
+
                 <div className="flex gap-2 flex-wrap">
                   <Button 
                     type="button"
@@ -354,7 +366,7 @@ export default function JobForm() {
                       }
                     }}
                     disabled={loading}
-                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold"
                   >
                     🎬 Spara som demo-jobb
                   </Button>

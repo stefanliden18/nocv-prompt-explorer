@@ -20,6 +20,8 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { stockholmToUTC, utcToStockholm, nowInStockholm } from '@/lib/timezone';
+import { RequirementProfileForm } from '@/components/RequirementProfileForm';
+import type { RequirementProfile } from '@/types/requirementTemplate';
 import type { Database } from '@/integrations/supabase/types';
 
 interface Company {
@@ -67,6 +69,7 @@ export default function JobEdit() {
   const [tempHour, setTempHour] = useState<string>('09');
   const [tempMinute, setTempMinute] = useState<string>('00');
   const [hasSelectedTime, setHasSelectedTime] = useState(false);
+  const [requirementProfile, setRequirementProfile] = useState<RequirementProfile | null>(null);
 
   useEffect(() => {
     fetchCompanies();
@@ -128,6 +131,11 @@ export default function JobEdit() {
         setSlug(job.slug);
         setKikuInterviewUrl(job.kiku_interview_url || '');
         setStatus(job.status);
+        
+        // Handle requirement_profile
+        if ((job as any).requirement_profile) {
+          setRequirementProfile((job as any).requirement_profile as RequirementProfile);
+        }
 
         // Handle publish_at - convert from UTC to Stockholm time
         if (job.publish_at) {
@@ -214,6 +222,7 @@ export default function JobEdit() {
           const publishAtUTC = stockholmToUTC(publishAt);
           return publishAtUTC;
         })(),
+        requirement_profile: requirementProfile as any,
       };
 
       if (newStatus) {
@@ -665,6 +674,12 @@ export default function JobEdit() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Requirement Profile */}
+          <RequirementProfileForm 
+            value={requirementProfile}
+            onChange={setRequirementProfile}
+          />
 
           {/* Preview */}
           <Card className="lg:sticky lg:top-6 h-fit">

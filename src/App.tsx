@@ -34,6 +34,7 @@ import AboutEdit from "./pages/admin/AboutEdit";
 import ContactEdit from "./pages/admin/ContactEdit";
 import CompaniesEdit from "./pages/admin/CompaniesEdit";
 import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
+import RequirementTemplates from "./pages/admin/RequirementTemplates";
 import CandidatePresentation from "./pages/CandidatePresentation";
 
 const queryClient = new QueryClient();
@@ -197,6 +198,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <GDPRPolicyEdit />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/requirement-templates" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <RequirementTemplates />
                 </ProtectedRoute>
               } 
             />

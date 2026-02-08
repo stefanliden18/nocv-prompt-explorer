@@ -518,13 +518,17 @@ const DemoJobDetail = () => {
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
             <div className="lg:col-span-2 space-y-8">
-              {job.description_md && (
+              {(job.description_md || job.requirements_md) && (
                 <Card className="bg-white border border-border">
                   <CardContent className="p-8">
                     <h2 className="text-2xl font-heading mb-4">Om tjänsten</h2>
                     <div 
                       className="prose prose-sm max-w-none text-foreground"
-                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(job.description_md) }}
+                      dangerouslySetInnerHTML={{ 
+                        __html: DOMPurify.sanitize(
+                          (job.description_md || '') + (job.requirements_md || '')
+                        ) 
+                      }}
                     />
                   </CardContent>
                 </Card>

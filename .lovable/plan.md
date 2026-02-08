@@ -1,185 +1,67 @@
 
 
-# Plan: Omvandla Kravprofilmallar till ifyllbart intervjuformulär
+# Plan: Lägg till fritextfält under varje frågekategori
 
 ## Problemet
 
-Den nuvarande sidan `/admin/requirement-templates` visar bara en **teknisk översikt** av mallar (fälttyper som badges). Du behöver istället ett **ifyllbart formulär som liknar Word-mallen** - med kryssrutor, textfält och tydliga sektioner som du kan använda vid kundintervjuer.
+Idag kan du fylla i formulärets strukturerade fält (checkboxar, select, etc) men det finns inget sätt att skriva en fritextnotering för varje kategori när kunden har specifika önskemål eller krav som inte passar in i mallstrukturen.
 
 ## Lösning
 
-Ersätt den nuvarande översiktssidan med en **interaktiv intervjuvy** som visar mallarna i ifyllbart format.
+Lägg till ett **Textarea-fält i botten av varje sektion** som sparas tillsammans med kravprofilen.
 
-### Layout-koncept
+---
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│  Kravprofil - Kundintervju                                              │
-│  Välj tjänstetyp för att starta intervjun                               │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  [Bilmekaniker ▼]  [🖨️ Skriv ut]  [💾 Spara som utkast]                 │
-│                                                                         │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  GRUNDUPPGIFTER                                                 │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  Företag:          [________________________]                   │    │
-│  │  Roll:             [________________________]                   │    │
-│  │  Erfarenhet av bilmärke: [________________]                     │    │
-│  │  Önskat tillträde: [________________________]                   │    │
-│  │  Lönespann:        [________________________]                   │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  UTBILDNING & ERFARENHET                                        │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  Utbildning (minst krav):                                       │    │
-│  │  [Gymnasial fordonsteknik ▼]                                    │    │
-│  │                                                                 │    │
-│  │  Yrkeserfarenhet (antal år): [___]                              │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  TEKNISKA KRAV - FORDONSTEKNIK                                  │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  ☑ Service & underhåll                                          │    │
-│  │  ☑ Motordiagnostik            Nivå: [Avancerad ▼]               │    │
-│  │  ☐ Växellåda/drivlina         Nivå: [Grund ▼]                   │    │
-│  │  ☑ Bromssystem                                                   │    │
-│  │  ☑ Styrning & hjulupphängning                                    │    │
-│  │  ☐ Elsystem                   Nivå: [Grund ▼]                   │    │
-│  │  ☐ Hybrid/Elteknik            Nivå: [Grund ▼]                   │    │
-│  │  ☐ Klimatanläggning                                              │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  DIAGNOSTIKVERKTYG                                               │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  ☑ OBD-scanner & felkodläsning                                  │    │
-│  │  ☐ Märkesspecifikt diagnostikverktyg   Vilket: [_________]      │    │
-│  │  ☐ Oscilloskop                                                   │    │
-│  │  ☐ Affärssystem                        Vilket: [_________]      │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  CERTIFIKAT & BEHÖRIGHETER                                       │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  Högvoltsbehörighet    ○ Krävs  ○ Meriterande  ● Ej relevant    │    │
-│  │  Köldmediabehörighet   ○ Krävs  ○ Meriterande  ● Ej relevant    │    │
-│  │  B-körkort             ● Krävs  ○ Meriterande  ○ Ej relevant    │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  PERSONLIGA EGENSKAPER                                           │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  Top 5 viktigaste egenskaper (rangordna):                       │    │
-│  │  ⠿ 1. [Noggrann                          ] [x]                  │    │
-│  │  ⠿ 2. [Självgående                       ] [x]                  │    │
-│  │  ⠿ 3. [Samarbetsvillig                   ] [x]                  │    │
-│  │  [+ Lägg till]                                                  │    │
-│  │                                                                 │    │
-│  │  Självständighet:                                                │    │
-│  │  [Jobbar självständigt efter riktning ▼]                        │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────┐    │
-│  │  PRIORITERINGAR                                                  │    │
-│  ├─────────────────────────────────────────────────────────────────┤    │
-│  │  Top 3 absoluta krav (MÅSTE ha):                                │    │
-│  │  ⠿ 1. [Motordiagnostik                   ] [x]                  │    │
-│  │  ⠿ 2. [B-körkort                         ] [x]                  │    │
-│  │  ⠿ 3. [Självständig                      ] [x]                  │    │
-│  │                                                                 │    │
-│  │  Dealbreakers:                                                   │    │
-│  │  [Ingen erfarenhet av VAG-bilar...                         ]    │    │
-│  └─────────────────────────────────────────────────────────────────┘    │
-│                                                                         │
-│  [Spara som utkast]  [Kopiera till jobb]  [🖨️ Skriv ut]                │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+## Tekniska ändringar
+
+### 1. Uppdatera datatypen `RequirementProfile`
+
+Lägg till ett nytt fält `section_notes` som lagrar fritextnoteringar per sektion:
+
+```typescript
+export interface RequirementProfile {
+  template_id: string;
+  role_key: string;
+  values: {
+    [sectionKey: string]: RequirementProfileValue;
+  };
+  section_notes?: {  // NYT FÄLT
+    [sectionKey: string]: string;
+  };
+}
 ```
 
----
+### 2. Uppdatera `CustomerInterviewForm.tsx`
 
-## Ändringar som behövs
+**Lägg till state för noteringar:**
+- Ny state: `sectionNotes` för att lagra fritextnoteringar per sektion
+- Uppdatera useEffect som laddar från localStorage för att också ladda `section_notes`
+- Uppdatera useEffect som initierar template för att också initiera `section_notes`
 
-### 1. Uppdatera `RequirementTemplates.tsx`
+**Uppdatera rendering:**
+- I sektion-loopen, efter alla fält, lägg till en `Textarea` före `</CardContent>`
+- Placeholder: "Noteringar för denna kategori..."
+- Koppla till `sectionNotes[section.key]` och uppdateringsfunktion
 
-Ändra från en teknisk översikt till en **interaktiv intervjuvy**:
+**Uppdatera save/copy-logik:**
+- `handleSaveDraft`: Inkludera `section_notes` i den sparade profilen
+- `handleCopyToJob`: Inkludera `section_notes` när profilen kopieras till jobbet
 
-| Nu | Nytt |
-|---|---|
-| Kort-vy med fälttyper som badges | Fullständigt ifyllbart formulär |
-| Accordion som visar mallstruktur | Accordion som visar ifyllbara fält |
-| Ingen möjlighet att fylla i | Alla fälttyper renderas som inputs |
+### 3. Resultat
 
-### 2. Utöka med kundfält
-
-Lägg till fält som **inte sparas i mallen** men behövs vid intervju:
-
-| Fält | Typ |
-|------|-----|
-| Företag | Text |
-| Kontaktperson | Text |
-| Önskat tillträde | Text |
-| Lönespann | Text |
-
-### 3. Lägg till funktioner
-
-| Funktion | Beskrivning |
-|----------|-------------|
-| **Spara som utkast** | Sparar ifylld profil till localStorage eller ny tabell |
-| **Kopiera till jobb** | Öppnar "Skapa jobb"-formuläret med profilen förifylld |
-| **Skriv ut** | Browser print-dialog med anpassad print-CSS |
+Användaren kan nu:
+- Se ett tomt Textarea-fält längst ned i varje sektion
+- Skriva fritextnoteringar för den kategorin
+- Noteringar sparas tillsammans med övriga svar i localStorage
+- Noteringar följer med när profilen kopieras till ett nytt jobb
+- Noteringar visas vid utskrift
 
 ---
 
-## Databas (valfritt tillägg)
+## Filer som ändras
 
-Om du vill spara intervjuer permanent kan vi lägga till:
-
-| Tabell | Beskrivning |
-|--------|-------------|
-| `customer_interviews` | Sparar ifyllda kravprofiler innan de kopplas till jobb |
-
-**Kolumner:**
-- `id`, `created_at`, `updated_at`
-- `company_name` - Kundföretaget
-- `contact_person` - Kontaktperson
-- `template_id` - Vilken mall som användes
-- `profile_data` - Ifylld data (JSONB)
-- `status` - draft/completed
-- `job_id` - Koppling till jobb (om det skapats)
-
----
-
-## Implementation
-
-### Fas 1: Omarbeta sidan
-1. Ersätt kort-vyn med `RequirementProfileForm`-liknande layout
-2. Visa alla sektioner öppna som standard (inte accordions)
-3. Lägg till kundfält (Företag, Kontakt, Tillträde, Lön)
-
-### Fas 2: Åtgärder
-4. "Kopiera till jobb"-knapp som navigerar till `/admin/jobs/new` med profilen
-5. Print-CSS för utskriftsvänlig layout
-6. Spara till localStorage som utkast
-
-### Fas 3: Permanent lagring (valfritt)
-7. Skapa `customer_interviews`-tabell
-8. Hantera utkast och slutförda intervjuer
-
----
-
-## Tekniska detaljer
-
-Sidan kommer återanvända logiken från `RequirementProfileForm` men med:
-
-- Fullskärmsbredd istället för kort-komponent
-- Tydliga sektionsrubriker med linjer (som Word-mallen)
-- Alla fält synliga utan att klicka på accordions
-- Extra kundfält högst upp
-- Utskriftsvänlig CSS
+| Fil | Ändring |
+|-----|---------|
+| `src/types/requirementTemplate.ts` | Lägg till `section_notes` i `RequirementProfile` |
+| `src/components/CustomerInterviewForm.tsx` | Lägg till state, rendering och lagring av `section_notes` |
 

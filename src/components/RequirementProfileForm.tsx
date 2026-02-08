@@ -36,6 +36,13 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
    const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(value?.template_id || null);
    const [openSections, setOpenSections] = useState<string[]>([]);
 
+  // Synkronisera selectedTemplateId med inkommande value
+  useEffect(() => {
+    if (value?.template_id && value.template_id !== selectedTemplateId) {
+      setSelectedTemplateId(value.template_id);
+    }
+  }, [value?.template_id]);
+
   const { data: templates, isLoading } = useQuery({
     queryKey: ['requirement-templates-active'],
     queryFn: async () => {
@@ -56,27 +63,40 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
 
   const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
 
-   // Initialize profile values when template changes
+  // Initiera openSections när template finns och sektioner är tomma
+  useEffect(() => {
+    if (selectedTemplate && openSections.length === 0) {
+      setOpenSections(selectedTemplate.template_data.sections.map(s => s.key));
+    }
+  }, [selectedTemplate, openSections.length]);
+
+   // Initialize profile values when template changes (only for new/empty profiles)
    useEffect(() => {
-     if (selectedTemplate && (!value || value.template_id !== selectedTemplateId)) {
-       const initialValues: RequirementProfile['values'] = {};
-       const initialNotes: Record<string, string> = {};
-       const sectionKeys: string[] = [];
-       selectedTemplate.template_data.sections.forEach(section => {
-         initialValues[section.key] = {};
-         initialNotes[section.key] = '';
-         sectionKeys.push(section.key);
-         section.fields.forEach(field => {
-           initialValues[section.key][field.key] = getDefaultValue(field);
+     if (selectedTemplate && selectedTemplateId) {
+       const isNewProfile = !value || value.template_id !== selectedTemplateId;
+       const hasExistingValues = value && Object.keys(value.values || {}).length > 0;
+       
+       // Endast initiera om profilen är ny OCH saknar existerande värden
+       if (isNewProfile && !hasExistingValues) {
+         const initialValues: RequirementProfile['values'] = {};
+         const initialNotes: Record<string, string> = {};
+         const sectionKeys: string[] = [];
+         selectedTemplate.template_data.sections.forEach(section => {
+           initialValues[section.key] = {};
+           initialNotes[section.key] = '';
+           sectionKeys.push(section.key);
+           section.fields.forEach(field => {
+             initialValues[section.key][field.key] = getDefaultValue(field);
+           });
          });
-       });
-       setOpenSections(sectionKeys);
-       onChange({
-         template_id: selectedTemplate.id,
-         role_key: selectedTemplate.role_key,
-         values: initialValues,
-         section_notes: initialNotes
-       });
+         setOpenSections(sectionKeys);
+         onChange({
+           template_id: selectedTemplate.id,
+           role_key: selectedTemplate.role_key,
+           values: initialValues,
+           section_notes: initialNotes
+         });
+       }
      }
    }, [selectedTemplateId, selectedTemplate]);
 

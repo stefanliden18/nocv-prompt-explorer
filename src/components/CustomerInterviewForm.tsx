@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { GripVertical, Plus, X, Printer, Save, ClipboardList, Link2, Sparkles, Loader2 } from "lucide-react";
+import { GripVertical, Plus, X, Printer, Save, ClipboardList, Link2, Sparkles, Loader2, FolderOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { 
@@ -44,10 +45,30 @@ interface InterviewData {
   templateId: string | null;
 }
 
+interface EditProfileData {
+  id: string;
+  template_id: string;
+  company_name: string;
+  contact_person: string | null;
+  desired_start_date: string | null;
+  salary_range: string | null;
+  profile_data: any;
+  section_notes: any;
+  linked_job_id: string | null;
+}
+
+interface CustomerInterviewFormProps {
+  editProfile?: EditProfileData | null;
+  onClearEdit?: () => void;
+}
+
 const STORAGE_KEY = 'nocv-interview-draft';
 
-export function CustomerInterviewForm() {
+export function CustomerInterviewForm({ editProfile, onClearEdit }: CustomerInterviewFormProps) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     companyName: '',
@@ -63,6 +84,7 @@ export function CustomerInterviewForm() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Query for existing jobs (exclude demo jobs)
   const { data: jobs } = useQuery({
@@ -99,8 +121,34 @@ export function CustomerInterviewForm() {
 
   const selectedTemplate = templates?.find(t => t.id === selectedTemplateId);
 
-  // Load draft from localStorage on mount
+  // Load editProfile when provided
   useEffect(() => {
+    if (editProfile) {
+      setCurrentProfileId(editProfile.id);
+      setSelectedTemplateId(editProfile.template_id);
+      setCustomerInfo({
+        companyName: editProfile.company_name || '',
+        contactPerson: editProfile.contact_person || '',
+        desiredStartDate: editProfile.desired_start_date || '',
+        salaryRange: editProfile.salary_range || ''
+      });
+      if (editProfile.profile_data) {
+        setProfileValues(editProfile.profile_data);
+      }
+      if (editProfile.section_notes) {
+        setSectionNotes(editProfile.section_notes);
+      }
+      if (editProfile.linked_job_id) {
+        setSelectedJobId(editProfile.linked_job_id);
+        setLinkMode('existing');
+      }
+    }
+  }, [editProfile]);
+
+  // Load draft from localStorage on mount (only if not editing)
+  useEffect(() => {
+    if (editProfile) return; // Don't load localStorage when editing
+    
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
@@ -119,11 +167,11 @@ export function CustomerInterviewForm() {
         console.error('Error loading draft:', e);
       }
     }
-  }, []);
+  }, [editProfile]);
 
   // Initialize profile values when template changes
   useEffect(() => {
-    if (selectedTemplate) {
+    if (selectedTemplate && !editProfile) {
       const savedData = localStorage.getItem(STORAGE_KEY);
       let savedValues: RequirementProfile['values'] | null = null;
       let savedNotes: Record<string, string> | null = null;
@@ -157,7 +205,7 @@ export function CustomerInterviewForm() {
         setSectionNotes(initialNotes);
       }
     }
-  }, [selectedTemplateId, selectedTemplate]);
+  }, [selectedTemplateId, selectedTemplate, editProfile]);
 
   const getDefaultValue = (field: TemplateField) => {
     switch (field.type) {
@@ -194,7 +242,69 @@ export function CustomerInterviewForm() {
     return profileValues?.[sectionKey]?.[fieldKey];
   };
 
-  const handleSaveDraft = () => {
+  // Save to database
+  const handleSaveToDatabase = async () => {
+    if (!selectedTemplateId || !selectedTemplate || !user) {
+      toast.error('Du måste vara inloggad och ha valt en tjänstetyp');
+      return;
+    }
+
+    if (!customerInfo.companyName.trim()) {
+      toast.error('Ange ett företagsnamn');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const profileData = {
+        created_by: user.id,
+        template_id: selectedTemplateId,
+        company_name: customerInfo.companyName.trim(),
+        contact_person: customerInfo.contactPerson.trim() || null,
+        desired_start_date: customerInfo.desiredStartDate.trim() || null,
+        salary_range: customerInfo.salaryRange.trim() || null,
+        profile_data: profileValues as any,
+        section_notes: sectionNotes as any,
+        linked_job_id: selectedJobId || null
+      };
+
+      if (currentProfileId) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('saved_requirement_profiles')
+          .update(profileData)
+          .eq('id', currentProfileId);
+
+        if (error) throw error;
+        toast.success('Kravprofil uppdaterad!');
+      } else {
+        // Insert new profile
+        const { data, error } = await supabase
+          .from('saved_requirement_profiles')
+          .insert(profileData)
+          .select('id')
+          .single();
+
+        if (error) throw error;
+        setCurrentProfileId(data.id);
+        toast.success('Kravprofil sparad till biblioteket!');
+      }
+
+      // Clear localStorage draft
+      localStorage.removeItem(STORAGE_KEY);
+      
+      // Invalidate queries to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['saved-requirement-profiles'] });
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      toast.error('Kunde inte spara profilen: ' + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Save to localStorage (temporary backup)
+  const handleSaveLocalDraft = () => {
     const data: InterviewData = {
       customerInfo,
       templateId: selectedTemplateId,
@@ -206,7 +316,7 @@ export function CustomerInterviewForm() {
       } : null
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    toast.success('Utkast sparat!');
+    toast.success('Utkast sparat lokalt!');
   };
 
   const handleClearDraft = () => {
@@ -220,7 +330,11 @@ export function CustomerInterviewForm() {
     setSelectedTemplateId(null);
     setProfileValues({});
     setSectionNotes({});
-    toast.success('Utkast rensat');
+    setCurrentProfileId(null);
+    setLinkMode(null);
+    setSelectedJobId(null);
+    onClearEdit?.();
+    toast.success('Formulär rensat');
   };
 
   const handlePrint = () => {
@@ -555,9 +669,18 @@ export function CustomerInterviewForm() {
             <Printer className="h-4 w-4 mr-2" />
             Skriv ut
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSaveDraft}>
-            <Save className="h-4 w-4 mr-2" />
-            Spara utkast
+          <Button 
+            variant="default" 
+            size="sm" 
+            onClick={handleSaveToDatabase}
+            disabled={isSaving || !customerInfo.companyName.trim()}
+          >
+            {isSaving ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FolderOpen className="h-4 w-4 mr-2" />
+            )}
+            {currentProfileId ? 'Uppdatera' : 'Spara till bibliotek'}
           </Button>
         </div>
       </div>
@@ -786,15 +909,29 @@ export function CustomerInterviewForm() {
           </Card>
 
           {/* Bottom actions */}
-          <div className="flex items-center gap-2 justify-end print:hidden">
+          <div className="flex items-center gap-2 justify-end print:hidden flex-wrap">
             <Button variant="outline" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" />
               Skriv ut
             </Button>
-            <Button variant="outline" onClick={handleSaveDraft}>
-              <Save className="h-4 w-4 mr-2" />
-              Spara utkast
+            <Button 
+              variant="default" 
+              onClick={handleSaveToDatabase}
+              disabled={isSaving || !customerInfo.companyName.trim()}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <FolderOpen className="h-4 w-4 mr-2" />
+              )}
+              {currentProfileId ? 'Uppdatera' : 'Spara till bibliotek'}
             </Button>
+            {currentProfileId && (
+              <Button variant="ghost" onClick={handleClearDraft}>
+                <X className="h-4 w-4 mr-2" />
+                Skapa ny
+              </Button>
+            )}
           </div>
         </>
       )}

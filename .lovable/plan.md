@@ -1,295 +1,337 @@
 
-# Plan: Kandidatpresentation med Tvåstegs AI-matchning
 
-## ✅ STATUS: IMPLEMENTERAD
-
-Alla fyra faser är slutförda:
-- ✅ Fas 1: Databas och grundstruktur
-- ✅ Fas 2: Screening-flöde  
-- ✅ Fas 3: Slutmatchning-flöde
-- ✅ Fas 4: Kundvy
+# Plan: Kravprofilmallar per tjänstetyp
 
 ## Sammanfattning
-Implementerat rekryteringssystem med **två distinkta matchningssteg**:
-1. **Screening-matchning** (efter initial Kiku/Sara-intervju) → Beslut: "Gå vidare eller ej?"
-2. **Slutmatchning** (efter fullständig digital intervju) → Genererar kundpresentation
+Skapa ett system för att hantera **kundkravprofiler** - strukturerade mallar för att samla in rekryteringskrav från kundföretag. Mallarna varierar per tjänstetyp (bilmekaniker, servicetekniker, etc.) och sparas kopplat till jobb.
 
 ---
 
-## Flödesöversikt
+## Problemanalys
+
+Kravprofilen du laddade upp innehåller:
+
+| Sektion | Innehåll |
+|---------|----------|
+| **Grunduppgifter** | Företag, Roll, Bilmärke, Tillträde, Ort, Lön |
+| **Tekniska krav** | Utbildning, Erfarenhet, Fordonsteknik (service, diagnostik, hybrid/el, etc.) |
+| **Diagnostikverktyg** | OBD-scanner, märkesverktyg, oscilloskop, affärssystem |
+| **Certifikat** | Högvolt, köldmedia, B-körkort |
+| **Personliga egenskaper** | Top 5-egenskaper, arbetssätt, kundkontakt |
+| **Team & Arbetsmiljö** | Teamstorlek, kultur, arbetstider |
+| **Prioriteringar** | Top 3 måste-krav, dealbreakers |
+
+---
+
+## Lösningsdesign
+
+### Arkitektur
 
 ```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                      STEG 1: INITIAL SCREENING                              │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Kandidat svarar på korta frågor via Kiku/Sara                              │
-│                        ↓                                                     │
-│  Rekryterare importerar transkript (ApplicationDetail)                      │
-│                        ↓                                                     │
-│  Väljer yrkesroll (bilmekaniker, servicetekniker, etc.)                     │
-│                        ↓                                                     │
-│  AI analyserar: "Ska denna kandidat gå vidare till intervju?"               │
-│                        ↓                                                     │
-│  ┌──────────────────────────────────────────────────────────────────┐       │
-│  │  SCREENING-RESULTAT (visas för rekryterare)                      │       │
-│  │  • Preliminary match score (0-100%)                              │       │
-│  │  • Nyckelstyrkor                                                 │       │
-│  │  • Eventuella röda flaggor                                       │       │
-│  │  • Rekommendation: "Gå vidare" / "Avvakta" / "Ej lämplig"        │       │
-│  └──────────────────────────────────────────────────────────────────┘       │
-│                        ↓                                                     │
-│  Rekryterare beslutar: Boka djupintervju?                                   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-                                   ↓
-                    (Endast utvalda kandidater)
-                                   ↓
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                    STEG 2: FULLSTÄNDIG INTERVJU                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Kandidat genomför djupare digital intervju                                 │
-│                        ↓                                                     │
-│  Rekryterare importerar FULLSTÄNDIG transkribering                          │
-│                        ↓                                                     │
-│  AI gör detaljerad matchning mot:                                           │
-│    • Yrkesrollens baskrav                                                   │
-│    • Platsannonsens specifika krav                                          │
-│    • Branschkunskap                                                         │
-│                        ↓                                                     │
-│  ┌──────────────────────────────────────────────────────────────────┐       │
-│  │  SLUTMATCHNING & KANDIDATPRESENTATION                            │       │
-│  │  • Övergripande match score (0-100%)                             │       │
-│  │  • Detaljerad styrke-analys med citat från intervjun             │       │
-│  │  • Teknisk kompetensbedömning                                    │       │
-│  │  • Mjuka färdigheter-bedömning                                   │       │
-│  │  • Eventuella utvecklingsområden                                 │       │
-│  │  • Professionell sammanfattning                                  │       │
-│  └──────────────────────────────────────────────────────────────────┘       │
-│                        ↓                                                     │
-│  Rekryterare granskar och publicerar                                        │
-│                        ↓                                                     │
-│  Kund får delningslänk och loggar in för att se kandidatprofil              │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│                  ADMIN: Kravprofilmallar                       │
+│ /admin/requirement-templates                                   │
+├────────────────────────────────────────────────────────────────┤
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────┐  │
+│  │ Bilmekaniker     │  │ Servicetekniker  │  │ Plåtslagare  │  │
+│  │ ─────────────    │  │ ─────────────    │  │ ──────────   │  │
+│  │ • Motordiagnostik│  │ • Serviceintervall│ │ • Svetsning  │  │
+│  │ • Växellåda      │  │ • Kundkontakt    │  │ • Karosseri  │  │
+│  │ • OBD/Techstream │  │ • Affärssystem   │  │ • Struktur   │  │
+│  └──────────────────┘  └──────────────────┘  └──────────────┘  │
+└────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────┐
+│                  ADMIN: Skapa Jobb                             │
+│ /admin/jobs/new                                                │
+├────────────────────────────────────────────────────────────────┤
+│  Välj tjänstetyp: [Bilmekaniker ▼]                             │
+│                              │                                  │
+│  ┌───────────────────────────▼─────────────────────────────┐   │
+│  │  KRAVPROFIL (förifyld från mall)                        │   │
+│  │                                                          │   │
+│  │  Tekniska krav:                                          │   │
+│  │  ☑ Motordiagnostik   ☑ OBD-scanner                       │   │
+│  │  ☐ Hybrid/Elteknik   ☑ Bromsystem                        │   │
+│  │                                                          │   │
+│  │  Erfarenhet: [3-5 år ▼]  Bilmärke: [VAG     ]           │   │
+│  │                                                          │   │
+│  │  Top 3 krav:                                             │   │
+│  │  1. [Diagnostik                        ]                 │   │
+│  │  2. [Självständig                      ]                 │   │
+│  │  3. [Kundkontakt                       ]                 │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌────────────────────────────────────────────────────────────────┐
+│            Sparas som strukturerad JSON i jobs-tabellen        │
+│            Används av AI vid kandidat-matchning                │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Databas - Schema
+## Databas
 
-### Tabell 1: role_profiles
-Fördefinierade kravprofiler för de 8 yrkesrollerna.
-
-| Kolumn | Typ | Beskrivning |
-|--------|-----|-------------|
-| id | uuid | Primärnyckel |
-| role_key | text | "bilmekaniker", "servicetekniker", etc. |
-| display_name | text | "Bilmekaniker" (för visning) |
-| description | text | Kort beskrivning av rollen |
-| technical_skills | jsonb | Tekniska kompetenser |
-| soft_skills | jsonb | Mjuka färdigheter |
-| knowledge_areas | jsonb | Kunskapsområden |
-| screening_criteria | jsonb | Kriterier för initial screening |
-
-**Initialdata:** 8 fördefinierade yrkesroller med branschspecifika krav.
-
----
-
-### Tabell 2: candidate_transcripts
-Lagrar transkriberade intervjusvar (stödjer flera per ansökan).
+### Ny tabell: `requirement_templates`
 
 | Kolumn | Typ | Beskrivning |
 |--------|-----|-------------|
 | id | uuid | Primärnyckel |
-| application_id | uuid | FK till applications |
-| interview_type | text | "screening" eller "full_interview" |
-| transcript_text | text | Full transkribering |
-| structured_data | jsonb | Parsade frågor/svar (om möjligt) |
-| imported_at | timestamptz | När den importerades |
-
----
-
-### Tabell 3: candidate_assessments
-AI-genererade bedömningar (en per intervjutyp).
-
-| Kolumn | Typ | Beskrivning |
-|--------|-----|-------------|
-| id | uuid | Primärnyckel |
-| application_id | uuid | FK till applications |
-| transcript_id | uuid | FK till candidate_transcripts |
-| role_profile_id | uuid | FK till role_profiles |
-| assessment_type | text | "screening" eller "final" |
-| match_score | integer | 0-100 |
-| role_match_score | integer | 0-100 (matchning mot yrkesroll) |
-| job_match_score | integer | 0-100 (matchning mot annons) |
-| recommendation | text | "proceed" / "maybe" / "reject" (endast screening) |
-| strengths | jsonb | Kandidatens styrkor |
-| concerns | jsonb | Röda flaggor / utvecklingsområden |
-| technical_assessment | text | Teknisk bedömning |
-| soft_skills_assessment | text | Mjuka färdigheter |
-| summary | text | AI-genererad sammanfattning |
+| role_key | text | Koppling till role_profiles (bilmekaniker, etc.) |
+| display_name | text | "Bilmekaniker - Kravprofil" |
+| template_data | jsonb | Strukturerad malldata (se nedan) |
+| is_active | boolean | Om mallen är aktiv |
 | created_at | timestamptz | Skapad |
+| updated_at | timestamptz | Uppdaterad |
 
----
+### JSON-struktur för `template_data`
 
-### Tabell 4: candidate_presentations
-Publicerbara kundpresentationer (endast från slutmatchning).
+```json
+{
+  "sections": [
+    {
+      "key": "education",
+      "title": "Utbildning & Erfarenhet",
+      "fields": [
+        {
+          "key": "min_education",
+          "label": "Utbildning (minst krav)",
+          "type": "select",
+          "options": ["Gymnasial fordonsteknik", "Eftergymnasial", "Annat"]
+        },
+        {
+          "key": "experience_years",
+          "label": "Yrkeserfarenhet (antal år)",
+          "type": "number"
+        },
+        {
+          "key": "brand_required",
+          "label": "Erfarenhet av bilmärke",
+          "type": "brand_selector"
+        }
+      ]
+    },
+    {
+      "key": "technical_skills",
+      "title": "Tekniska krav",
+      "fields": [
+        {
+          "key": "service_maintenance",
+          "label": "Service & underhåll",
+          "type": "checkbox"
+        },
+        {
+          "key": "motor_diagnostics",
+          "label": "Motordiagnostik",
+          "type": "checkbox_with_level",
+          "levels": ["Grund", "Avancerad"]
+        },
+        {
+          "key": "hybrid_ev",
+          "label": "Hybrid/Elteknik",
+          "type": "checkbox_with_level",
+          "levels": ["Grund", "Avancerad", "Högvoltsbehörighet"]
+        }
+      ]
+    },
+    {
+      "key": "certifications",
+      "title": "Certifikat & Behörigheter",
+      "fields": [
+        {
+          "key": "high_voltage",
+          "label": "Högvoltsbehörighet",
+          "type": "requirement_level"
+        },
+        {
+          "key": "refrigerant",
+          "label": "Köldmediabehörighet",
+          "type": "requirement_level"
+        },
+        {
+          "key": "drivers_license",
+          "label": "B-körkort",
+          "type": "requirement_level"
+        }
+      ]
+    },
+    {
+      "key": "soft_skills",
+      "title": "Personliga egenskaper",
+      "fields": [
+        {
+          "key": "top_qualities",
+          "label": "Top 5 viktigaste egenskaper",
+          "type": "ranked_list",
+          "max_items": 5
+        },
+        {
+          "key": "independence",
+          "label": "Självständighet",
+          "type": "select",
+          "options": ["Mycket självständig", "Jobbar självständigt efter riktning", "Behöver nära uppföljning"]
+        }
+      ]
+    },
+    {
+      "key": "priorities",
+      "title": "Prioriteringar",
+      "fields": [
+        {
+          "key": "must_haves",
+          "label": "Top 3 absoluta krav",
+          "type": "ranked_list",
+          "max_items": 3
+        },
+        {
+          "key": "dealbreakers",
+          "label": "Dealbreakers",
+          "type": "text"
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Uppdatering av `jobs`-tabellen
+
+Lägg till ny kolumn:
 
 | Kolumn | Typ | Beskrivning |
 |--------|-----|-------------|
-| id | uuid | Primärnyckel |
-| application_id | uuid | FK till applications (UNIQUE) |
-| final_assessment_id | uuid | FK till candidate_assessments |
-| presentation_html | text | Renderad HTML-presentation |
-| status | text | "draft" / "published" |
-| share_token | text | Unik delningslänk |
-| published_at | timestamptz | Publicerad tidpunkt |
+| requirement_profile | jsonb | Ifylld kravprofil (från mall) |
 
 ---
 
-## Backend Functions
+## Frontend-komponenter
 
-### 1. generate-screening-assessment
-Genererar initial screening-bedömning.
+### 1. RequirementTemplateManager (Admin)
 
-**Input:**
-- application_id
-- transcript_text (från Kiku/Sara screening)
-- role_key (vald yrkesroll)
+**Route:** `/admin/requirement-templates`
 
-**Output:**
-- Preliminary match score
-- Nyckelstyrkor
-- Eventuella röda flaggor
-- Rekommendation: "proceed" / "maybe" / "reject"
-- Kort sammanfattning
+- Lista alla mallar per yrkesroll
+- Skapa/redigera mallar via formulär
+- Aktivera/inaktivera mallar
 
-**AI-prompt fokus:** Snabb bedömning för att avgöra om kandidaten ska gå vidare.
+### 2. RequirementProfileForm (I JobForm)
 
----
+**Integreras i:** `/admin/jobs/new` och `/admin/jobs/:id/edit`
 
-### 2. generate-final-assessment
-Genererar fullständig slutmatchning och kandidatpresentation.
+- Dropdown för att välja tjänstetyp
+- Renderar dynamiskt formulär baserat på mallens `template_data`
+- Fälttyper:
+  - `checkbox` - Enkel kryssruta
+  - `checkbox_with_level` - Kryssruta + nivåväljare
+  - `select` - Dropdown
+  - `number` - Numeriskt fält
+  - `text` - Fritext
+  - `ranked_list` - Rangordnad lista (drag-and-drop)
+  - `requirement_level` - Krävs/Meriterande/Ej relevant
+  - `brand_selector` - Bilmärkesväljare med fritext
 
-**Input:**
-- application_id
-- transcript_text (från djupintervju)
-- role_key
-- job_id (för att hämta annonsens specifika krav)
+### 3. RequirementProfileDisplay (I ApplicationDetail)
 
-**Output:**
-- Detaljerad match score (roll + jobb)
-- Styrkor med citat från intervjun
-- Teknisk kompetensbedömning
-- Mjuka färdigheter-bedömning
-- Utvecklingsområden
-- Professionell sammanfattning
-- Renderad HTML-presentation
-
-**AI-prompt fokus:** Djupanalys med konkreta exempel och professionellt presentationsformat.
+**Visar ifylld kravprofil för:** AI-matchning och rekryterarens referens.
 
 ---
 
-## Frontend - Komponenter
+## AI-integration
 
-### ApplicationDetail.tsx - Ny sektion
-Lägg till ett nytt kort "Kandidatbedömning" med två flikar:
+Uppdatera edge functions för att använda strukturerad kravprofil:
 
-**Flik 1: Screening**
-- Importera screening-transkript
-- Välj yrkesroll (dropdown med 8 roller)
-- Knapp: "Generera screening"
-- Visa resultat: Match-score, styrkor, röda flaggor, rekommendation
-- Knapp: "Boka djupintervju" (om godkänd)
+### `generate-screening-assessment`
+- Läs `jobs.requirement_profile` istället för/utöver `requirements_md`
+- Matcha kandidatens svar mot specifika checkboxar (motordiagnostik, certifikat, etc.)
 
-**Flik 2: Slutmatchning**
-- Importera fullständig transkribering
-- Knapp: "Generera slutmatchning"
-- Visa detaljerat resultat
-- Förhandsgranska kundpresentation
-- Knapp: "Publicera för kund"
+### `generate-final-assessment`
+- Använd kravprofilen för detaljerad matchningsanalys
+- Generera presentation som visar hur kandidaten matchar varje kravkategori
 
 ---
 
-### CandidatePresentationCustomerView
-Publik sida för kunder (via delningslänk).
+## De 8 mallarna (basinnehåll)
 
-**Innehåll:**
-- Kandidatens namn och roll
-- Match-score visuellt
-- Styrkor (utan känslig info)
-- Teknisk och mjuk bedömning
-- Professionell sammanfattning
-- Responsiv design för utskrift
-
-**Route:** `/presentation/:token` (ingen inloggning krävs, skyddad med token)
-
----
-
-## Routes
-
-| Route | Beskrivning |
-|-------|-------------|
-| `/admin/applications/:id` | Befintlig sida, utökas med bedömnings-sektion |
-| `/presentation/:token` | Publik kundvy |
-
----
-
-## De 8 Yrkesrollprofilerna
-
-| Roll | Nyckelkompetenser |
-|------|-------------------|
-| **Bilmekaniker** | Diagnostik, motor/växellåda, bilmärken (VAG, Volvo, etc.), verkstadsrutiner |
-| **Servicetekniker** | Serviceintervall, kundkontakt, felsökning, bokningssystem |
-| **Plåtslagare** | Karossarbete, svetsning, MIG/MAG, dörrbyte, panel-justering |
-| **Lackerare** | Färgblandning, sprayteknik, vattenbaserade lacker, ytbehandling |
-| **Rekondare** | Detaljrengöring, polering, interiörvård, ceramic coating |
-| **Däckskiftare** | Däckbyte, balansering, TPMS-sensorer, säsongslagring |
-| **Kundmottagare** | Kundkommunikation, offerthantering, bokning, problemlösning |
-| **Fordonstekniker** | Avancerad diagnostik, elektronik, hybrid/elbil, ADAS-system |
+| Roll | Specifika sektioner |
+|------|---------------------|
+| **Bilmekaniker** | Motordiagnostik, växellåda, el/hybrid, OBD-verktyg, märkeserfarenhet |
+| **Servicetekniker** | Serviceintervall, kundkontakt, affärssystem, bokningssystem |
+| **Plåtslagare** | Svetsning (MIG/MAG), karosseri, strukturmätning, kvalitetskrav |
+| **Lackerare** | Färgblandning, sprayteknik, vattenbaserade lacker, miljökrav |
+| **Rekondare** | Detaljrengöring, polering, ceramic coating, interiörvård |
+| **Däckskiftare** | Däckmontage, balansering, TPMS, säsongslagring |
+| **Kundmottagare** | Kommunikation, offert, bokning, problemlösning, affärssystem |
+| **Fordonstekniker** | Avancerad diagnostik, ADAS, elbil, programmering, märkesverktyg |
 
 ---
 
 ## Implementeringsordning
 
-### Fas 1: Databas och grundstruktur
-1. Skapa tabeller: `role_profiles`, `candidate_transcripts`, `candidate_assessments`, `candidate_presentations`
-2. Sätta RLS-policies
-3. Seeda de 8 yrkesrollprofilerna
+### Fas 1: Databas
+1. Skapa `requirement_templates`-tabellen
+2. Lägg till `requirement_profile`-kolumn i `jobs`
+3. Seeda 8 basmallar
 
-### Fas 2: Screening-flöde
-4. Skapa `generate-screening-assessment` edge function
-5. Lägg till screening-import i ApplicationDetail
-6. Visa screening-resultat
+### Fas 2: Admin-gränssnitt för mallar
+4. Skapa `/admin/requirement-templates` sida
+5. Implementera mallredigerare
 
-### Fas 3: Slutmatchning-flöde
-7. Skapa `generate-final-assessment` edge function
-8. Lägg till slutmatchning-import
-9. Generera kandidatpresentation
+### Fas 3: Integration i jobbformulär
+6. Skapa `RequirementProfileForm`-komponent
+7. Integrera i `JobForm.tsx` och `JobEdit.tsx`
 
-### Fas 4: Kundvy
-10. Skapa publik presentationssida
-11. Implementera delningslänk
+### Fas 4: AI-uppdatering
+8. Uppdatera screening-assessment att läsa strukturerad profil
+9. Uppdatera final-assessment
 
 ---
 
-## Säkerhet
+## Tekniska detaljer
 
-- **role_profiles:** Alla autenticerade kan läsa, endast admins kan redigera
-- **candidate_transcripts:** Admins + job creators kan läsa/skriva
-- **candidate_assessments:** Admins + job creators kan läsa/skriva
-- **candidate_presentations:** Admins kan läsa/skriva, kundvy via unik token
-- **Kundvy:** Skyddad med 64-teckens random token, ingen auth krävs
-- **Känslig data:** Kundvyn visar INTE email, telefon eller fullständigt namn
+### RLS-policies för `requirement_templates`
+- **SELECT:** Alla autenticerade användare
+- **INSERT/UPDATE/DELETE:** Endast admins
+
+### Typning
+```typescript
+interface RequirementTemplate {
+  id: string;
+  role_key: string;
+  display_name: string;
+  template_data: TemplateData;
+  is_active: boolean;
+}
+
+interface TemplateData {
+  sections: TemplateSection[];
+}
+
+interface TemplateSection {
+  key: string;
+  title: string;
+  fields: TemplateField[];
+}
+
+interface TemplateField {
+  key: string;
+  label: string;
+  type: 'checkbox' | 'checkbox_with_level' | 'select' | 'number' | 'text' | 'ranked_list' | 'requirement_level' | 'brand_selector';
+  options?: string[];
+  levels?: string[];
+  max_items?: number;
+}
+```
 
 ---
 
-## Tekniska val
+## Fördelar med denna lösning
 
-- **AI-modell:** Lovable AI (google/gemini-3-flash-preview) - ingen API-nyckel krävs
-- **Tool calling:** Strukturerad output för konsekvent dataformat
-- **HTML-generering:** Tailwind-baserad, professionell layout
-- **Share-token:** crypto.randomUUID() eller 64-teckens hex
+1. **Flexibilitet:** Varje yrkesroll har sin egen mall som kan anpassas
+2. **Strukturerad data:** JSON-format möjliggör precisare AI-matchning
+3. **Återanvändbarhet:** Mallar sparas och kan användas för flera jobb
+4. **Enkel redigering:** Admin kan uppdatera mallar utan kodjusteringar
+5. **Sömlös integration:** Kravprofilen används automatiskt i AI-bedömning
 

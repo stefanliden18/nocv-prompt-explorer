@@ -179,6 +179,183 @@ export type Database = {
           },
         ]
       }
+      candidate_assessments: {
+        Row: {
+          application_id: string
+          assessment_type: Database["public"]["Enums"]["assessment_type"]
+          concerns: Json | null
+          created_at: string
+          id: string
+          job_match_score: number | null
+          match_score: number | null
+          recommendation:
+            | Database["public"]["Enums"]["screening_recommendation"]
+            | null
+          role_match_score: number | null
+          role_profile_id: string
+          soft_skills_assessment: string | null
+          strengths: Json | null
+          summary: string | null
+          technical_assessment: string | null
+          transcript_id: string
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          assessment_type: Database["public"]["Enums"]["assessment_type"]
+          concerns?: Json | null
+          created_at?: string
+          id?: string
+          job_match_score?: number | null
+          match_score?: number | null
+          recommendation?:
+            | Database["public"]["Enums"]["screening_recommendation"]
+            | null
+          role_match_score?: number | null
+          role_profile_id: string
+          soft_skills_assessment?: string | null
+          strengths?: Json | null
+          summary?: string | null
+          technical_assessment?: string | null
+          transcript_id: string
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          assessment_type?: Database["public"]["Enums"]["assessment_type"]
+          concerns?: Json | null
+          created_at?: string
+          id?: string
+          job_match_score?: number | null
+          match_score?: number | null
+          recommendation?:
+            | Database["public"]["Enums"]["screening_recommendation"]
+            | null
+          role_match_score?: number | null
+          role_profile_id?: string
+          soft_skills_assessment?: string | null
+          strengths?: Json | null
+          summary?: string | null
+          technical_assessment?: string | null
+          transcript_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_assessments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_assessments_role_profile_id_fkey"
+            columns: ["role_profile_id"]
+            isOneToOne: false
+            referencedRelation: "role_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_assessments_transcript_id_fkey"
+            columns: ["transcript_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_transcripts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_presentations: {
+        Row: {
+          application_id: string
+          created_at: string
+          final_assessment_id: string
+          id: string
+          presentation_html: string | null
+          published_at: string | null
+          share_token: string | null
+          status: Database["public"]["Enums"]["presentation_status"]
+          updated_at: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          final_assessment_id: string
+          id?: string
+          presentation_html?: string | null
+          published_at?: string | null
+          share_token?: string | null
+          status?: Database["public"]["Enums"]["presentation_status"]
+          updated_at?: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          final_assessment_id?: string
+          id?: string
+          presentation_html?: string | null
+          published_at?: string | null
+          share_token?: string | null
+          status?: Database["public"]["Enums"]["presentation_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_presentations_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: true
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "candidate_presentations_final_assessment_id_fkey"
+            columns: ["final_assessment_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      candidate_transcripts: {
+        Row: {
+          application_id: string
+          created_at: string
+          id: string
+          imported_at: string
+          interview_type: Database["public"]["Enums"]["interview_type"]
+          source: string | null
+          structured_data: Json | null
+          transcript_text: string
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          id?: string
+          imported_at?: string
+          interview_type: Database["public"]["Enums"]["interview_type"]
+          source?: string | null
+          structured_data?: Json | null
+          transcript_text: string
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          id?: string
+          imported_at?: string
+          interview_type?: Database["public"]["Enums"]["interview_type"]
+          source?: string | null
+          structured_data?: Json | null
+          transcript_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "candidate_transcripts_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null
@@ -427,6 +604,45 @@ export type Database = {
         }
         Relationships: []
       }
+      role_profiles: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_name: string
+          id: string
+          knowledge_areas: Json | null
+          role_key: string
+          screening_criteria: Json | null
+          soft_skills: Json | null
+          technical_skills: Json | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_name: string
+          id?: string
+          knowledge_areas?: Json | null
+          role_key: string
+          screening_criteria?: Json | null
+          soft_skills?: Json | null
+          technical_skills?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          id?: string
+          knowledge_areas?: Json | null
+          role_key?: string
+          screening_criteria?: Json | null
+          soft_skills?: Json | null
+          technical_skills?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -482,8 +698,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "user"
       application_status: "new" | "viewed" | "booked" | "rejected"
+      assessment_type: "screening" | "final"
+      interview_type: "screening" | "full_interview"
       job_status: "draft" | "published" | "archived" | "demo"
+      presentation_status: "draft" | "published" | "archived"
       profile_role: "recruiter" | "admin" | "user"
+      screening_recommendation: "proceed" | "maybe" | "reject"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -613,8 +833,12 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "user"],
       application_status: ["new", "viewed", "booked", "rejected"],
+      assessment_type: ["screening", "final"],
+      interview_type: ["screening", "full_interview"],
       job_status: ["draft", "published", "archived", "demo"],
+      presentation_status: ["draft", "published", "archived"],
       profile_role: ["recruiter", "admin", "user"],
+      screening_recommendation: ["proceed", "maybe", "reject"],
     },
   },
 } as const

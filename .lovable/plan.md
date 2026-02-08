@@ -1,160 +1,125 @@
 
-# Plan: Kravprofilbibliotek med databassparning
-
-## Status: ✅ IMPLEMENTERAT
-
-### Slutförda funktioner:
-- ✅ Ny databastabell `saved_requirement_profiles` med RLS-policies
-- ✅ Biblioteksvy med flikar (Ny kravprofil / Mina kravprofiler)
-- ✅ SavedProfilesList-komponent med sök, filter och åtgärder
-- ✅ CustomerInterviewForm sparar till databas istället för localStorage
-- ✅ Redigera/öppna befintliga profiler från biblioteket
+# Plan: Jobbbibliotek för avpublicerade jobb
 
 ## Översikt
 
-Vi skapar ett **kravprofilbibliotek** där du kan:
-- Spara kravprofiler permanent i databasen
-- Se alla sparade profiler i en lista
-- Öppna och återanvända profiler
-- Redigera befintliga profiler
-- Ta bort profiler du inte längre behöver
+Du vill kunna "avpublicera" jobb så de försvinner från hemsidan men sparas i ett bibliotek för framtida återanvändning. Detta skiljer sig från arkivering som är mer permanent.
 
----
+Lösningen: Använd en ny status **`inactive`** (vilande) som gör att:
+- Jobbet försvinner från hemsidan
+- Jobbet sparas i ett "Jobbbibliotek" 
+- Du kan enkelt publicera det igen när det blir aktuellt
 
-## Nya funktioner
+## Ändringar
 
-### 1. Biblioteksvy med flikar
+### 1. Ny jobbstatus: `inactive` (vilande)
 
-Sidan `/admin/requirement-templates` får två flikar:
-- **Ny kravprofil** - Formuläret som finns idag (CustomerInterviewForm)
-- **Mina kravprofiler** - Lista över alla sparade profiler
+Lägger till en ny status i databasen som representerar vilande/pausade jobb:
 
-### 2. Sparade kravprofiler i listan visar
+- `draft` = Utkast (aldrig publicerat)
+- `published` = Publicerat (visas på hemsidan)
+- `inactive` = Vilande (tidigare publicerat, nu pausat - kan återaktiveras)
+- `archived` = Arkiverad (permanent stängt - för gamla jobb)
+- `demo` = Demo-jobb
 
-- Företagsnamn (från kundinformation)
-- Tjänstetyp (t.ex. "Bilmekaniker")
-- Skapad datum
-- Status (utkast / kopplad till jobb)
-- Knappar: Öppna, Koppla till jobb, Ta bort
+### 2. Ny sida: Jobbbibliotek
 
-### 3. Arbetsflöde
+Skapar en ny sida `/admin/job-library` som visar:
+- Alla **vilande** (`inactive`) jobb
+- Möjlighet att snabbt publicera igen
+- Möjlighet att redigera innan publicering
+- Möjlighet att arkivera permanent
 
 ```text
 ┌─────────────────────────────────────────────────────────────────┐
-│  KRAVPROFILER                                                   │
-├─────────────────────────────────────────────────────────────────┤
-│  [Ny kravprofil] [Mina kravprofiler]                            │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│  Mina kravprofiler                                              │
+│  JOBBBIBLIOTEK                                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Mekaniker - AutoExpert AB              2025-02-08         │  │
-│  │ Status: Utkast                    [Öppna] [Koppla] [✕]    │  │
+│  │ Svetsare - AutoExpert AB              Vilande sedan 8 feb │  │
+│  │ Stockholm                     [Publicera] [Redigera] [🗑] │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Diagnostekniker - CarService AB        2025-02-05         │  │
-│  │ Status: Kopplad till jobb         [Öppna] [Visa jobb] [✕] │  │
+│  │ Bilmekaniker - CarService              Vilande sedan 2 jan│  │
+│  │ Göteborg                      [Publicera] [Redigera] [🗑] │  │
 │  └───────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+### 3. Uppdatera JobEdit.tsx
+
+Ändra "Avpublicera"-knappen till att sätta status `inactive` istället för `draft`:
+- Byt etikett till "Pausa/Lägg i bibliotek"
+- Sätt status till `inactive`
+- Jobbet hamnar i jobbbiblioteket
+
+### 4. Uppdatera Jobs.tsx
+
+Lägg till filter/flikar för att visa:
+- Alla jobb
+- Aktiva (publicerade + utkast)
+- Vilande (bibliotek)
+- Arkiverade
+
+### 5. Sidofältet (AdminSidebar)
+
+Lägg till ny menypost:
+- "Jobbbibliotek" med ikon (t.ex. `Archive` eller `FolderOpen`)
 
 ---
 
 ## Tekniska ändringar
 
-### 1. Ny databastabell: `saved_requirement_profiles`
+### Databasändring
 
-Skapar en ny tabell för att lagra kravprofiler:
+Lägg till `inactive` som giltig status i `job_status` enum:
 
 ```sql
-CREATE TABLE saved_requirement_profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  template_id UUID NOT NULL REFERENCES requirement_templates(id),
-  
-  -- Kundinformation
-  company_name TEXT NOT NULL,
-  contact_person TEXT,
-  desired_start_date TEXT,
-  salary_range TEXT,
-  
-  -- Kravprofildata (JSON)
-  profile_data JSONB NOT NULL,
-  section_notes JSONB,
-  
-  -- Status
-  linked_job_id UUID REFERENCES jobs(id),
-  
-  -- Metadata
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+ALTER TYPE job_status ADD VALUE 'inactive';
 ```
 
-### 2. RLS-policies för säkerhet
+### Nya filer
 
-- Admins kan se alla kravprofiler
-- Rekryterare kan se och hantera sina egna kravprofiler
-- Endast skaparen eller admin kan ta bort
+| Fil | Beskrivning |
+|-----|-------------|
+| `src/pages/admin/JobLibrary.tsx` | Ny sida för jobbbiblioteket |
 
-### 3. Uppdatera CustomerInterviewForm
-
-- Lägg till `profileId` state för att hålla reda på om vi redigerar en befintlig profil
-- Ändra "Spara utkast" till att spara i databasen istället för localStorage
-- Lägg till "Spara som ny" knapp när man redigerar befintlig profil
-- Behåll localStorage som temporär backup (vid oavsiktlig stängning)
-
-### 4. Ny komponent: SavedProfilesList
-
-Skapar en ny komponent som visar listan över sparade profiler med:
-- Sökfunktion
-- Sortering efter datum/företag
-- Filtrering (utkast/kopplade)
-- Åtgärdsknappar
-
-### 5. Uppdatera RequirementTemplates-sidan
-
-Lägg till flikar (Tabs) för att växla mellan "Ny profil" och "Bibliotek".
-
----
-
-## Filer som skapas/ändras
+### Filer som uppdateras
 
 | Fil | Ändring |
 |-----|---------|
-| **Databas** | Ny tabell `saved_requirement_profiles` med RLS |
-| `src/components/SavedProfilesList.tsx` | **NY** - Listkomponent för biblioteket |
-| `src/pages/admin/RequirementTemplates.tsx` | Lägg till flikar och routing |
-| `src/components/CustomerInterviewForm.tsx` | Spara till databas, ladda befintlig profil |
-| `src/types/requirementTemplate.ts` | Lägg till `SavedRequirementProfile` interface |
+| `src/pages/admin/JobEdit.tsx` | Ändra "Avpublicera" → "Lägg i bibliotek" (status `inactive`) |
+| `src/pages/admin/Jobs.tsx` | Lägg till flikar/filter för olika statusar |
+| `src/components/AdminSidebar.tsx` | Lägg till menypost för Jobbbibliotek |
+| `src/App.tsx` | Lägg till route för `/admin/job-library` |
 
 ---
 
-## Databasschema
+## Arbetsflöde efter ändring
 
 ```text
-saved_requirement_profiles
-├── id (uuid, PK)
-├── created_by (uuid, FK → auth.users)
-├── template_id (uuid, FK → requirement_templates)
-├── company_name (text)
-├── contact_person (text)
-├── desired_start_date (text)
-├── salary_range (text)
-├── profile_data (jsonb)
-├── section_notes (jsonb)
-├── linked_job_id (uuid, FK → jobs, nullable)
-├── created_at (timestamptz)
-└── updated_at (timestamptz)
+UTKAST ──────────────────────────────────────────────────────────┐
+   │                                                              │
+   │ [Publicera]                                                  │
+   ▼                                                              │
+PUBLICERAD (visas på hemsidan)                                    │
+   │                                                              │
+   │ [Lägg i bibliotek]                                           │
+   ▼                                                              │
+VILANDE (jobbbibliotek) ◄─────────────────────────────────────────┘
+   │                  │
+   │ [Publicera]      │ [Arkivera]
+   ▼                  ▼
+PUBLICERAD       ARKIVERAD (permanent stängd)
 ```
 
 ---
 
-## Säkerhet
+## Statusförklaring i UI
 
-- RLS-policies säkerställer att endast behöriga användare kan se/redigera profiler
-- Skaparen kan alltid hantera sina egna profiler
-- Admins har full åtkomst
-- Koppling till `created_by` säkerställer att varje profil har en ägare
+| Status | Badge | Var visas |
+|--------|-------|-----------|
+| `draft` | Utkast | Jobb-listan |
+| `published` | Publicerad | Jobb-listan + hemsidan |
+| `inactive` | Vilande | Jobbbiblioteket |
+| `archived` | Arkiverad | Arkiverade jobb |
+| `demo` | Demo | Demo-jobb sidan |

@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive } from 'lucide-react';
+import { ArrowLeft, Eye, CalendarIcon, Save, Send, Archive, FolderOpen } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -60,7 +60,7 @@ export default function JobEdit() {
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
   const [kikuInterviewUrl, setKikuInterviewUrl] = useState('');
-  const [status, setStatus] = useState<'draft' | 'published' | 'archived' | 'demo'>('draft');
+  const [status, setStatus] = useState<'draft' | 'published' | 'archived' | 'demo' | 'inactive'>('draft');
   const [publishAt, setPublishAt] = useState<Date | undefined>(undefined);
   const [publishHour, setPublishHour] = useState<string>('09');
   const [publishMinute, setPublishMinute] = useState<string>('00');
@@ -159,6 +159,7 @@ export default function JobEdit() {
     const badges = {
       draft: <Badge variant="secondary">Utkast</Badge>,
       published: <Badge variant="default">Publicerad</Badge>,
+      inactive: <Badge variant="outline" className="text-orange-600 border-orange-300">Vilande</Badge>,
       archived: <Badge variant="destructive">Arkiverad</Badge>,
       demo: <Badge className="bg-yellow-500 hover:bg-yellow-600 text-black">Demo</Badge>,
     };
@@ -169,17 +170,17 @@ export default function JobEdit() {
     const buttons = {
       save: true,
       preview: true,
-      publish: status === 'draft',
-      schedule: status === 'draft' || status === 'published',
-      unpublish: status === 'published',
-      archive: status === 'draft' || status === 'published',
+      publish: status === 'draft' || status === 'inactive',
+      schedule: status === 'draft' || status === 'published' || status === 'inactive',
+      addToLibrary: status === 'published',
+      archive: status === 'draft' || status === 'published' || status === 'inactive',
       setDemo: status !== 'demo',
       unsetDemo: status === 'demo',
     };
     return buttons;
   };
 
-  const updateJob = async (newStatus?: 'draft' | 'published' | 'archived' | 'demo') => {
+  const updateJob = async (newStatus?: 'draft' | 'published' | 'archived' | 'demo' | 'inactive') => {
     if (!id) return;
 
     // Basic validation
@@ -292,7 +293,7 @@ export default function JobEdit() {
     });
   };
 
-  const handleUnpublish = () => updateJob('draft');
+  const handleAddToLibrary = () => updateJob('inactive');
 
   const buttons = getActionBarButtons();
 
@@ -372,13 +373,14 @@ export default function JobEdit() {
               {hasSelectedTime ? "SPARA SCHEMALÄGGNING" : "VÄLJ DATUM OCH TID"}
             </Button>
             
-            {buttons.unpublish && (
+            {buttons.addToLibrary && (
               <Button
-                onClick={handleUnpublish}
+                onClick={handleAddToLibrary}
                 disabled={loading}
                 variant="secondary"
               >
-                Avpublicera
+                <FolderOpen className="h-4 w-4 mr-2" />
+                Lägg i bibliotek
               </Button>
             )}
             

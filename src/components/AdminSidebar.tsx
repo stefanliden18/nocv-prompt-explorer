@@ -12,7 +12,8 @@ import {
   Kanban,
   Shield,
   Film,
-  ClipboardList
+  ClipboardList,
+  FolderOpen
 } from "lucide-react";
 import {
   Sidebar,
@@ -30,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const menuItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Jobb", url: "/admin/jobs", icon: Briefcase },
+  { title: "Jobbbibliotek", url: "/admin/job-library", icon: FolderOpen },
   { title: "Demo-jobb", url: "/admin/demo-jobs", icon: Film },
   { title: "Importera jobb", url: "/admin/jobs/import", icon: Upload },
   { title: "Ansökningar", url: "/admin/applications", icon: FileText },

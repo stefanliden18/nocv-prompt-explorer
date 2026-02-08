@@ -28,6 +28,7 @@ import JobForm from "./pages/admin/JobForm";
 import JobEdit from "./pages/admin/JobEdit";
 import JobPreview from "./pages/admin/JobPreview";
 import RecruitmentBoard from "./pages/admin/RecruitmentBoard";
+import JobLibrary from "./pages/admin/JobLibrary";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import AboutEdit from "./pages/admin/AboutEdit";
@@ -142,6 +143,14 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <RecruitmentBoard />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin/job-library" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <JobLibrary />
                 </ProtectedRoute>
               } 
             />

@@ -793,7 +793,7 @@ export type Database = {
       application_status: "new" | "viewed" | "booked" | "rejected"
       assessment_type: "screening" | "final"
       interview_type: "screening" | "full_interview"
-      job_status: "draft" | "published" | "archived" | "demo"
+      job_status: "draft" | "published" | "archived" | "demo" | "inactive"
       presentation_status: "draft" | "published" | "archived"
       profile_role: "recruiter" | "admin" | "user"
       screening_recommendation: "proceed" | "maybe" | "reject"
@@ -928,7 +928,7 @@ export const Constants = {
       application_status: ["new", "viewed", "booked", "rejected"],
       assessment_type: ["screening", "final"],
       interview_type: ["screening", "full_interview"],
-      job_status: ["draft", "published", "archived", "demo"],
+      job_status: ["draft", "published", "archived", "demo", "inactive"],
       presentation_status: ["draft", "published", "archived"],
       profile_role: ["recruiter", "admin", "user"],
       screening_recommendation: ["proceed", "maybe", "reject"],

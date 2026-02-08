@@ -64,4 +64,7 @@ export interface RequirementProfile {
   values: {
     [sectionKey: string]: RequirementProfileValue;
   };
+  section_notes?: {
+    [sectionKey: string]: string;
+  };
 }

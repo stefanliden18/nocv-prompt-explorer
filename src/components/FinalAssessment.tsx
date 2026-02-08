@@ -310,10 +310,12 @@ export function FinalAssessment({
               <CandidatePresentationEditor
                 presentationId={presentation.id}
                 applicationId={applicationId}
+                assessmentId={existingAssessment.id}
                 candidateName={candidateName}
                 roleName={existingAssessment.role_profile.display_name}
                 jobTitle={jobTitle}
                 companyName={companyName}
+                shareToken={presentation.share_token}
                 assessment={{
                   match_score: existingAssessment.match_score,
                   role_match_score: existingAssessment.role_match_score,

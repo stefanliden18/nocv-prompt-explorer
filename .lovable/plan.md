@@ -1,87 +1,55 @@
 
-# Plan: Utöka kandidatpresentationsredigeraren
+# Plan: Utöka kandidatpresentationsredigeraren ✅ KLAR
 
 ## Problem
-1. **Förhandsgranskningen visar bara halva presentationen** - Dialog-fönstret är för litet och klipps av
-2. **AI-genererad text går inte att redigera** - Sammanfattning, teknisk bedömning, styrkor m.m. är låsta
+1. ~~**Förhandsgranskningen visar bara halva presentationen** - Dialog-fönstret är för litet och klipps av~~ ✅
+2. ~~**AI-genererad text går inte att redigera** - Sammanfattning, teknisk bedömning, styrkor m.m. är låsta~~ ✅
 
-## Lösning
+## Implementerade ändringar
 
-### 1. Förbättra förhandsgranskning
-Ändra så att förhandsgranskningen öppnas i ett större fönster eller i ett nytt fönster/flik så att hela presentationen kan ses.
+### 1. Förhandsgranskning öppnas nu i ny flik ✅
+- Bytte ut `Dialog`-komponenten mot en `window.open()` som öppnar `/presentation/{share_token}` i ny flik
+- Full visning av hela presentationen utan scrollproblem
 
-**Alternativ A**: Öppna i ny flik (rekommenderas för full vy)
-**Alternativ B**: Fullskärms-dialog med bättre scroll
-
-### 2. Gör AI-text redigerbar
-Utöka `CandidatePresentationEditor` med redigeringsfält för all AI-genererad text:
+### 2. AI-text är nu redigerbar ✅
+Skapade ny komponent `src/components/presentation/AITextEditor.tsx` som hanterar:
 
 | Fält | Beskrivning |
 |------|-------------|
-| `summary` | Sammanfattande text |
-| `technical_assessment` | Teknisk bedömning |
-| `soft_skills_assessment` | Mjuka färdigheter |
-| `strengths` | Lista med styrkor + citat |
-| `concerns` | Lista med utvecklingsområden |
+| `summary` | Sammanfattande text (textarea) |
+| `technical_assessment` | Teknisk bedömning (textarea) |
+| `soft_skills_assessment` | Mjuka färdigheter (textarea) |
+| `strengths` | Lista med styrkor + citat (dynamiska kort) |
+| `concerns` | Lista med utvecklingsområden (dynamisk lista) |
 
-### Ändringar per fil
+### Ändrade filer
 
-**`CandidatePresentationEditor.tsx`**
-- Lägg till state för AI-fälten: `summary`, `technicalAssessment`, `softSkillsAssessment`, `strengths`, `concerns`
-- Initiera med värden från `assessment`-prop
-- Lägg till editeringsfält:
-  - Textarea för sammanfattning
-  - Textarea för teknisk bedömning
-  - Textarea för mjuka färdigheter
-  - Redigerbart kort för varje styrka (punkt + citat)
-  - Redigerbar lista för utvecklingsområden
-- Utöka `handleSave` för att uppdatera `candidate_assessments`-tabellen
-- Ändra förhandsgranskning till att öppna i ny flik istället för dialog
+**`src/components/presentation/AITextEditor.tsx`** (NY)
+- Collapsible-sektion för att visa/dölja AI-text
+- Textareor för sammanfattning, teknisk bedömning, mjuka färdigheter
+- Dynamiska kort för styrkor med punkt + citat + ta bort-knapp
+- Dynamisk lista för utvecklingsområden med + lägg till
 
-**`FinalAssessment.tsx`**
-- Skicka `assessmentId` till editorn så den kan uppdatera rätt rad
-- Lägg till `onAssessmentUpdate` callback för att uppdatera lokal state efter redigering
+**`src/components/CandidatePresentationEditor.tsx`** (UPPDATERAD)
+- Ny prop `assessmentId` för att uppdatera rätt rad i `candidate_assessments`
+- Ny prop `shareToken` för att öppna förhandsvisning i ny flik
+- Ny prop `onAssessmentUpdate` callback för att synka ändringar till parent
+- State för alla AI-fält som initieras från `assessment`-prop
+- `handleSave` uppdaterar nu **två tabeller**:
+  1. `candidate_presentations` - recruiter_notes, soft_values_notes, skill_scores
+  2. `candidate_assessments` - summary, technical_assessment, soft_skills_assessment, strengths, concerns
+- "Förhandsgranska"-knappen öppnar nu i ny flik istället för dialog
 
-**`CandidatePresentationView.tsx`**
-- Ingen ändring behövs - tar redan emot data dynamiskt
+**`src/components/FinalAssessment.tsx`** (UPPDATERAD)
+- Skickar nu `assessmentId={existingAssessment.id}` till editorn
+- Skickar nu `shareToken={presentation.share_token}` till editorn
+
+**`src/components/CandidatePresentationView.tsx`** 
+- Ingen ändring behövdes - tar redan emot data dynamiskt
 
 ---
 
-## Teknisk detalj
-
-### Databasuppdatering
-Editorn behöver uppdatera **två tabeller**:
-1. `candidate_presentations` - recruiter_notes, soft_values_notes, skill_scores
-2. `candidate_assessments` - summary, technical_assessment, soft_skills_assessment, strengths, concerns
-
-### UI-struktur (ny redigeringssektion)
-
-```text
-┌──────────────────────────────────────────────────────┐
-│ Redigera presentation                    [Spara] [👁] │
-├──────────────────────────────────────────────────────┤
-│ ▼ AI-genererade texter (klickbart för att expandera) │
-│   ┌──────────────────┐  ┌──────────────────┐        │
-│   │ Sammanfattning   │  │ Teknisk bedömning│        │
-│   │ [textarea]       │  │ [textarea]       │        │
-│   └──────────────────┘  └──────────────────┘        │
-│   ┌──────────────────────────────────────────┐      │
-│   │ Styrkor                                   │      │
-│   │ ┌──────────────────────────────────────┐ │      │
-│   │ │ Punkt: [input]                       │ │      │
-│   │ │ Citat: [input]              [Ta bort]│ │      │
-│   │ └──────────────────────────────────────┘ │      │
-│   │ [+ Lägg till styrka]                     │      │
-│   └──────────────────────────────────────────┘      │
-│   ┌──────────────────────────────────────────┐      │
-│   │ Utvecklingsområden                        │      │
-│   │ • [input]                      [Ta bort] │      │
-│   │ • [input]                      [Ta bort] │      │
-│   │ [+ Lägg till]                            │      │
-│   └──────────────────────────────────────────┘      │
-├──────────────────────────────────────────────────────┤
-│ ▼ Rekryterarens tillägg (redan implementerat)       │
-│   Personliga observationer | Intervjuintryck        │
-│   Kompetenspoäng                                    │
-└──────────────────────────────────────────────────────┘
-```
+## Resultat
+- ✅ Hela presentationen kan ses i förhandsgranskningen (öppnas i ny flik)
+- ✅ All AI-genererad text kan redigeras av rekryteraren
+- ✅ Ändringar sparas till både `candidate_presentations` och `candidate_assessments`

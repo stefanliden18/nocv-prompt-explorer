@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.send-nocv-tip]
 verify_jwt = false
+
+[functions.generate-screening-assessment]
+verify_jwt = true
+
+[functions.generate-final-assessment]
+verify_jwt = true

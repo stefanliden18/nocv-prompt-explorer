@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { StarRating } from '@/components/StarRating';
 import { TagManager } from '@/components/TagManager';
 import { InterviewBookingDialog } from '@/components/InterviewBookingDialog';
+import { CandidateAssessment } from '@/components/CandidateAssessment';
 import { utcToStockholm } from '@/lib/timezone';
 
 const statusMap = {
@@ -291,67 +292,77 @@ export default function ApplicationDetail() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <CardTitle>Kontaktinformation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">E-post</p>
-                  <a href={`mailto:${application.email}`} className="text-sm text-primary hover:underline">
-                    {application.email}
-                  </a>
-                </div>
-              </div>
-
-              {application.phone && (
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Kontaktinformation</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
+                  <Mail className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium">Telefon</p>
-                    <a href={`tel:${application.phone}`} className="text-sm text-primary hover:underline">
-                      {application.phone}
+                    <p className="text-sm font-medium">E-post</p>
+                    <a href={`mailto:${application.email}`} className="text-sm text-primary hover:underline">
+                      {application.email}
                     </a>
                   </div>
                 </div>
-              )}
 
-              {application.message && (
-                <>
-                  <Separator />
+                {application.phone && (
                   <div className="flex items-start gap-3">
-                    <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium mb-2">Meddelande</p>
-                      <p className="text-sm text-foreground whitespace-pre-wrap">
-                        {application.message}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {application.cv_url && (
-                <>
-                  <Separator />
-                  <div className="flex items-start gap-3">
-                    <ExternalLink className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <Phone className="w-5 h-5 text-muted-foreground mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium mb-2">CV</p>
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={application.cv_url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Öppna CV
-                        </a>
-                      </Button>
+                      <p className="text-sm font-medium">Telefon</p>
+                      <a href={`tel:${application.phone}`} className="text-sm text-primary hover:underline">
+                        {application.phone}
+                      </a>
                     </div>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                )}
+
+                {application.message && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-3">
+                      <FileText className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium mb-2">Meddelande</p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                          {application.message}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {application.cv_url && (
+                  <>
+                    <Separator />
+                    <div className="flex items-start gap-3">
+                      <ExternalLink className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium mb-2">CV</p>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={application.cv_url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Öppna CV
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* AI Assessment Section */}
+            <CandidateAssessment
+              applicationId={application.id}
+              jobId={application.job_id}
+              candidateName={application.candidate_name}
+              onAssessmentComplete={fetchApplication}
+            />
+          </div>
 
           <div className="space-y-4">
             <Card>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { GripVertical, Plus, X, Printer, Save, Copy, ClipboardList } from "lucide-react";
+import { GripVertical, Plus, X, Printer, Save, ClipboardList, Link2, Sparkles, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import type { 
@@ -22,6 +22,14 @@ import type {
   RequirementLevel,
   CheckboxWithLevelValue
 } from "@/types/requirementTemplate";
+
+interface JobWithCompany {
+  id: string;
+  title: string;
+  city: string | null;
+  status: string;
+  companies: { name: string } | null;
+}
 
 interface CustomerInfo {
   companyName: string;
@@ -49,6 +57,27 @@ export function CustomerInterviewForm() {
   });
   const [profileValues, setProfileValues] = useState<RequirementProfile['values']>({});
   const [sectionNotes, setSectionNotes] = useState<Record<string, string>>({});
+  
+  // Job linking state
+  const [linkMode, setLinkMode] = useState<'existing' | 'new' | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLinking, setIsLinking] = useState(false);
+
+  // Query for existing jobs
+  const { data: jobs } = useQuery({
+    queryKey: ['jobs-for-linking'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('id, title, city, status, companies(name)')
+        .in('status', ['draft', 'published', 'demo'])
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return (data || []) as JobWithCompany[];
+    }
+  });
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['requirement-templates-active'],
@@ -198,26 +227,91 @@ export function CustomerInterviewForm() {
     window.print();
   };
 
-  const handleCopyToJob = () => {
+  // Link requirement profile to an existing job
+  const handleLinkToJob = async () => {
+    if (!selectedJobId || !selectedTemplateId || !selectedTemplate) {
+      toast.error('Välj både en tjänstetyp och ett jobb');
+      return;
+    }
+
+    setIsLinking(true);
+    try {
+      const profile: RequirementProfile = {
+        template_id: selectedTemplateId,
+        role_key: selectedTemplate.role_key,
+        values: profileValues,
+        section_notes: sectionNotes
+      };
+
+      const { error } = await supabase
+        .from('jobs')
+        .update({ requirement_profile: profile as any })
+        .eq('id', selectedJobId);
+
+      if (error) throw error;
+
+      toast.success('Kravprofil kopplad till jobbet!', {
+        action: {
+          label: 'Öppna jobb',
+          onClick: () => navigate(`/admin/jobs/${selectedJobId}/edit`)
+        }
+      });
+      
+      // Reset linking state
+      setLinkMode(null);
+      setSelectedJobId(null);
+    } catch (error: any) {
+      console.error('Error linking profile to job:', error);
+      toast.error('Kunde inte koppla kravprofilen: ' + error.message);
+    } finally {
+      setIsLinking(false);
+    }
+  };
+
+  // Generate a new job ad using AI
+  const handleGenerateAd = async () => {
     if (!selectedTemplateId || !selectedTemplate) {
       toast.error('Välj en tjänstetyp först');
       return;
     }
 
-    const profile: RequirementProfile = {
-      template_id: selectedTemplateId,
-      role_key: selectedTemplate.role_key,
-      values: profileValues,
-      section_notes: sectionNotes
-    };
+    setIsGenerating(true);
+    try {
+      const profile: RequirementProfile = {
+        template_id: selectedTemplateId,
+        role_key: selectedTemplate.role_key,
+        values: profileValues,
+        section_notes: sectionNotes
+      };
 
-    // Store in sessionStorage for JobForm to pick up
-    sessionStorage.setItem('prefill-requirement-profile', JSON.stringify(profile));
-    sessionStorage.setItem('prefill-customer-info', JSON.stringify(customerInfo));
-    
-    // Navigate directly without toast to avoid portal cleanup issues
-    // The toast would cause Radix UI portals to interfere with navigation
-    window.location.href = '/admin/jobs/new';
+      const { data, error } = await supabase.functions.invoke('generate-job-ad', {
+        body: {
+          requirement_profile: profile,
+          customer_info: customerInfo,
+          role_display_name: selectedTemplate.display_name.replace(' - Kravprofil', '')
+        }
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      // Store AI-generated data and profile in sessionStorage
+      sessionStorage.setItem('prefill-job-ad', JSON.stringify(data));
+      sessionStorage.setItem('prefill-requirement-profile', JSON.stringify(profile));
+      sessionStorage.setItem('prefill-customer-info', JSON.stringify(customerInfo));
+
+      toast.success('Annons genererad! Navigerar till formuläret...');
+      
+      // Navigate to job form
+      setTimeout(() => {
+        window.location.href = '/admin/jobs/new';
+      }, 500);
+    } catch (error: any) {
+      console.error('Error generating job ad:', error);
+      toast.error('Kunde inte generera annons: ' + error.message);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const renderField = (sectionKey: string, field: TemplateField) => {
@@ -465,10 +559,6 @@ export function CustomerInterviewForm() {
             <Save className="h-4 w-4 mr-2" />
             Spara utkast
           </Button>
-          <Button variant="default" size="sm" onClick={handleCopyToJob} disabled={!selectedTemplateId}>
-            <Copy className="h-4 w-4 mr-2" />
-            Kopiera till jobb
-          </Button>
         </div>
       </div>
 
@@ -601,6 +691,100 @@ export function CustomerInterviewForm() {
             </Card>
           ))}
 
+          {/* Job Linking Section */}
+          <Card className="print:hidden border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Link2 className="h-5 w-5 text-primary" />
+                Koppla kravprofil till jobb
+              </CardTitle>
+              <CardDescription>
+                Välj om du vill koppla profilen till ett befintligt jobb eller skapa ett nytt med AI-hjälp
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <RadioGroup 
+                value={linkMode || ''} 
+                onValueChange={(val) => setLinkMode(val as 'existing' | 'new')}
+              >
+                {/* Option 1: Link to existing job */}
+                <div className={`flex items-start space-x-3 p-4 border rounded-lg transition-colors ${linkMode === 'existing' ? 'border-primary bg-background' : 'border-border'}`}>
+                  <RadioGroupItem value="existing" id="link-existing" className="mt-1" />
+                  <div className="flex-1 space-y-3">
+                    <Label htmlFor="link-existing" className="text-sm font-medium cursor-pointer">
+                      Koppla till befintligt jobb
+                    </Label>
+                    {linkMode === 'existing' && (
+                      <div className="space-y-3">
+                        <Select value={selectedJobId || ''} onValueChange={setSelectedJobId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Välj jobb..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {jobs?.map(job => (
+                              <SelectItem key={job.id} value={job.id}>
+                                {job.title} - {job.companies?.name || 'Okänt företag'} ({job.city || 'Ingen stad'})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          onClick={handleLinkToJob} 
+                          disabled={!selectedJobId || isLinking}
+                          className="w-full sm:w-auto"
+                        >
+                          {isLinking ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Kopplar...
+                            </>
+                          ) : (
+                            <>
+                              <Link2 className="h-4 w-4 mr-2" />
+                              Koppla kravprofil
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Option 2: Create new job with AI */}
+                <div className={`flex items-start space-x-3 p-4 border rounded-lg transition-colors ${linkMode === 'new' ? 'border-primary bg-background' : 'border-border'}`}>
+                  <RadioGroupItem value="new" id="link-new" className="mt-1" />
+                  <div className="flex-1 space-y-3">
+                    <Label htmlFor="link-new" className="text-sm font-medium cursor-pointer">
+                      Skapa nytt jobb med AI-hjälp
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      AI analyserar kravprofilen och genererar ett förslag till platsannons som du kan redigera innan publicering.
+                    </p>
+                    {linkMode === 'new' && (
+                      <Button 
+                        onClick={handleGenerateAd} 
+                        disabled={isGenerating}
+                        className="w-full sm:w-auto"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Genererar annons...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4 mr-2" />
+                            Generera annons →
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
           {/* Bottom actions */}
           <div className="flex items-center gap-2 justify-end print:hidden">
             <Button variant="outline" onClick={handlePrint}>
@@ -610,10 +794,6 @@ export function CustomerInterviewForm() {
             <Button variant="outline" onClick={handleSaveDraft}>
               <Save className="h-4 w-4 mr-2" />
               Spara utkast
-            </Button>
-            <Button onClick={handleCopyToJob}>
-              <Copy className="h-4 w-4 mr-2" />
-              Kopiera till jobb
             </Button>
           </div>
         </>

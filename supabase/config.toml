@@ -38,3 +38,6 @@ verify_jwt = true
 
 [functions.generate-final-assessment]
 verify_jwt = true
+
+[functions.generate-job-ad]
+verify_jwt = true

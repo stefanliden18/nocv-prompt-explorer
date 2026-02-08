@@ -15,7 +15,7 @@ interface Job {
   id: string;
   title: string;
   city: string;
-  status: 'draft' | 'published' | 'archived' | 'demo';
+  status: 'draft' | 'published' | 'archived' | 'demo' | 'inactive';
   publish_at: string | null;
   created_at: string;
   companies: {
@@ -67,6 +67,10 @@ export default function AdminJobs() {
     
     if (job.status === 'archived') {
       return <Badge variant="secondary">Arkiverad</Badge>;
+    }
+
+    if (job.status === 'inactive') {
+      return <Badge variant="outline" className="text-orange-600 border-orange-300">Vilande</Badge>;
     }
     
     if (job.status === 'published') {

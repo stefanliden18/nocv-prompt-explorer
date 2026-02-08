@@ -450,6 +450,7 @@ export type Database = {
           last_application_date: string | null
           publish_at: string | null
           region: string | null
+          requirement_profile: Json | null
           requirements_md: string | null
           slug: string
           status: Database["public"]["Enums"]["job_status"]
@@ -475,6 +476,7 @@ export type Database = {
           last_application_date?: string | null
           publish_at?: string | null
           region?: string | null
+          requirement_profile?: Json | null
           requirements_md?: string | null
           slug: string
           status?: Database["public"]["Enums"]["job_status"]
@@ -500,6 +502,7 @@ export type Database = {
           last_application_date?: string | null
           publish_at?: string | null
           region?: string | null
+          requirement_profile?: Json | null
           requirements_md?: string | null
           slug?: string
           status?: Database["public"]["Enums"]["job_status"]
@@ -600,6 +603,36 @@ export type Database = {
           email?: string
           id?: string
           role?: Database["public"]["Enums"]["profile_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      requirement_templates: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          role_key: string
+          template_data: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          role_key: string
+          template_data?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          role_key?: string
+          template_data?: Json
           updated_at?: string
         }
         Relationships: []

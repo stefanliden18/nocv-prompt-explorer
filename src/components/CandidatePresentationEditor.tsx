@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Slider } from '@/components/ui/slider';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -15,17 +15,22 @@ import {
   User, 
   MessageSquare,
   Sparkles,
-  Settings
+  Settings,
+  ChevronDown,
+  ExternalLink
 } from 'lucide-react';
-import { CandidatePresentationView, type PresentationData, type Strength } from './CandidatePresentationView';
+import { type Strength } from './CandidatePresentationView';
+import { AITextEditor } from './presentation/AITextEditor';
 
 interface CandidatePresentationEditorProps {
   presentationId: string;
   applicationId: string;
+  assessmentId: string;
   candidateName: string;
   roleName: string;
   jobTitle: string;
   companyName: string;
+  shareToken?: string;
   assessment: {
     match_score: number;
     role_match_score: number;
@@ -40,52 +45,66 @@ interface CandidatePresentationEditorProps {
   initialSoftValuesNotes?: string;
   initialSkillScores?: Record<string, number>;
   onSave?: () => void;
+  onAssessmentUpdate?: (updates: Partial<{
+    summary: string;
+    technical_assessment: string;
+    soft_skills_assessment: string;
+    strengths: Strength[];
+    concerns: string[];
+  }>) => void;
 }
 
 export function CandidatePresentationEditor({
   presentationId,
   applicationId,
+  assessmentId,
   candidateName,
   roleName,
   jobTitle,
   companyName,
+  shareToken,
   assessment,
   initialRecruiterNotes = '',
   initialSoftValuesNotes = '',
   initialSkillScores = {},
   onSave,
+  onAssessmentUpdate,
 }: CandidatePresentationEditorProps) {
   const { toast } = useToast();
+  
+  // Recruiter fields
   const [recruiterNotes, setRecruiterNotes] = useState(initialRecruiterNotes);
   const [softValuesNotes, setSoftValuesNotes] = useState(initialSoftValuesNotes);
   const [skillScores, setSkillScores] = useState<Record<string, number>>(initialSkillScores);
+  
+  // AI-generated fields (editable)
+  const [summary, setSummary] = useState(assessment.summary);
+  const [technicalAssessment, setTechnicalAssessment] = useState(assessment.technical_assessment);
+  const [softSkillsAssessment, setSoftSkillsAssessment] = useState(assessment.soft_skills_assessment);
+  const [strengths, setStrengths] = useState<Strength[]>(assessment.strengths);
+  const [concerns, setConcerns] = useState<string[]>(assessment.concerns);
+  
   const [isSaving, setIsSaving] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
   const [showSkillEditor, setShowSkillEditor] = useState(false);
 
-  // Build preview data
-  const previewData: PresentationData = {
-    candidateName,
-    roleName,
-    jobTitle,
-    companyName,
-    matchScore: assessment.match_score,
-    roleMatchScore: assessment.role_match_score,
-    jobMatchScore: assessment.job_match_score,
-    summary: assessment.summary,
-    technicalAssessment: assessment.technical_assessment,
-    softSkillsAssessment: assessment.soft_skills_assessment,
-    strengths: assessment.strengths,
-    concerns: assessment.concerns,
-    skillScores,
-    recruiterNotes,
-    softValuesNotes,
+  const handlePreview = () => {
+    // Open preview in new tab with current edited data
+    if (shareToken) {
+      window.open(`/presentation/${shareToken}`, '_blank');
+    } else {
+      toast({
+        title: 'Ingen delningslänk',
+        description: 'Presentationen måste ha en share_token för att kunna förhandsgranskas.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      // Update candidate_presentations table
+      const { error: presentationError } = await supabase
         .from('candidate_presentations')
         .update({
           recruiter_notes: recruiterNotes,
@@ -95,11 +114,35 @@ export function CandidatePresentationEditor({
         })
         .eq('id', presentationId);
 
-      if (error) throw error;
+      if (presentationError) throw presentationError;
+
+      // Update candidate_assessments table with AI text changes
+      const { error: assessmentError } = await supabase
+        .from('candidate_assessments')
+        .update({
+          summary,
+          technical_assessment: technicalAssessment,
+          soft_skills_assessment: softSkillsAssessment,
+          strengths: JSON.parse(JSON.stringify(strengths)),
+          concerns: JSON.parse(JSON.stringify(concerns)),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', assessmentId);
+
+      if (assessmentError) throw assessmentError;
 
       toast({
         title: 'Ändringar sparade',
         description: 'Presentationen har uppdaterats',
+      });
+
+      // Notify parent about assessment updates
+      onAssessmentUpdate?.({
+        summary,
+        technical_assessment: technicalAssessment,
+        soft_skills_assessment: softSkillsAssessment,
+        strengths,
+        concerns,
       });
 
       onSave?.();
@@ -140,20 +183,10 @@ export function CandidatePresentationEditor({
           <h3 className="text-lg font-semibold">Redigera presentation</h3>
         </div>
         <div className="flex gap-2">
-          <Dialog open={showPreview} onOpenChange={setShowPreview}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Eye className="w-4 h-4 mr-2" />
-                Förhandsgranska
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto p-0">
-              <DialogHeader className="sr-only">
-                <DialogTitle>Förhandsgranskning av presentation</DialogTitle>
-              </DialogHeader>
-              <CandidatePresentationView data={previewData} isPreview />
-            </DialogContent>
-          </Dialog>
+          <Button variant="outline" size="sm" onClick={handlePreview}>
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Öppna förhandsvisning
+          </Button>
           
           <Button onClick={handleSave} disabled={isSaving} size="sm">
             {isSaving ? (
@@ -173,7 +206,23 @@ export function CandidatePresentationEditor({
 
       <Separator />
 
-      {/* Editable Fields */}
+      {/* AI Text Editor Section */}
+      <AITextEditor
+        summary={summary}
+        technicalAssessment={technicalAssessment}
+        softSkillsAssessment={softSkillsAssessment}
+        strengths={strengths}
+        concerns={concerns}
+        onSummaryChange={setSummary}
+        onTechnicalChange={setTechnicalAssessment}
+        onSoftSkillsChange={setSoftSkillsAssessment}
+        onStrengthsChange={setStrengths}
+        onConcernsChange={setConcerns}
+      />
+
+      <Separator />
+
+      {/* Recruiter's Editable Fields */}
       <div className="grid gap-6 md:grid-cols-2">
         {/* Recruiter Notes */}
         <Card>
@@ -219,87 +268,88 @@ export function CandidatePresentationEditor({
       </div>
 
       {/* Skill Scores Editor */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Settings className="w-4 h-4 text-accent" />
-                Kompetenspoäng (valfritt)
-              </CardTitle>
-              <CardDescription>
-                Justera poängen för tekniska kompetenser som visas i diagrammet
-              </CardDescription>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowSkillEditor(!showSkillEditor)}
-            >
-              {showSkillEditor ? 'Dölj' : 'Visa'} kompetenser
-            </Button>
-          </div>
-        </CardHeader>
-        {showSkillEditor && (
-          <CardContent className="space-y-4">
-            {Object.entries(skillScores).length === 0 ? (
-              <p className="text-sm text-muted-foreground italic">
-                Inga kompetenser har lagts till ännu. AI-genererade kompetenspoäng kommer visas när tillgängliga.
-              </p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {Object.entries(skillScores).map(([skill, score]) => (
-                  <div key={skill} className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <Label>{skill}</Label>
-                      <span className="text-muted-foreground">{score}%</span>
-                    </div>
-                    <Slider
-                      value={[score]}
-                      onValueChange={([value]) => updateSkillScore(skill, value)}
-                      max={100}
-                      min={0}
-                      step={5}
-                      className="w-full"
-                    />
-                  </div>
-                ))}
+      <Collapsible open={showSkillEditor} onOpenChange={setShowSkillEditor}>
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Settings className="w-4 h-4 text-accent" />
+                  Kompetenspoäng (valfritt)
+                </CardTitle>
+                <CardDescription>
+                  Justera poängen för tekniska kompetenser som visas i diagrammet
+                </CardDescription>
               </div>
-            )}
-            
-            {/* Add new skill */}
-            <div className="pt-4 border-t">
-              <Label className="text-sm text-muted-foreground">Lägg till ny kompetens</Label>
-              <div className="flex gap-2 mt-2">
-                <input
-                  type="text"
-                  placeholder="Kompetensnamn..."
-                  className="flex-1 px-3 py-2 text-sm border rounded-md"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      addNewSkill((e.target as HTMLInputElement).value);
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }}
-                />
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={(e) => {
-                    const input = (e.target as HTMLElement).parentElement?.querySelector('input');
-                    if (input) {
-                      addNewSkill(input.value);
-                      input.value = '';
-                    }
-                  }}
-                >
-                  Lägg till
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ChevronDown className={`w-4 h-4 mr-2 transition-transform ${showSkillEditor ? 'rotate-180' : ''}`} />
+                  {showSkillEditor ? 'Dölj' : 'Visa'}
                 </Button>
-              </div>
+              </CollapsibleTrigger>
             </div>
-          </CardContent>
-        )}
-      </Card>
+          </CardHeader>
+          <CollapsibleContent>
+            <CardContent className="space-y-4">
+              {Object.entries(skillScores).length === 0 ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Inga kompetenser har lagts till ännu. AI-genererade kompetenspoäng kommer visas när tillgängliga.
+                </p>
+              ) : (
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {Object.entries(skillScores).map(([skill, score]) => (
+                    <div key={skill} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <Label>{skill}</Label>
+                        <span className="text-muted-foreground">{score}%</span>
+                      </div>
+                      <Slider
+                        value={[score]}
+                        onValueChange={([value]) => updateSkillScore(skill, value)}
+                        max={100}
+                        min={0}
+                        step={5}
+                        className="w-full"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Add new skill */}
+              <div className="pt-4 border-t">
+                <Label className="text-sm text-muted-foreground">Lägg till ny kompetens</Label>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    placeholder="Kompetensnamn..."
+                    className="flex-1 px-3 py-2 text-sm border rounded-md bg-background"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        addNewSkill((e.target as HTMLInputElement).value);
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }}
+                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      const input = (e.target as HTMLElement).parentElement?.querySelector('input');
+                      if (input) {
+                        addNewSkill(input.value);
+                        input.value = '';
+                      }
+                    }}
+                  >
+                    Lägg till
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
 
       {/* Help text */}
       <p className="text-sm text-muted-foreground text-center">

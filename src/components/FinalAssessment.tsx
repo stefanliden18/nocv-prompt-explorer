@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -22,13 +23,24 @@ import {
   Sparkles, 
   ExternalLink, 
   Copy,
-  Share2
+  Share2,
+  ChevronDown,
+  Pencil
 } from 'lucide-react';
 import type { RoleProfile, FinalResult, PresentationInfo } from './CandidateAssessment';
+import { CandidatePresentationEditor } from './CandidatePresentationEditor';
+
+interface ExtendedPresentationInfo extends PresentationInfo {
+  recruiter_notes?: string;
+  soft_values_notes?: string;
+  skill_scores?: Record<string, number>;
+}
 
 interface FinalAssessmentProps {
   applicationId: string;
   candidateName: string;
+  jobTitle?: string;
+  companyName?: string;
   roleProfiles: RoleProfile[];
   existingAssessment: FinalResult | null;
   presentation: PresentationInfo | null;
@@ -40,6 +52,8 @@ interface FinalAssessmentProps {
 export function FinalAssessment({
   applicationId,
   candidateName,
+  jobTitle = '',
+  companyName = '',
   roleProfiles,
   existingAssessment,
   presentation,
@@ -52,6 +66,36 @@ export function FinalAssessment({
   const [selectedRole, setSelectedRole] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [showEditor, setShowEditor] = useState(false);
+  const [extendedPresentation, setExtendedPresentation] = useState<ExtendedPresentationInfo | null>(null);
+
+  // Fetch extended presentation data when presentation changes
+  useEffect(() => {
+    if (presentation) {
+      fetchExtendedPresentationData();
+    }
+  }, [presentation?.id]);
+
+  const fetchExtendedPresentationData = async () => {
+    if (!presentation) return;
+    
+    const { data } = await supabase
+      .from('candidate_presentations')
+      .select('id, share_token, status, recruiter_notes, soft_values_notes, skill_scores')
+      .eq('id', presentation.id)
+      .single();
+    
+    if (data) {
+      setExtendedPresentation({
+        id: data.id,
+        share_token: data.share_token || '',
+        status: data.status as 'draft' | 'published' | 'archived',
+        recruiter_notes: data.recruiter_notes || '',
+        soft_values_notes: data.soft_values_notes || '',
+        skill_scores: (data.skill_scores as Record<string, number>) || {},
+      });
+    }
+  };
 
   const handleGenerate = async () => {
     if (!transcriptText.trim()) {
@@ -247,6 +291,47 @@ export function FinalAssessment({
             <p className="text-sm text-muted-foreground">{existingAssessment.soft_skills_assessment}</p>
           </div>
         </div>
+
+        <Separator />
+
+        {/* Presentation Editor Section */}
+        {presentation && (
+          <Collapsible open={showEditor} onOpenChange={setShowEditor}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                <span className="flex items-center gap-2">
+                  <Pencil className="w-4 h-4" />
+                  Redigera presentation
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showEditor ? 'rotate-180' : ''}`} />
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-4">
+              <CandidatePresentationEditor
+                presentationId={presentation.id}
+                applicationId={applicationId}
+                candidateName={candidateName}
+                roleName={existingAssessment.role_profile.display_name}
+                jobTitle={jobTitle}
+                companyName={companyName}
+                assessment={{
+                  match_score: existingAssessment.match_score,
+                  role_match_score: existingAssessment.role_match_score,
+                  job_match_score: existingAssessment.job_match_score,
+                  summary: existingAssessment.summary,
+                  technical_assessment: existingAssessment.technical_assessment,
+                  soft_skills_assessment: existingAssessment.soft_skills_assessment,
+                  strengths: existingAssessment.strengths,
+                  concerns: existingAssessment.concerns,
+                }}
+                initialRecruiterNotes={extendedPresentation?.recruiter_notes}
+                initialSoftValuesNotes={extendedPresentation?.soft_values_notes}
+                initialSkillScores={extendedPresentation?.skill_scores}
+                onSave={fetchExtendedPresentationData}
+              />
+            </CollapsibleContent>
+          </Collapsible>
+        )}
 
         <Separator />
 

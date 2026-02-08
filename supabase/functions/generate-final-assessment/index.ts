@@ -22,6 +22,7 @@ interface FinalAssessmentResult {
   technical_assessment: string;
   soft_skills_assessment: string;
   summary: string;
+  skill_scores: Record<string, number>;
 }
 
 serve(async (req) => {
@@ -135,6 +136,7 @@ Analysera intervjutranskriberingen noggrant och ge en detaljerad bedömning:
 6. **Teknisk bedömning**: Utförlig bedömning av tekniska färdigheter
 7. **Bedömning av mjuka färdigheter**: Utförlig bedömning av personliga egenskaper
 8. **Sammanfattning**: Professionell sammanfattning (3-5 meningar) lämplig att dela med kund
+9. **Kompetenspoäng**: Ge 0-100 poäng för varje teknisk kompetens och kunskapsområde baserat på intervjun
 
 Var objektiv, professionell och fokusera på konkreta exempel från intervjun.`;
 
@@ -187,9 +189,13 @@ Var objektiv, professionell och fokusera på konkreta exempel från intervjun.`;
               summary: {
                 type: "string",
                 description: "Professionell sammanfattning för kund (3-5 meningar)"
+              },
+              skill_scores: {
+                type: "object",
+                description: "Poäng 0-100 för varje teknisk kompetens och kunskapsområde (t.ex. {'Motordiagnostik': 85, 'Bromssystem': 70})"
               }
             },
-            required: ["match_score", "role_match_score", "job_match_score", "strengths", "concerns", "technical_assessment", "soft_skills_assessment", "summary"]
+            required: ["match_score", "role_match_score", "job_match_score", "strengths", "concerns", "technical_assessment", "soft_skills_assessment", "summary", "skill_scores"]
           }
         }
       }
@@ -310,7 +316,10 @@ Var objektiv, professionell och fokusera på konkreta exempel från intervjun.`;
         final_assessment_id: assessment.id,
         presentation_html: presentationHtml,
         status: 'draft',
-        share_token: shareToken
+        share_token: shareToken,
+        skill_scores: assessmentResult.skill_scores || {},
+        recruiter_notes: '',
+        soft_values_notes: ''
       })
       .select()
       .single();

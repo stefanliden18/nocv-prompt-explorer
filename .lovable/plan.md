@@ -1,75 +1,156 @@
 
-# Plan: Sammanslagen annons + Publicera riktiga jobb ✅ IMPLEMENTERAT
+# Plan: Kravprofilbibliotek med databassparning
 
 ## Översikt
 
-Vi slår ihop beskrivning och krav till **ett enda textfält** i hela systemet. AI:n genererar en komplett platsannons, och du skapar jobbet som **utkast** som sedan kan publiceras på riktigt.
+Just nu sparas kravprofiler endast i webbläsarens minne (localStorage), vilket innebär att:
+- Data försvinner om du rensar webbläsaren
+- Du kan inte se sparade profiler från andra enheter
+- Det finns inget bibliotek att bläddra i
 
-## Ändringar ✅
-
-### 1. Edge function: Generera sammanslagen annons ✅
-
-Uppdaterat `supabase/functions/generate-job-ad/index.ts`:
-
-- AI-prompten genererar nu EN sammanslagen annons-HTML (`ad_html`) 
-- Returnerar `ad_html` istället för separata `description_html` och `requirements_html`
-- Behåller title, category, employment_type som tidigare
-
-### 2. Formulär: Ett fält för annonstext ✅
-
-**JobForm.tsx och JobEdit.tsx:**
-
-- Tagit bort "Krav"-fältet från formuläret
-- Bytt etikett till "Annonstext" 
-- Uppdaterat förifyllningslogik för att läsa `ad_html` (med fallback för legacy-fält)
-- Sparar endast till `description_md` i databasen
-
-### 3. Jobbvisning: Sammanslagen visning ✅
-
-**JobDetail.tsx, DemoJobDetail.tsx, JobPreview.tsx:**
-
-- Tagit bort separat "Krav"-sektion
-- Visar `description_md` + eventuell legacy `requirements_md` som "Om tjänsten"
-- Bakåtkompatibilitet med befintliga jobb
-
-### 4. CustomerInterviewForm: Exkluderar demo-jobb ✅
-
-- Filtrar bort `demo` från jobbdropdown (bara `draft`, `published` visas)
-- AI skapar jobb som **utkast** (inte demo)
-
-### 5. "Publicera"-knapp i JobForm ✅
-
-- Lagt till knapp: "✅ Publicera på hemsidan" som sätter status `published`
-- Ny knappordning: [Spara som utkast] [✅ Publicera på hemsidan] [🎬 Spara som demo-jobb] [Avbryt]
+Vi skapar ett **kravprofilbibliotek** där du kan:
+- Spara kravprofiler permanent i databasen
+- Se alla sparade profiler i en lista
+- Öppna och återanvända profiler
+- Redigera befintliga profiler
+- Ta bort profiler du inte längre behöver
 
 ---
 
-## Filer som ändrats
+## Nya funktioner
+
+### 1. Biblioteksvy med flikar
+
+Sidan `/admin/requirement-templates` får två flikar:
+- **Ny kravprofil** - Formuläret som finns idag (CustomerInterviewForm)
+- **Mina kravprofiler** - Lista över alla sparade profiler
+
+### 2. Sparade kravprofiler i listan visar
+
+- Företagsnamn (från kundinformation)
+- Tjänstetyp (t.ex. "Bilmekaniker")
+- Skapad datum
+- Status (utkast / kopplad till jobb)
+- Knappar: Öppna, Koppla till jobb, Ta bort
+
+### 3. Arbetsflöde
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│  KRAVPROFILER                                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  [Ny kravprofil] [Mina kravprofiler]                            │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│  Mina kravprofiler                                              │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Mekaniker - AutoExpert AB              2025-02-08         │  │
+│  │ Status: Utkast                    [Öppna] [Koppla] [✕]    │  │
+│  └───────────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │ Diagnostekniker - CarService AB        2025-02-05         │  │
+│  │ Status: Kopplad till jobb         [Öppna] [Visa jobb] [✕] │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Tekniska ändringar
+
+### 1. Ny databastabell: `saved_requirement_profiles`
+
+Skapar en ny tabell för att lagra kravprofiler:
+
+```sql
+CREATE TABLE saved_requirement_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  template_id UUID NOT NULL REFERENCES requirement_templates(id),
+  
+  -- Kundinformation
+  company_name TEXT NOT NULL,
+  contact_person TEXT,
+  desired_start_date TEXT,
+  salary_range TEXT,
+  
+  -- Kravprofildata (JSON)
+  profile_data JSONB NOT NULL,
+  section_notes JSONB,
+  
+  -- Status
+  linked_job_id UUID REFERENCES jobs(id),
+  
+  -- Metadata
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
+### 2. RLS-policies för säkerhet
+
+- Admins kan se alla kravprofiler
+- Rekryterare kan se och hantera sina egna kravprofiler
+- Endast skaparen eller admin kan ta bort
+
+### 3. Uppdatera CustomerInterviewForm
+
+- Lägg till `profileId` state för att hålla reda på om vi redigerar en befintlig profil
+- Ändra "Spara utkast" till att spara i databasen istället för localStorage
+- Lägg till "Spara som ny" knapp när man redigerar befintlig profil
+- Behåll localStorage som temporär backup (vid oavsiktlig stängning)
+
+### 4. Ny komponent: SavedProfilesList
+
+Skapar en ny komponent som visar listan över sparade profiler med:
+- Sökfunktion
+- Sortering efter datum/företag
+- Filtrering (utkast/kopplade)
+- Åtgärdsknappar
+
+### 5. Uppdatera RequirementTemplates-sidan
+
+Lägg till flikar (Tabs) för att växla mellan "Ny profil" och "Bibliotek".
+
+---
+
+## Filer som skapas/ändras
 
 | Fil | Ändring |
 |-----|---------|
-| `supabase/functions/generate-job-ad/index.ts` | ✅ Genererar `ad_html` |
-| `src/pages/admin/JobForm.tsx` | ✅ Ett fält, Publicera-knapp |
-| `src/pages/admin/JobEdit.tsx` | ✅ Ett fält, sammanslagen visning |
-| `src/pages/JobDetail.tsx` | ✅ Visar sammanslagen annons |
-| `src/pages/DemoJobDetail.tsx` | ✅ Visar sammanslagen annons |
-| `src/pages/admin/JobPreview.tsx` | ✅ Visar sammanslagen annons |
-| `src/components/CustomerInterviewForm.tsx` | ✅ Exkluderar demo-jobb |
+| **Databas** | Ny tabell `saved_requirement_profiles` med RLS |
+| `src/components/SavedProfilesList.tsx` | **NY** - Listkomponent för biblioteket |
+| `src/pages/admin/RequirementTemplates.tsx` | Lägg till flikar och routing |
+| `src/components/CustomerInterviewForm.tsx` | Spara till databas, ladda befintlig profil |
+| `src/types/requirementTemplate.ts` | Lägg till `SavedRequirementProfile` interface |
 
 ---
 
-## Dataflöde efter ändring
+## Databasschema
 
 ```text
-Kravprofil fylls i
-        ↓
-AI genererar sammanslagen annons (ad_html)
-        ↓
-JobForm visar ETT textfält med hela annonsen
-        ↓
-Användaren redigerar
-        ↓
-Sparas som "utkast" eller "publicerat" (inte demo)
-        ↓
-Jobbet visas på hemsidan (om publicerat)
+saved_requirement_profiles
+├── id (uuid, PK)
+├── created_by (uuid, FK → auth.users)
+├── template_id (uuid, FK → requirement_templates)
+├── company_name (text)
+├── contact_person (text)
+├── desired_start_date (text)
+├── salary_range (text)
+├── profile_data (jsonb)
+├── section_notes (jsonb)
+├── linked_job_id (uuid, FK → jobs, nullable)
+├── created_at (timestamptz)
+└── updated_at (timestamptz)
 ```
+
+---
+
+## Säkerhet
+
+- RLS-policies säkerställer att endast behöriga användare kan se/redigera profiler
+- Skaparen kan alltid hantera sina egna profiler
+- Admins har full åtkomst
+- Koppling till `created_by` säkerställer att varje profil har en ägare

@@ -1,125 +1,155 @@
 
-# Plan: Jobbbibliotek för avpublicerade jobb
+# Kandidatpresentation 2.0 - Modern visuell design med redigerbar text
 
-## Översikt
-
-Du vill kunna "avpublicera" jobb så de försvinner från hemsidan men sparas i ett bibliotek för framtida återanvändning. Detta skiljer sig från arkivering som är mer permanent.
-
-Lösningen: Använd en ny status **`inactive`** (vilande) som gör att:
-- Jobbet försvinner från hemsidan
-- Jobbet sparas i ett "Jobbbibliotek" 
-- Du kan enkelt publicera det igen när det blir aktuellt
-
-## Ändringar
-
-### 1. Ny jobbstatus: `inactive` (vilande)
-
-Lägger till en ny status i databasen som representerar vilande/pausade jobb:
-
-- `draft` = Utkast (aldrig publicerat)
-- `published` = Publicerat (visas på hemsidan)
-- `inactive` = Vilande (tidigare publicerat, nu pausat - kan återaktiveras)
-- `archived` = Arkiverad (permanent stängt - för gamla jobb)
-- `demo` = Demo-jobb
-
-### 2. Ny sida: Jobbbibliotek
-
-Skapar en ny sida `/admin/job-library` som visar:
-- Alla **vilande** (`inactive`) jobb
-- Möjlighet att snabbt publicera igen
-- Möjlighet att redigera innan publicering
-- Möjlighet att arkivera permanent
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│  JOBBBIBLIOTEK                                                  │
-├─────────────────────────────────────────────────────────────────┤
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Svetsare - AutoExpert AB              Vilande sedan 8 feb │  │
-│  │ Stockholm                     [Publicera] [Redigera] [🗑] │  │
-│  └───────────────────────────────────────────────────────────┘  │
-│  ┌───────────────────────────────────────────────────────────┐  │
-│  │ Bilmekaniker - CarService              Vilande sedan 2 jan│  │
-│  │ Göteborg                      [Publicera] [Redigera] [🗑] │  │
-│  └───────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 3. Uppdatera JobEdit.tsx
-
-Ändra "Avpublicera"-knappen till att sätta status `inactive` istället för `draft`:
-- Byt etikett till "Pausa/Lägg i bibliotek"
-- Sätt status till `inactive`
-- Jobbet hamnar i jobbbiblioteket
-
-### 4. Uppdatera Jobs.tsx
-
-Lägg till filter/flikar för att visa:
-- Alla jobb
-- Aktiva (publicerade + utkast)
-- Vilande (bibliotek)
-- Arkiverade
-
-### 5. Sidofältet (AdminSidebar)
-
-Lägg till ny menypost:
-- "Jobbbibliotek" med ikon (t.ex. `Archive` eller `FolderOpen`)
+## Sammanfattning
+Omdesigna kandidatpresentationen till en modern, visuell upplevelse som kombinerar:
+- **Interaktiva diagram** (radar/spider chart för kompetenser, radiella progress-indikatorer för matchning)
+- **Redigerbara textfält** för manuella observationer om mjuka värden och personlighet
+- **Modern layout** med NOCV-färger, whitespace och professionell typografi
 
 ---
 
-## Tekniska ändringar
+## Designkoncept
 
-### Databasändring
+### Visuell struktur (uppifrån och ner)
 
-Lägg till `inactive` som giltig status i `job_status` enum:
+```text
++----------------------------------------------------------+
+|  HEADER: Kandidatnamn + Roll + Jobb                      |
++----------------------------------------------------------+
+|                                                          |
+|  [===]  [===]  [===]   Tre radiella score-indikatorer   |
+|  82%    78%    85%     med animerad fyllnad             |
+|  Total  Roll   Jobb                                      |
+|                                                          |
++----------------------------------------------------------+
+|  SAMMANFATTNING (AI-genererad text i elegant quote-box) |
++----------------------------------------------------------+
+|                        |                                 |
+|   KOMPETENSRADAR       |   MANUELL TEXT                 |
+|   (Spider chart med    |   "Personliga observationer"   |
+|   6-8 tekniska         |   Redigerbar textarea för      |
+|   kompetenser)         |   rekryterarens noteringar     |
+|                        |                                 |
++----------------------------------------------------------+
+|                        |                                 |
+|   MJUKA FÄRDIGHETER    |   INTERVJUINTRYCK              |
+|   (Horisontella        |   "Vad vi såg i intervjun"     |
+|   progress-bars med    |   Redigerbar textarea för      |
+|   färgkodning)         |   mjuka värden och kultur      |
+|                        |                                 |
++----------------------------------------------------------+
+|  STYRKOR (Quote cards med citat från intervjun)         |
++----------------------------------------------------------+
+|  UTVECKLINGSOMRÅDEN (Ikon-lista med gula accenter)      |
++----------------------------------------------------------+
+|  Footer: NOCV-branding                                   |
++----------------------------------------------------------+
+```
+
+### Färgpalett
+- **Primär**: NOCV Dark Blue (#1e3a5f) - rubriker, diagram-linjer
+- **Accent**: NOCV Orange (#f97316) - knappar, highlight, score över 70%
+- **Success**: Grön (#10b981) - styrkor, höga poäng
+- **Warning**: Gul (#f59e0b) - utvecklingsområden
+- **Neutral**: Ljusgrå bakgrunder, vit whitespace
+
+---
+
+## Teknisk implementation
+
+### Nya databasfält
+Lägga till kolumner i `candidate_presentations` för manuell text:
 
 ```sql
-ALTER TYPE job_status ADD VALUE 'inactive';
+ALTER TABLE candidate_presentations ADD COLUMN IF NOT EXISTS
+  recruiter_notes TEXT DEFAULT '';
+  
+ALTER TABLE candidate_presentations ADD COLUMN IF NOT EXISTS
+  soft_values_notes TEXT DEFAULT '';
+  
+ALTER TABLE candidate_presentations ADD COLUMN IF NOT EXISTS
+  skill_scores JSONB DEFAULT '{}';
 ```
+
+- **recruiter_notes**: Fritt textfält för personliga observationer
+- **soft_values_notes**: Text om mjuka värden från intervjun
+- **skill_scores**: JSON-objekt med kompetens-scores för diagram (t.ex. `{"motordiagnostik": 85, "kundkommunikation": 70}`)
+
+### Komponentstruktur
+
+**Ny React-komponent** (`src/components/CandidatePresentationEditor.tsx`):
+- Visas i admin-vyn efter att slutmatchning genererats
+- Låter rekryteraren redigera manuella textfält
+- Preview-knapp för att se hur presentationen ser ut
+- Spara-knapp som uppdaterar `candidate_presentations`
+
+**Uppdaterad publik sida** (`src/pages/CandidatePresentation.tsx`):
+- Renderar React-komponenter istället för raw HTML
+- Använder Recharts för radar- och progress-diagram
+- Responsiv design för både desktop och mobil
+
+### Diagram-implementation (Recharts)
+
+**Radar Chart för tekniska kompetenser**:
+```typescript
+// Data från role_profiles.technical_skills + skill_scores
+const radarData = [
+  { skill: 'Motordiagnostik', score: 85, fullMark: 100 },
+  { skill: 'Växellåda', score: 70, fullMark: 100 },
+  // ...
+];
+```
+
+**Radial Progress för matchningspoäng**:
+```typescript
+// Cirkulära progress-indikatorer med procent i mitten
+<RadialBarChart data={[{ value: 82, fill: '#10b981' }]} />
+```
+
+**Horisontella bars för mjuka färdigheter**:
+```typescript
+// Färgkodade progress-bars
+<Progress value={75} className="bg-orange-500" />
+```
+
+### Edge-funktion uppdatering
+Uppdatera `generate-final-assessment/index.ts`:
+1. Generera initiala `skill_scores` baserat på AI-analys
+2. Spara JSON-struktur istället för HTML
+3. Behåll HTML-generering som fallback för bakåtkompatibilitet
+
+### Redigeringsflöde
+
+1. **Generera slutmatchning** - AI skapar assessment + initiala skill_scores
+2. **Redigeringsläge** - Rekryterare ser preview med textfält
+3. **Fyll i manuell text**:
+   - "Personliga observationer" (recruiter_notes)
+   - "Mjuka värden från intervjun" (soft_values_notes)
+   - Justera skill_scores via sliders (optional)
+4. **Spara och förhandsgranska**
+5. **Publicera** - Låser presentationen för kund
+
+---
+
+## Filer som skapas/ändras
 
 ### Nya filer
+1. `src/components/CandidatePresentationEditor.tsx` - Redigeringskomponent
+2. `src/components/CandidatePresentationView.tsx` - Visuell presentation med diagram
 
-| Fil | Beskrivning |
-|-----|-------------|
-| `src/pages/admin/JobLibrary.tsx` | Ny sida för jobbbiblioteket |
-
-### Filer som uppdateras
-
-| Fil | Ändring |
-|-----|---------|
-| `src/pages/admin/JobEdit.tsx` | Ändra "Avpublicera" → "Lägg i bibliotek" (status `inactive`) |
-| `src/pages/admin/Jobs.tsx` | Lägg till flikar/filter för olika statusar |
-| `src/components/AdminSidebar.tsx` | Lägg till menypost för Jobbbibliotek |
-| `src/App.tsx` | Lägg till route för `/admin/job-library` |
+### Modifierade filer
+1. `src/pages/CandidatePresentation.tsx` - Använd React-komponenter istället för raw HTML
+2. `src/components/FinalAssessment.tsx` - Lägg till redigeringsknapp och preview
+3. `supabase/functions/generate-final-assessment/index.ts` - Generera skill_scores JSON
+4. Databasmigration för nya kolumner
 
 ---
 
-## Arbetsflöde efter ändring
+## Fördelar med denna approach
 
-```text
-UTKAST ──────────────────────────────────────────────────────────┐
-   │                                                              │
-   │ [Publicera]                                                  │
-   ▼                                                              │
-PUBLICERAD (visas på hemsidan)                                    │
-   │                                                              │
-   │ [Lägg i bibliotek]                                           │
-   ▼                                                              │
-VILANDE (jobbbibliotek) ◄─────────────────────────────────────────┘
-   │                  │
-   │ [Publicera]      │ [Arkivera]
-   ▼                  ▼
-PUBLICERAD       ARKIVERAD (permanent stängd)
-```
-
----
-
-## Statusförklaring i UI
-
-| Status | Badge | Var visas |
-|--------|-------|-----------|
-| `draft` | Utkast | Jobb-listan |
-| `published` | Publicerad | Jobb-listan + hemsidan |
-| `inactive` | Vilande | Jobbbiblioteket |
-| `archived` | Arkiverad | Arkiverade jobb |
-| `demo` | Demo | Demo-jobb sidan |
+- **Modern och visuell**: Diagram kommunicerar kompetens snabbare än text
+- **Personlig touch**: Rekryteraren kan lägga till egen text om kandidatens personlighet
+- **Flexibel**: Kombination av AI-genererat och manuellt innehåll
+- **Responsiv**: Fungerar på både desktop och mobil
+- **Utskriftsvänlig**: CSS print-styles för PDF-export

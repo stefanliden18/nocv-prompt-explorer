@@ -13,9 +13,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye } from 'lucide-react';
+import { ArrowLeft, Eye, Sparkles } from 'lucide-react';
 import { RequirementProfileForm } from '@/components/RequirementProfileForm';
 import type { RequirementProfile } from '@/types/requirementTemplate';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Company {
   id: string;
@@ -47,12 +48,34 @@ export default function JobForm() {
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
   const [requirementProfile, setRequirementProfile] = useState<RequirementProfile | null>(null);
+  const [isAIGenerated, setIsAIGenerated] = useState(false);
 
   // Check for prefilled data from customer interview form
   useEffect(() => {
+    const prefillJobAd = sessionStorage.getItem('prefill-job-ad');
     const prefillProfile = sessionStorage.getItem('prefill-requirement-profile');
     const prefillCustomer = sessionStorage.getItem('prefill-customer-info');
     
+    // AI-generated job ad data
+    if (prefillJobAd) {
+      try {
+        const jobAdData = JSON.parse(prefillJobAd);
+        console.log('Loading AI-generated job ad:', jobAdData);
+        
+        if (jobAdData.title) setTitle(jobAdData.title);
+        if (jobAdData.description_html) setDescriptionHtml(jobAdData.description_html);
+        if (jobAdData.requirements_html) setRequirementsHtml(jobAdData.requirements_html);
+        if (jobAdData.category) setCategory(jobAdData.category);
+        if (jobAdData.employment_type) setEmploymentType(jobAdData.employment_type);
+        
+        setIsAIGenerated(true);
+        sessionStorage.removeItem('prefill-job-ad');
+      } catch (e) {
+        console.error('Error parsing prefill job ad:', e);
+      }
+    }
+    
+    // Requirement profile
     if (prefillProfile) {
       try {
         setRequirementProfile(JSON.parse(prefillProfile));
@@ -62,9 +85,11 @@ export default function JobForm() {
       }
     }
     
+    // Customer info (could be used to match company)
     if (prefillCustomer) {
       try {
         const customerInfo = JSON.parse(prefillCustomer);
+        console.log('Customer info available:', customerInfo.companyName);
         // Could use customerInfo.companyName to pre-select company if needed
         sessionStorage.removeItem('prefill-customer-info');
       } catch (e) {
@@ -217,6 +242,16 @@ export default function JobForm() {
             <p className="text-muted-foreground">Skapa en ny jobbannons</p>
           </div>
         </div>
+
+        {isAIGenerated && (
+          <Alert className="border-primary/50 bg-primary/10 col-span-full">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <AlertDescription className="text-sm">
+              <strong>AI-genererad annons:</strong> Denna annons skapades automatiskt baserat på kravprofilen. 
+              Granska och redigera texten innan du sparar.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Form */}

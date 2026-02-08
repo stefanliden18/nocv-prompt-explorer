@@ -103,6 +103,8 @@ export function CandidatePresentationEditor({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      console.log('📝 Saving assessment:', { assessmentId, presentationId, summary: summary.substring(0, 50) });
+      
       // Update candidate_presentations table
       const { error: presentationError } = await supabase
         .from('candidate_presentations')
@@ -114,10 +116,13 @@ export function CandidatePresentationEditor({
         })
         .eq('id', presentationId);
 
-      if (presentationError) throw presentationError;
+      if (presentationError) {
+        console.error('Presentation update error:', presentationError);
+        throw presentationError;
+      }
 
       // Update candidate_assessments table with AI text changes
-      const { error: assessmentError } = await supabase
+      const { data, error: assessmentError } = await supabase
         .from('candidate_assessments')
         .update({
           summary,
@@ -129,11 +134,16 @@ export function CandidatePresentationEditor({
         })
         .eq('id', assessmentId);
 
-      if (assessmentError) throw assessmentError;
+      if (assessmentError) {
+        console.error('Assessment update error:', assessmentError);
+        throw assessmentError;
+      }
+
+      console.log('✅ Save successful');
 
       toast({
         title: 'Ändringar sparade',
-        description: 'Presentationen har uppdaterats',
+        description: 'Presentationen och bedömningen har uppdaterats',
       });
 
       // Notify parent about assessment updates
@@ -147,10 +157,10 @@ export function CandidatePresentationEditor({
 
       onSave?.();
     } catch (error) {
-      console.error('Save error:', error);
+      console.error('❌ Save error:', error);
       toast({
         title: 'Ett fel uppstod',
-        description: 'Kunde inte spara ändringar',
+        description: error instanceof Error ? error.message : 'Kunde inte spara ändringar',
         variant: 'destructive',
       });
     } finally {

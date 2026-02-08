@@ -33,7 +33,8 @@ interface RequirementProfileFormProps {
 }
 
 export function RequirementProfileForm({ value, onChange, className }: RequirementProfileFormProps) {
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(value?.template_id || null);
+   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(value?.template_id || null);
+   const [openSections, setOpenSections] = useState<string[]>([]);
 
   const { data: templates, isLoading } = useQuery({
     queryKey: ['requirement-templates-active'],
@@ -60,13 +61,16 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
      if (selectedTemplate && (!value || value.template_id !== selectedTemplateId)) {
        const initialValues: RequirementProfile['values'] = {};
        const initialNotes: Record<string, string> = {};
+       const sectionKeys: string[] = [];
        selectedTemplate.template_data.sections.forEach(section => {
          initialValues[section.key] = {};
          initialNotes[section.key] = '';
+         sectionKeys.push(section.key);
          section.fields.forEach(field => {
            initialValues[section.key][field.key] = getDefaultValue(field);
          });
        });
+       setOpenSections(sectionKeys);
        onChange({
          template_id: selectedTemplate.id,
          role_key: selectedTemplate.role_key,
@@ -400,8 +404,8 @@ export function RequirementProfileForm({ value, onChange, className }: Requireme
           )}
         </div>
 
-        {selectedTemplate && value && (
-          <Accordion type="multiple" defaultValue={selectedTemplate.template_data.sections.map(s => s.key)} className="w-full">
+         {selectedTemplate && value && (
+           <Accordion type="multiple" value={openSections} onValueChange={setOpenSections} className="w-full">
             {selectedTemplate.template_data.sections.map((section) => (
               <AccordionItem key={section.key} value={section.key}>
                 <AccordionTrigger className="text-sm font-medium py-2">

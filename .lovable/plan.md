@@ -1,67 +1,85 @@
 
-
-# Plan: Lägg till fritextfält under varje frågekategori
+# Plan: Fixa React-bugg i RequirementProfileForm
 
 ## Problemet
 
-Idag kan du fylla i formulärets strukturerade fält (checkboxar, select, etc) men det finns inget sätt att skriva en fritextnotering för varje kategori när kunden har specifika önskemål eller krav som inte passar in i mallstrukturen.
+Komponenten `RequirementProfileForm` har en synkroniseringsbugg mellan `selectedTemplateId` state och `value.template_id` prop som orsakar:
+
+1. **Förfyllda profiler skrivs över** - När en profil skickas in via props så initieras den om till tomma värden
+2. **Potentiell render-loop** - `useEffect` triggar `onChange` som uppdaterar `value` som triggar `useEffect` igen
+3. **Accordion kollapsar** - `openSections` initieras inte korrekt för förfyllda profiler
 
 ## Lösning
 
-Lägg till ett **Textarea-fält i botten av varje sektion** som sparas tillsammans med kravprofilen.
+Synkronisera `selectedTemplateId` med inkommande `value.template_id` genom att:
+
+1. **Lägga till en separat useEffect** som synkroniserar `selectedTemplateId` när `value` ändras utifrån
+2. **Förbättra villkoret** i initierings-useEffect för att inte köras när profilen redan är korrekt ifylld
+3. **Initiera `openSections`** även för förfyllda profiler
 
 ---
 
 ## Tekniska ändringar
 
-### 1. Uppdatera datatypen `RequirementProfile`
+### Fil: `src/components/RequirementProfileForm.tsx`
 
-Lägg till ett nytt fält `section_notes` som lagrar fritextnoteringar per sektion:
+**Ändring 1: Lägg till synkroniserings-useEffect (efter rad 37)**
+
+Ny useEffect som körs när `value` prop ändras:
 
 ```typescript
-export interface RequirementProfile {
-  template_id: string;
-  role_key: string;
-  values: {
-    [sectionKey: string]: RequirementProfileValue;
-  };
-  section_notes?: {  // NYT FÄLT
-    [sectionKey: string]: string;
-  };
-}
+// Synkronisera selectedTemplateId med inkommande value
+useEffect(() => {
+  if (value?.template_id && value.template_id !== selectedTemplateId) {
+    setSelectedTemplateId(value.template_id);
+  }
+}, [value?.template_id]);
 ```
 
-### 2. Uppdatera `CustomerInterviewForm.tsx`
+**Ändring 2: Initiera openSections för förfyllda profiler**
 
-**Lägg till state för noteringar:**
-- Ny state: `sectionNotes` för att lagra fritextnoteringar per sektion
-- Uppdatera useEffect som laddar från localStorage för att också ladda `section_notes`
-- Uppdatera useEffect som initierar template för att också initiera `section_notes`
+Lägg till useEffect som öppnar sektioner när template laddas:
 
-**Uppdatera rendering:**
-- I sektion-loopen, efter alla fält, lägg till en `Textarea` före `</CardContent>`
-- Placeholder: "Noteringar för denna kategori..."
-- Koppla till `sectionNotes[section.key]` och uppdateringsfunktion
+```typescript
+// Initiera openSections när template finns och sektioner är tomma
+useEffect(() => {
+  if (selectedTemplate && openSections.length === 0) {
+    setOpenSections(selectedTemplate.template_data.sections.map(s => s.key));
+  }
+}, [selectedTemplate, openSections.length]);
+```
 
-**Uppdatera save/copy-logik:**
-- `handleSaveDraft`: Inkludera `section_notes` i den sparade profilen
-- `handleCopyToJob`: Inkludera `section_notes` när profilen kopieras till jobbet
+**Ändring 3: Förbättra villkoret i initierings-useEffect (rad 60-81)**
 
-### 3. Resultat
+Ändra villkoret så att profilen INTE ominitieras om det redan finns ifyllda värden:
 
-Användaren kan nu:
-- Se ett tomt Textarea-fält längst ned i varje sektion
-- Skriva fritextnoteringar för den kategorin
-- Noteringar sparas tillsammans med övriga svar i localStorage
-- Noteringar följer med när profilen kopieras till ett nytt jobb
-- Noteringar visas vid utskrift
+```typescript
+useEffect(() => {
+  // Endast initiera om vi har en template OCH profilen är tom/ny
+  // Skippa om value redan har värden (t.ex. från sessionStorage)
+  if (selectedTemplate && selectedTemplateId) {
+    const isNewProfile = !value || value.template_id !== selectedTemplateId;
+    const hasExistingValues = value && Object.keys(value.values || {}).length > 0;
+    
+    if (isNewProfile && !hasExistingValues) {
+      // ... behåll existerande initierings-logik
+    }
+  }
+}, [selectedTemplateId, selectedTemplate]);
+```
 
 ---
+
+## Resultat
+
+Efter denna fix:
+- Förfyllda profiler från "Kopiera till jobb" behålls intakta
+- Accordion expanderas korrekt för alla profiler
+- Ingen render-loop eller React-fel
+- Manuellt val av template fungerar som tidigare
 
 ## Filer som ändras
 
 | Fil | Ändring |
 |-----|---------|
-| `src/types/requirementTemplate.ts` | Lägg till `section_notes` i `RequirementProfile` |
-| `src/components/CustomerInterviewForm.tsx` | Lägg till state, rendering och lagring av `section_notes` |
-
+| `src/components/RequirementProfileForm.tsx` | Lägg till synkroniserings-useEffects och förbättra villkor |

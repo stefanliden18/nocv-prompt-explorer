@@ -48,6 +48,31 @@ export default function JobForm() {
   const [slug, setSlug] = useState('');
   const [requirementProfile, setRequirementProfile] = useState<RequirementProfile | null>(null);
 
+  // Check for prefilled data from customer interview form
+  useEffect(() => {
+    const prefillProfile = sessionStorage.getItem('prefill-requirement-profile');
+    const prefillCustomer = sessionStorage.getItem('prefill-customer-info');
+    
+    if (prefillProfile) {
+      try {
+        setRequirementProfile(JSON.parse(prefillProfile));
+        sessionStorage.removeItem('prefill-requirement-profile');
+      } catch (e) {
+        console.error('Error parsing prefill profile:', e);
+      }
+    }
+    
+    if (prefillCustomer) {
+      try {
+        const customerInfo = JSON.parse(prefillCustomer);
+        // Could use customerInfo.companyName to pre-select company if needed
+        sessionStorage.removeItem('prefill-customer-info');
+      } catch (e) {
+        console.error('Error parsing prefill customer:', e);
+      }
+    }
+  }, []);
+
   // Fetch companies
   useEffect(() => {
     fetchCompanies();

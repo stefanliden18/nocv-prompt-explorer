@@ -1,57 +1,74 @@
 
-# Plan: Uppdatera e-posttexter för NOCV-tips
+# Plan: Dölj företagsnamn i annons och e-post
 
 ## Sammanfattning
-Uppdaterar e-posttexterna i `send-nocv-tip` edge function för både jobbsökare och arbetsgivare med de slutgiltiga texterna.
+Lagger till en inställning per jobb som styr om företagsnamnet ska visas eller döljas -- bade i den publika jobbannonsen och i kandidatmejl. Nar flaggan ar aktiv doljs foretags- namnet och logotypen overallt dar kandidaten ser det.
 
----
+## Steg 1: Databasandring
 
-## Ändringar för Jobbsökare
+Lagg till en ny kolumn i `jobs`-tabellen:
 
-### E-postämne
-`${senderName} tipsar: Slipp CV:t - testa dina kunskaper!`
+```sql
+ALTER TABLE public.jobs 
+ADD COLUMN hide_company_in_emails boolean NOT NULL DEFAULT false;
+```
 
-### Rubrik
-"Slipp CV:t - sök jobb genom kunskapsfrågor"
+Kolumnnamnet behalles som `hide_company_in_emails` for att vara konsekvent med tidigare diskussion, men funktionaliteten utvidgas till att aven omfatta annonssidan.
 
-### Beskrivning
-"Sök jobb genom att svara på kunskapsfrågor under 5-10 minuter. Testa om du når över 50% rätt! :)"
+## Steg 2: Admin - Switch i JobEdit och JobForm
 
-### Fördelar
-| Ikon | Text |
-|------|------|
-| ✅ | **Inga dokument** - Glöm CV och personligt brev |
-| ✅ | **Kunskapsfrågor** - Visa vad du kan på 5-10 min |
-| ✅ | **Testa dig själv** - Nå över 50% och sök jobbet |
-| ✅ | **Fokus på kunskap** - Inte på papper |
+Lagg till en Switch-komponent i bade `JobEdit.tsx` (bredvid GetKiku-faltet) och `JobForm.tsx`:
 
----
+- Label: **"Dolj foretagsnamn for kandidater"**
+- Beskrivning: "Foretaget visas inte i annonsen eller i mejl till kandidater"
+- State: `hideCompanyInEmails` (ny state-variabel)
+- Sparas till `hide_company_in_emails` i databasen
 
-## Ändringar för Arbetsgivare
+## Steg 3: Jobbannonsen (publika sidor)
 
-### E-postämne
-`${senderName} tipsar: Rekrytera snabbare utan dokument`
+### JobDetail.tsx
+Nar `hide_company_in_emails` ar `true`:
+- **Dolj** foretags-logotypen (rad 455-463)
+- **Dolj** foretagsnamnet i headern (rad 484-489)
+- **Dolj** foretagsnamnet i SEO-titel och beskrivning (rad 372-375) - ersatt med "NOCV" eller bara jobbtiteln
+- **Dolj** foretagsnamnet i structured data (rad 386-390)
 
-### Rubrik
-"Rekrytera snabbare - helt utan dokument"
+### DemoJobDetail.tsx
+Samma andringar som JobDetail - dolj logotyp och foretagsnamn.
 
-### Beskrivning
-"NOCV eliminerar CV-granskning och fokuserar på det som spelar roll: rätt kompetens för jobbet."
+### Jobs.tsx (jobblistan)
+Dolj logotypen i jobbkortet nar flaggan ar aktiv (rad 376-383). Foretagsnamnet visas inte som text har redan, sa ingen ytterligare andring behovs.
 
-### Fördelar (uppdaterad enligt önskemål)
-| Ikon | Text |
-|------|------|
-| ✅ | **Inga CV att granska** - Spara upp till 50% av tiden på varje rekrytering |
-| ✅ | **Kunskapsbaserade frågor** - Mäter verklig kompetens |
-| ✅ | **Hög träffsäkerhet** - Rätt kandidater redan från start |
-| ✅ | **Snabbare till anställning** - Ingen dokumenthantering |
+## Steg 4: Kandidatmejl
 
----
+### send-application-email (bekraftelsemejl)
+- Hamta `hide_company_in_emails` fran jobb-datan (redan inkluderad i queryn)
+- Nar `true`: ersatt foretagsnamnet med "arbetsgivaren" i mejlet
+- Gor CTA-knappen mer synlig (starkare farg)
 
-## Teknisk ändring
+### send-getkiku-invitation (AI-intervjuinbjudan)
+- Hamta `hide_company_in_emails` fran jobb-datan
+- Nar `true`: ersatt foretagsnamnet med "arbetsgivaren" i amnesrad och brodel
+- Forbattra knappens synlighet
 
-| Fil | Ändring |
+## Tekniska andringar
+
+| Fil | Andring |
 |-----|---------|
-| `supabase/functions/send-nocv-tip/index.ts` | Uppdatera `getEmailContent` för jobseeker och recruiter |
+| Migration (SQL) | Lagg till `hide_company_in_emails` boolean i `jobs` |
+| `src/pages/admin/JobForm.tsx` | Switch + state + spara till DB |
+| `src/pages/admin/JobEdit.tsx` | Switch + state + ladda/spara |
+| `src/pages/JobDetail.tsx` | Villkorlig visning av foretagsnamn och logotyp |
+| `src/pages/DemoJobDetail.tsx` | Samma villkorliga visning |
+| `src/pages/Jobs.tsx` | Dolj logotyp i jobbkort nar flaggan ar aktiv |
+| `supabase/functions/send-application-email/index.ts` | Villkorlig visning + battre knapp |
+| `supabase/functions/send-getkiku-invitation/index.ts` | Villkorlig visning + battre knapp |
 
-Edge function deployas automatiskt efter ändring.
+## Anvandardflode
+
+1. Rekryteraren skapar/redigerar ett jobb i admin
+2. Aktiverar "Dolj foretagsnamn for kandidater"
+3. Sparar jobbet
+4. Pa annonssidan: foretagsnamn och logotyp visas inte
+5. I bekraftelsemejl: "arbetsgivaren" visas istallet for foretagsnamn
+6. I Getkiku-inbjudan: samma sak

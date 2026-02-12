@@ -294,7 +294,21 @@ export default function JobForm() {
                         </SelectItem>
                       ))}
                     </SelectContent>
-                  </Select>
+                </Select>
+                </div>
+
+                <div className="flex items-center space-x-2 p-3 rounded-lg border border-amber-200 bg-amber-50">
+                  <Switch
+                    id="hideCompanyInEmails"
+                    checked={hideCompanyInEmails}
+                    onCheckedChange={setHideCompanyInEmails}
+                  />
+                  <div>
+                    <Label htmlFor="hideCompanyInEmails">Dölj företagsnamn för kandidater</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Företaget visas inte i annonsen eller i mejl till kandidater
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -370,20 +384,6 @@ export default function JobForm() {
                     onCheckedChange={setDriverLicense}
                   />
                   <Label htmlFor="driverLicense">Kräver körkort</Label>
-                </div>
-
-                <div className="flex items-center space-x-2 p-3 rounded-lg border border-amber-200 bg-amber-50">
-                  <Switch
-                    id="hideCompanyInEmails"
-                    checked={hideCompanyInEmails}
-                    onCheckedChange={setHideCompanyInEmails}
-                  />
-                  <div>
-                    <Label htmlFor="hideCompanyInEmails">Dölj företagsnamn för kandidater</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Företaget visas inte i annonsen eller i mejl till kandidater
-                    </p>
-                  </div>
                 </div>
 
                 <Separator />

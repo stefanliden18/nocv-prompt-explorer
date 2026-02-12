@@ -80,6 +80,21 @@ serve(async (req: Request) => {
       );
     }
 
+    // Security check: Prevent duplicate email sending
+    const { data: emailCheck } = await supabase
+      .from("applications")
+      .select("email_sent")
+      .eq("id", applicationId)
+      .single();
+
+    if (emailCheck?.email_sent) {
+      console.warn(`Email already sent for application ${applicationId}`);
+      return new Response(
+        JSON.stringify({ error: "Email har redan skickats för denna ansökan" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const hideCompany = application.jobs?.hide_company_in_emails === true;
     const jobTitle = application.jobs?.title || "Okänt jobb";
     const companyName = hideCompany ? "Arbetsgivaren" : (application.jobs?.companies?.name || "Företaget");
@@ -224,6 +239,12 @@ serve(async (req: Request) => {
 
       console.log("Recruiter email sent:", recruiterEmailResult);
     }
+
+    // Mark email as sent to prevent duplicates
+    await supabase
+      .from("applications")
+      .update({ email_sent: true })
+      .eq("id", applicationId);
 
     return new Response(
       JSON.stringify({ 

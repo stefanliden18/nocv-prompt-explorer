@@ -86,7 +86,7 @@ const getEmailContent = (
     <div class="content">
       <p style="font-size: 16px; margin-top: 0;">Hej!</p>
       
-      <p><strong>${senderName}</strong> tänkte att NOCV skulle kunna hjälpa dig i din jobbsökning!</p>
+      <p><strong>${senderName}</strong> tänkte att NoCV skulle kunna hjälpa dig i din jobbsökning!</p>
       
       ${personalMessageHtml}
       
@@ -113,7 +113,7 @@ const getEmailContent = (
     </div>
     
     <div class="footer">
-      <p>NOCV - Rekrytering för framtidens industri</p>
+      <p>NoCV - Rekrytering för framtidens industri</p>
       <p style="font-size: 12px; color: #94a3b8;">
         <a href="https://nocv.se" style="color: #f97316;">nocv.se</a> | 
         <a href="https://nocv.se/jobs" style="color: #f97316;">Lediga jobb</a>
@@ -146,13 +146,13 @@ const getEmailContent = (
     <div class="content">
       <p style="font-size: 16px; margin-top: 0;">Hej!</p>
       
-      <p><strong>${senderName}</strong> tipsar om NOCV - en modern rekryteringslösning!</p>
+      <p><strong>${senderName}</strong> tipsar om NoCV - en modern rekryteringslösning!</p>
       
       ${personalMessageHtml}
       
       <div class="highlight-box">
         <h2 style="margin-top: 0; color: #1a365d;">🚀 Rekrytera snabbare - helt utan dokument</h2>
-        <p>NOCV eliminerar CV-granskning och fokuserar på det som spelar roll: rätt kompetens för jobbet.</p>
+        <p>NoCV eliminerar CV-granskning och fokuserar på det som spelar roll: rätt kompetens för jobbet.</p>
       </div>
       
       <div class="benefits">
@@ -173,7 +173,7 @@ const getEmailContent = (
     </div>
     
     <div class="footer">
-      <p>NOCV - Rekrytering för framtidens industri</p>
+      <p>NoCV - Rekrytering för framtidens industri</p>
       <p style="font-size: 12px; color: #94a3b8;">
         <a href="https://nocv.se" style="color: #f97316;">nocv.se</a> | 
         <a href="https://nocv.se/companies" style="color: #f97316;">För företag</a>
@@ -188,7 +188,7 @@ const getEmailContent = (
 
   // General category
   return {
-    subject: `${senderName} tipsar om NOCV`,
+    subject: `${senderName} tipsar om NoCV`,
     html: `
 <!DOCTYPE html>
 <html>
@@ -206,13 +206,13 @@ const getEmailContent = (
     <div class="content">
       <p style="font-size: 16px; margin-top: 0;">Hej!</p>
       
-      <p><strong>${senderName}</strong> vill tipsa dig om NOCV!</p>
+      <p><strong>${senderName}</strong> vill tipsa dig om NoCV!</p>
       
       ${personalMessageHtml}
       
       <div class="highlight-box">
         <h2 style="margin-top: 0; color: #1a365d;">💡 Framtiden för rekrytering är här</h2>
-        <p>NOCV tar bort CV:t från rekryteringsprocessen. Istället fokuserar vi på vad som verkligen räknas: kompetens, erfarenhet och personlighet.</p>
+        <p>NoCV tar bort CV:t från rekryteringsprocessen. Istället fokuserar vi på vad som verkligen räknas: kompetens, erfarenhet och personlighet.</p>
       </div>
       
       <div class="benefits">
@@ -224,7 +224,7 @@ const getEmailContent = (
       </div>
       
       <div style="text-align: center;">
-        <a href="https://nocv.se" class="btn">Läs mer om NOCV</a>
+        <a href="https://nocv.se" class="btn">Läs mer om NoCV</a>
       </div>
       
       <p style="color: #64748b; font-size: 14px; margin-top: 30px;">
@@ -233,7 +233,7 @@ const getEmailContent = (
     </div>
     
     <div class="footer">
-      <p>NOCV - Rekrytering för framtidens industri</p>
+      <p>NoCV - Rekrytering för framtidens industri</p>
       <p style="font-size: 12px; color: #94a3b8;">
         <a href="https://nocv.se" style="color: #f97316;">nocv.se</a> | 
         <a href="https://nocv.se/jobs" style="color: #f97316;">Lediga jobb</a> | 
@@ -254,7 +254,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const requestBody = await req.json();
-    console.log("Received NOCV tip request:", JSON.stringify(requestBody, null, 2));
+    console.log("Received NoCV tip request:", JSON.stringify(requestBody, null, 2));
 
     const {
       senderName,
@@ -283,14 +283,14 @@ const handler = async (req: Request): Promise<Response> => {
     const { subject, html } = getEmailContent(category, senderName, sanitizedMessage);
 
     const emailResponse = await resend.emails.send({
-      from: "NOCV <noreply@nocv.se>",
+      from: "NoCV <noreply@nocv.se>",
       to: [friendEmail],
       replyTo: senderEmail,
       subject,
       html,
     });
 
-    console.log("NOCV tip email sent successfully:", emailResponse);
+    console.log("NoCV tip email sent successfully:", emailResponse);
 
     return new Response(
       JSON.stringify({

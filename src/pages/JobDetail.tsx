@@ -372,13 +372,13 @@ const JobDetail = () => {
 
   // Generate SEO metadata
   const pageTitle = hideCompany
-    ? `${job.title} | NOCV`
-    : `${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
+    ? `${job.title} | NoCV`
+    : `${job.title} - ${job.companies?.name || 'Okänt företag'} | NoCV`;
   const pageDescription = job.description_md 
     ? job.description_md.replace(/[#*_\[\]]/g, '').trim().substring(0, 155) + '...'
     : hideCompany
-      ? `Ansök till ${job.title} i ${job.city || 'Sverige'}. Sök jobb utan CV på NOCV.`
-      : `Ansök till ${job.title} hos ${job.companies?.name || 'företaget'} i ${job.city || 'Sverige'}. Sök jobb utan CV på NOCV.`;
+      ? `Ansök till ${job.title} i ${job.city || 'Sverige'}. Sök jobb utan CV på NoCV.`
+      : `Ansök till ${job.title} hos ${job.companies?.name || 'företaget'} i ${job.city || 'Sverige'}. Sök jobb utan CV på NoCV.`;
 
   // Generate structured data for JobPosting
   const jobPostingSchema = {
@@ -391,7 +391,7 @@ const JobDetail = () => {
     "employmentType": job.employment_type?.toUpperCase() || "FULL_TIME",
     "hiringOrganization": hideCompany ? {
       "@type": "Organization",
-      "name": "NOCV"
+      "name": "NoCV"
     } : {
       "@type": "Organization",
       "name": job.companies?.name || "Okänt företag",

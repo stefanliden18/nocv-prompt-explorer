@@ -35,7 +35,7 @@ serve(async (req) => {
     const emailHtml = getCancellationEmailTemplate(candidateName, jobTitle);
 
     const { error: emailError } = await resend.emails.send({
-      from: "NOCV <onboarding@resend.dev>",
+      from: "NoCV <onboarding@resend.dev>",
       to: [candidateEmail],
       subject: `Intervju avbokad - ${jobTitle}`,
       html: emailHtml,

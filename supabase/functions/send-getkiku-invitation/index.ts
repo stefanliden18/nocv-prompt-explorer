@@ -77,7 +77,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send Getkiku invitation email
     const emailResponse = await resend.emails.send({
-      from: "NOCV <noreply@nocv.se>",
+      from: "NoCV <noreply@nocv.se>",
       to: [email],
       subject: hideCompany
         ? `Din AI-intervju med Sara för ${job.title}`
@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 <p style="margin-top: 24px;">
                   Med vänliga hälsningar,<br>
-                  <strong>NOCV Team</strong>
+                  <strong>NoCV Team</strong>
                 </p>
               </div>
               

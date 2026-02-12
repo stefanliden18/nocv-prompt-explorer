@@ -161,7 +161,7 @@ export default function CompaniesEdit() {
                   <CardHeader>
                     <CardTitle>Så fungerar det</CardTitle>
                     <CardDescription>
-                      Förklara hur NOCV fungerar för företag
+                      Förklara hur NoCV fungerar för företag
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

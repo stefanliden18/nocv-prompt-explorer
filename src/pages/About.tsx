@@ -36,10 +36,10 @@ export default function About() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Om NOCV - Vår historia, vision och värderingar</title>
+        <title>Om NoCV - Vår historia, vision och värderingar</title>
         <meta 
           name="description" 
-          content="Lär känna NOCV - vi revolutionerar rekrytering genom att fokusera på vad kandidater kan och vill, inte vad de har studerat. Läs om vår vision och värderingar." 
+          content="Lär känna NoCV - vi revolutionerar rekrytering genom att fokusera på vad kandidater kan och vill, inte vad de har studerat. Läs om vår vision och värderingar." 
         />
       </Helmet>
 

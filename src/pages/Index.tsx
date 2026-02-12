@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
 import Hero from "@/components/Hero";
-import WhyNOCV from "@/components/WhyNOCV";
+import WhyNoCV from "@/components/WhyNOCV";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -8,7 +8,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Navigation />
       <Hero />
-      <WhyNOCV />
+      <WhyNoCV />
       <Footer />
     </div>
   );

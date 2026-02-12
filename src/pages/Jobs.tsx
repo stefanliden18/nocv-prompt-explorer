@@ -219,7 +219,7 @@ const Jobs = () => {
     if (categoryFilter !== 'all') title = `${categoryFilter}-jobb`;
     if (cityFilter !== 'all') title += ` i ${cityFilter}`;
     if (searchQuery) title += ` - ${searchQuery}`;
-    return `${title} | NOCV - Sök jobb utan CV`;
+    return `${title} | NoCV - Sök jobb utan CV`;
   };
 
   const generatePageDescription = () => {
@@ -228,7 +228,7 @@ const Jobs = () => {
       desc = `Sök bland ${totalCount} lediga jobb`;
       if (categoryFilter !== 'all') desc += ` inom ${categoryFilter}`;
       if (cityFilter !== 'all') desc += ` i ${cityFilter}`;
-      desc += ' på NOCV. Ansök utan CV.';
+      desc += ' på NoCV. Ansök utan CV.';
     }
     return desc;
   };

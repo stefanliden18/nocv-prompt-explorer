@@ -45,7 +45,7 @@ const Candidates = () => {
             </h1>
             
             <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
-              Hos NOCV söker du jobb utan CV. Vi är intresserade av vad du kan göra, 
+              Hos NoCV söker du jobb utan CV. Vi är intresserade av vad du kan göra, 
               inte vad du har studerat. Visa upp dina kunskaper och hitta arbete 
               där din erfarenhet verkligen räknas.
             </p>

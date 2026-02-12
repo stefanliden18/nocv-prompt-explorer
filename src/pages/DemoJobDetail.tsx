@@ -385,8 +385,8 @@ const DemoJobDetail = () => {
   const hideCompany = (job as any).hide_company_in_emails === true;
 
   const pageTitle = hideCompany
-    ? `[DEMO] ${job.title} | NOCV`
-    : `[DEMO] ${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
+    ? `[DEMO] ${job.title} | NoCV`
+    : `[DEMO] ${job.title} - ${job.companies?.name || 'Okänt företag'} | NoCV`;
   const pageDescription = `Detta är ett demojobb för säljpresentationer.`;
 
   return (

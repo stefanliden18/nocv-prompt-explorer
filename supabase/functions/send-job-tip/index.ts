@@ -144,7 +144,7 @@ const handler = async (req: Request): Promise<Response> => {
       </div>
       
       <div class="benefits">
-        <h3 style="margin-top: 0; color: #1a365d;">Varför NOCV?</h3>
+        <h3 style="margin-top: 0; color: #1a365d;">Varför NoCV?</h3>
         <div class="benefit-item">✅ <strong>Inget CV behövs</strong> - Sök jobb på 2 minuter</div>
         <div class="benefit-item">✅ <strong>Snabb ansökan</strong> - Hoppa över det traditionella pappersarbetet</div>
         <div class="benefit-item">✅ <strong>Personlig matchning</strong> - Vi fokuserar på din kompetens</div>
@@ -157,7 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
     </div>
     
     <div class="footer">
-      <p>NOCV - Rekrytering för framtidens industri</p>
+      <p>NoCV - Rekrytering för framtidens industri</p>
       <p style="font-size: 12px; color: #94a3b8;">
         <a href="https://nocv.se" style="color: #f97316; text-decoration: none;">nocv.se</a> | 
         <a href="https://nocv.se/jobs" style="color: #f97316; text-decoration: none;">Lediga jobb</a>
@@ -170,7 +170,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email via Resend
     const emailResponse = await resend.emails.send({
-      from: "NOCV <noreply@nocv.se>",
+      from: "NoCV <noreply@nocv.se>",
       to: [friendEmail],
       replyTo: senderEmail,
       subject: `${senderName} tipsar om ett jobb: ${jobTitle}`,

@@ -372,7 +372,7 @@ export default function JobForm() {
                   <Label htmlFor="driverLicense">Kräver körkort</Label>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 p-3 rounded-lg border border-amber-200 bg-amber-50">
                   <Switch
                     id="hideCompanyInEmails"
                     checked={hideCompanyInEmails}

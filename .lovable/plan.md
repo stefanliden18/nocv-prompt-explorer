@@ -1,37 +1,40 @@
 
 
-# Plan: Gör "Dölj företagsnamn"-switchen synlig och framträdande
+# Flytta "Dölj företagsnamn" direkt under Företag-fältet
 
-## Problem
-Switchen "Dölj företagsnamn för kandidater" finns i koden och i DOM:en, men syns inte visuellt på sidan. Troligen beror det på att den smälter in mellan andra fält utan tillräcklig visuell markering.
+## Vad som ändras
+Switchen "Dölj företagsnamn för kandidater" flyttas till en mer logisk position: **direkt under dropdownen där du väljer företag**. Så behöver du inte scrolla ner för att hitta den.
 
-## Losning
-Flytta switchen till en mer framträdande position (direkt efter "Kräver körkort") och ge den en visuellt distinkt stil med en färgad bakgrund och ram, så att den är omöjlig att missa.
+## Visuellt resultat
 
-## Teknisk ändring
+Formuläret kommer se ut så här i toppen:
+
+```text
+Titel *
+[ Servicetekniker till stort bilföretag i Norrort ]
+
+Företag *
+[ Europeiska Motor                              v ]
+
++--------------------------------------------------+
+| [toggle] Dölj företagsnamn för kandidater        |
+|          Företaget visas inte i annonsen eller    |
+|          i mejl till kandidater                   |
++--------------------------------------------------+
+
+Stad *                    Region
+[ Stockholm ]             [ Stockholms län ]
+```
+
+Den amber-färgade ramen behålls så att switchen är tydlig och lätt att hitta.
+
+## Tekniska ändringar
 
 ### src/pages/admin/JobEdit.tsx
-1. **Flytta** switchen från sin nuvarande position (rad 556-568, mellan GetKiku och Publiceringsdatum)
-2. **Placera** den direkt efter "Kräver körkort"-switchen (rad 530)
-3. **Styla** den med en framträdande bakgrund och ram:
-
-```
-<div className="flex items-center space-x-2 p-3 rounded-lg border border-amber-200 bg-amber-50">
-  <Switch ... />
-  <div>
-    <Label>Dölj företagsnamn för kandidater</Label>
-    <p className="text-xs text-muted-foreground">
-      Företaget visas inte i annonsen eller i mejl till kandidater
-    </p>
-  </div>
-</div>
-```
+- **Ta bort** switchen från rad 531-543 (nuvarande position efter "Kräver körkort")
+- **Lägg till** samma switch-block direkt efter Företag-selecten (efter rad 454)
 
 ### src/pages/admin/JobForm.tsx
-Samma visuella styling appliceras på switchen i "Nytt jobb"-formuläret för konsistens.
+- Samma ändring: flytta switchen från nuvarande position till direkt efter Företag-fältet för konsistens
 
-## Sammanfattning
-- Switchen placeras direkt efter "Kräver körkort" -- ett ställe du redan ser och känner igen
-- Den får en gul/amber bakgrund och ram som gör den omöjlig att missa
-- Ingen funktionell ändring, bara position och utseende
-
+Ingen funktionell ändring -- bara position i formuläret.

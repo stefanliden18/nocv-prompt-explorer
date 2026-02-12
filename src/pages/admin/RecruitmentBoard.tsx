@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { MultiSelect, MultiSelectWithBadges, type MultiSelectOption } from '@/components/ui/multi-select';
 import { AIChat } from '@/components/AIChat';
+import { JobFilterChips } from '@/components/JobFilterChips';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Settings2, X, Filter } from 'lucide-react';
@@ -38,6 +39,9 @@ interface Application {
 interface Job {
   id: string;
   title: string;
+  status: string;
+  company_name: string | null;
+  application_count: number;
 }
 
 export default function RecruitmentBoard() {
@@ -148,7 +152,8 @@ export default function RecruitmentBoard() {
   const fetchJobs = async () => {
     const { data, error } = await supabase
       .from('jobs')
-      .select('id, title')
+      .select('id, title, status, companies(name)')
+      .in('status', ['published', 'inactive', 'draft'])
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -160,7 +165,23 @@ export default function RecruitmentBoard() {
       return;
     }
 
-    setJobs(data || []);
+    // Count applications per job
+    const { data: countData } = await supabase
+      .from('applications')
+      .select('job_id');
+
+    const countMap: Record<string, number> = {};
+    (countData || []).forEach(app => {
+      countMap[app.job_id] = (countMap[app.job_id] || 0) + 1;
+    });
+
+    setJobs((data || []).map(job => ({
+      id: job.id,
+      title: job.title,
+      status: job.status,
+      company_name: (job.companies as any)?.name || null,
+      application_count: countMap[job.id] || 0,
+    })));
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -264,6 +285,12 @@ export default function RecruitmentBoard() {
     { value: '1', label: '1 stjärna' },
   ];
 
+  const handleToggleJob = (jobId: string) => {
+    setSelectedJobIds(prev =>
+      prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
+    );
+  };
+
   const jobOptions: MultiSelectOption[] = jobs.map(job => ({
     value: job.id,
     label: job.title,
@@ -295,7 +322,8 @@ export default function RecruitmentBoard() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">Rekryteringstavla</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Visa: {filteredApplications.length} kandidater
+              Visar {filteredApplications.length} kandidater
+              {selectedJobIds.length > 0 && ` för ${selectedJobIds.length} jobb`}
             </p>
           </div>
 
@@ -309,49 +337,13 @@ export default function RecruitmentBoard() {
           </Button>
         </div>
 
-        {/* Jobb-filter med badges */}
-        <div className="space-y-3">
-          <div className="flex gap-3 items-start flex-wrap">
-            <MultiSelect
-              options={jobOptions}
-              selected={selectedJobIds}
-              onChange={setSelectedJobIds}
-              placeholder="Välj jobb att visa"
-              className="w-64"
-            />
-            
-            {selectedJobIds.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setSelectedJobIds([])}
-              >
-                Visa alla jobb
-              </Button>
-            )}
-          </div>
-
-          {selectedJobIds.length > 0 && (
-            <div className="flex gap-2 flex-wrap">
-              {selectedJobIds.map(jobId => {
-                const job = jobs.find(j => j.id === jobId);
-                if (!job) return null;
-                
-                return (
-                  <Badge key={jobId} variant="secondary" className="gap-1">
-                    {job.title}
-                    <X 
-                      className="h-3 w-3 cursor-pointer hover:text-destructive" 
-                      onClick={() => setSelectedJobIds(prev => 
-                        prev.filter(id => id !== jobId)
-                      )}
-                    />
-                  </Badge>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        {/* Jobbfilter med chips */}
+        <JobFilterChips
+          jobs={jobs}
+          selectedJobIds={selectedJobIds}
+          onToggleJob={handleToggleJob}
+          onClearAll={() => setSelectedJobIds([])}
+        />
 
         {/* Sök- och filter-sektion */}
         <div className="space-y-3">

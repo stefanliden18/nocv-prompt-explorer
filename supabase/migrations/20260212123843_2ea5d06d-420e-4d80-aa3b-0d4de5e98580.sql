@@ -1,0 +1,1 @@
+ALTER TABLE public.jobs ADD COLUMN hide_company_in_emails boolean NOT NULL DEFAULT false;

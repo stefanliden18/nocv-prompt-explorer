@@ -45,6 +45,7 @@ export default function JobForm() {
   const [descriptionHtml, setDescriptionHtml] = useState('');
   
   const [driverLicense, setDriverLicense] = useState(false);
+  const [hideCompanyInEmails, setHideCompanyInEmails] = useState(false);
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
   const [requirementProfile, setRequirementProfile] = useState<RequirementProfile | null>(null);
@@ -187,6 +188,7 @@ export default function JobForm() {
           publish_at: null,
           created_by: user!.id,
           requirement_profile: requirementProfile as any,
+          hide_company_in_emails: hideCompanyInEmails,
         } as any)
         .select()
         .single();
@@ -368,6 +370,20 @@ export default function JobForm() {
                     onCheckedChange={setDriverLicense}
                   />
                   <Label htmlFor="driverLicense">Kräver körkort</Label>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="hideCompanyInEmails"
+                    checked={hideCompanyInEmails}
+                    onCheckedChange={setHideCompanyInEmails}
+                  />
+                  <div>
+                    <Label htmlFor="hideCompanyInEmails">Dölj företagsnamn för kandidater</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Företaget visas inte i annonsen eller i mejl till kandidater
+                    </p>
+                  </div>
                 </div>
 
                 <Separator />

@@ -50,6 +50,7 @@ serve(async (req: Request) => {
           id,
           title,
           contact_person_email,
+          hide_company_in_emails,
           companies (
             name,
             contact_email
@@ -79,8 +80,9 @@ serve(async (req: Request) => {
       );
     }
 
+    const hideCompany = application.jobs?.hide_company_in_emails === true;
     const jobTitle = application.jobs?.title || "Okänt jobb";
-    const companyName = application.jobs?.companies?.name || "Företaget";
+    const companyName = hideCompany ? "Arbetsgivaren" : (application.jobs?.companies?.name || "Företaget");
     const recruiterEmail = application.jobs?.contact_person_email || application.jobs?.companies?.contact_email;
     
     if (!recruiterEmail) {
@@ -111,7 +113,7 @@ serve(async (req: Request) => {
             <p style="font-size: 16px; margin-bottom: 20px;">Hej ${application.candidate_name}!</p>
             
             <p style="font-size: 16px; margin-bottom: 20px;">
-              Vi har mottagit din ansökan till tjänsten som <strong>${jobTitle}</strong> hos ${companyName}.
+              Vi har mottagit din ansökan till tjänsten som <strong>${jobTitle}</strong>${hideCompany ? '' : ` hos ${companyName}`}.
             </p>
             
             <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">

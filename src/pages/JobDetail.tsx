@@ -551,14 +551,18 @@ const JobDetail = () => {
                   size="sm"
                   variant="outline"
                   className="h-10 border-white/50 bg-white text-primary hover:bg-white/90 hover:border-white"
-                  onClick={() => {
-                    navigator.clipboard.writeText(`https://nocv.se/jobb/${job.slug}`);
-                    setLinkCopied(true);
-                    setTimeout(() => setLinkCopied(false), 2000);
-                    toast({
-                      title: "Länk kopierad!",
-                      description: "Jobblänken har kopierats till urklipp.",
-                    });
+                  onClick={async () => {
+                    const jobUrl = `https://nocv.se/jobb/${job.slug}`;
+                    try {
+                      await navigator.clipboard.writeText(jobUrl);
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                      toast({ title: "Länk kopierad!", description: jobUrl });
+                    } catch {
+                      setLinkCopied(true);
+                      setTimeout(() => setLinkCopied(false), 2000);
+                      toast({ title: "Kopiera länken nedan:", description: jobUrl });
+                    }
                   }}
                 >
                   {linkCopied ? (

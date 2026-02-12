@@ -9,7 +9,7 @@ import { TipNOCVDialog } from "./TipNOCVDialog";
 
 const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [tipNOCVDialogOpen, setTipNOCVDialogOpen] = useState(false);
+  const [tipNoCVDialogOpen, setTipNoCVDialogOpen] = useState(false);
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -22,7 +22,7 @@ const Navigation = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
               <h2 className="text-2xl font-bold font-heading text-primary">
-                NOCV
+                NoCV
               </h2>
             </Link>
           </div>
@@ -45,10 +45,10 @@ const Navigation = () => {
               Kontakt
             </Link>
             <button 
-              onClick={() => setTipNOCVDialogOpen(true)}
+              onClick={() => setTipNoCVDialogOpen(true)}
               className="text-foreground hover:text-primary transition-colors font-medium"
             >
-              💡 Tipsa om NOCV
+              💡 Tipsa om NoCV
             </button>
             {isAdmin && (
               <Link to="/admin" className="text-foreground hover:text-primary transition-colors font-medium">
@@ -116,11 +116,11 @@ const Navigation = () => {
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
-                      setTipNOCVDialogOpen(true);
+                      setTipNoCVDialogOpen(true);
                     }}
                     className="text-lg font-medium text-foreground hover:text-primary transition-colors text-left"
                   >
-                    💡 Tipsa om NOCV
+                    💡 Tipsa om NoCV
                   </button>
                   {isAdmin && (
                     <Link 
@@ -143,8 +143,8 @@ const Navigation = () => {
     </nav>
 
     <TipNOCVDialog 
-      open={tipNOCVDialogOpen} 
-      onOpenChange={setTipNOCVDialogOpen}
+      open={tipNoCVDialogOpen} 
+      onOpenChange={setTipNoCVDialogOpen}
     />
     </>
   );

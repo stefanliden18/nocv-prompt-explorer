@@ -107,7 +107,7 @@ export default function AboutEdit() {
               <RichTextEditor
                 content={heroContent}
                 onChange={setHeroContent}
-                placeholder="Skriv om NOCV..."
+                placeholder="Skriv om NoCV..."
                 minHeight="400px"
               />
             </CardContent>

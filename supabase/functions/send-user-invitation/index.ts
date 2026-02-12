@@ -32,18 +32,18 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     const emailResponse = await resend.emails.send({
-      from: "NOCV <onboarding@resend.dev>",
+      from: "NoCV <onboarding@resend.dev>",
       to: [email],
-      subject: "Inbjudan till NOCV",
+      subject: "Inbjudan till NoCV",
       html: `
-        <h1>Välkommen till NOCV!</h1>
-        <p>Du har blivit inbjuden att gå med i NOCV som <strong>${roleLabels[role] || role}</strong>.</p>
+        <h1>Välkommen till NoCV!</h1>
+        <p>Du har blivit inbjuden att gå med i NoCV som <strong>${roleLabels[role] || role}</strong>.</p>
         <p>Klicka på länken nedan för att sätta ditt lösenord och komma igång:</p>
         <p><a href="${inviteLink}" style="display: inline-block; padding: 12px 24px; background-color: #0066cc; color: white; text-decoration: none; border-radius: 6px;">Acceptera inbjudan</a></p>
         <p>Om knappen inte fungerar, kopiera och klistra in denna länk i din webbläsare:</p>
         <p style="color: #666; word-break: break-all;">${inviteLink}</p>
         <br>
-        <p>Med vänliga hälsningar,<br>NOCV-teamet</p>
+        <p>Med vänliga hälsningar,<br>NoCV-teamet</p>
       `,
     });
 

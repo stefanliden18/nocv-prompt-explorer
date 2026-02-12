@@ -181,7 +181,7 @@ export default function AdminDashboard() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-4xl font-bold">NOCV Admin</h1>
+          <h1 className="text-4xl font-bold">NoCV Admin</h1>
           <p className="text-muted-foreground">Översikt över systemet</p>
         </div>
 

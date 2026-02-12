@@ -162,7 +162,7 @@ serve(async (req: Request) => {
           
           <div style="text-align: center; margin-top: 20px; padding: 20px; color: #666; font-size: 14px;">
             <p style="margin: 0;">Med vänliga hälsningar,</p>
-            <p style="margin: 5px 0; font-weight: bold;">NOCV Team</p>
+            <p style="margin: 5px 0; font-weight: bold;">NoCV Team</p>
             <p style="margin: 10px 0;"><a href="https://nocv.se" style="color: #667eea; text-decoration: none;">nocv.se</a></p>
           </div>
         </body>
@@ -171,7 +171,7 @@ serve(async (req: Request) => {
 
     // Send email to candidate
     const candidateEmailResult = await resend.emails.send({
-      from: "NOCV <noreply@nocv.se>",
+      from: "NoCV <noreply@nocv.se>",
       to: [application.email],
       subject: `Tack för din ansökan - ${jobTitle}`,
       html: candidateEmailHtml,
@@ -223,7 +223,7 @@ serve(async (req: Request) => {
             </div>
             
             <div style="text-align: center; margin-top: 20px; padding: 20px; color: #666; font-size: 14px;">
-              <p style="margin: 0;">NOCV Recruitment Platform</p>
+              <p style="margin: 0;">NoCV Recruitment Platform</p>
               <p style="margin: 10px 0;"><a href="https://nocv.se" style="color: #667eea; text-decoration: none;">nocv.se</a></p>
             </div>
           </body>
@@ -231,7 +231,7 @@ serve(async (req: Request) => {
       `;
 
       const recruiterEmailResult = await resend.emails.send({
-        from: "NOCV <noreply@nocv.se>",
+        from: "NoCV <noreply@nocv.se>",
         to: [recruiterEmail],
         subject: `Ny ansökan: ${application.candidate_name} - ${jobTitle}`,
         html: recruiterEmailHtml,

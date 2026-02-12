@@ -25,7 +25,7 @@ export const PreviewHeader = ({ jobId }: PreviewHeaderProps) => {
             <div className="flex items-center">
               <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <h2 className="text-2xl font-bold font-heading text-primary">
-                  NOCV
+                  NoCV
                 </h2>
               </Link>
             </div>

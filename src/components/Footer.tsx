@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TipNOCVDialog } from "./TipNOCVDialog";
 
 const Footer = () => {
-  const [tipNOCVDialogOpen, setTipNOCVDialogOpen] = useState(false);
+  const [tipNoCVDialogOpen, setTipNoCVDialogOpen] = useState(false);
 
   return (
     <>
@@ -14,11 +14,11 @@ const Footer = () => {
             <div className="space-y-4">
               <div className="flex items-center">
                 <h3 className="text-2xl font-bold font-heading text-white">
-                  NOCV
+                  NoCV
                 </h3>
               </div>
               <p className="text-white/80 text-lg leading-relaxed max-w-md">
-                NOCV – Rekrytering för framtidens industri
+                NoCV – Rekrytering för framtidens industri
               </p>
             </div>
 
@@ -59,10 +59,10 @@ const Footer = () => {
                   Kontakt
                 </a>
                 <button
-                  onClick={() => setTipNOCVDialogOpen(true)}
+                  onClick={() => setTipNoCVDialogOpen(true)}
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium text-left"
                 >
-                  💡 Tipsa om NOCV
+                  💡 Tipsa om NoCV
                 </button>
               </nav>
             </div>
@@ -71,7 +71,7 @@ const Footer = () => {
           {/* Bottom Section */}
           <div className="border-t border-white/20 mt-8 pt-8 text-center">
             <p className="text-white/60 text-sm">
-              © 2024 NOCV. Alla rättigheter förbehållna.
+              © 2024 NoCV. Alla rättigheter förbehållna.
             </p>
           </div>
         </div>
@@ -79,8 +79,8 @@ const Footer = () => {
     </footer>
 
     <TipNOCVDialog 
-      open={tipNOCVDialogOpen} 
-      onOpenChange={setTipNOCVDialogOpen}
+      open={tipNoCVDialogOpen} 
+      onOpenChange={setTipNoCVDialogOpen}
     />
     </>
   );

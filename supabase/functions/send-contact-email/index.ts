@@ -41,7 +41,7 @@ serve(async (req) => {
 
     // Send email using Resend
     const emailBody = `
-Nytt meddelande från NOCV hemsidan
+Nytt meddelande från NoCV hemsidan
 
 Namn: ${name}
 E-post: ${email}
@@ -51,7 +51,7 @@ Meddelande:
 ${message}
 
 ---
-Skickat från NOCV kontaktformulär
+Skickat från NoCV kontaktformulär
     `.trim()
 
     const resendResponse = await fetch('https://api.resend.com/emails', {
@@ -61,9 +61,9 @@ Skickat från NOCV kontaktformulär
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'NOCV Hemsida <noreply@nocv.se>',
+        from: 'NoCV Hemsida <noreply@nocv.se>',
         to: ['stefanliden18@gmail.com'],
-        subject: 'Kontakt från NOCV hemsida',
+        subject: 'Kontakt från NoCV hemsida',
         text: emailBody,
         reply_to: email,
       }),

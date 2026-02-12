@@ -73,7 +73,7 @@ const Companies = () => {
                   Snabbare rekrytering utan CV
                 </h1>
                 <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
-                  NOCV hjälper ditt företag hitta rätt kandidater baserat på kunskaper och kompetens 
+                  NoCV hjälper ditt företag hitta rätt kandidater baserat på kunskaper och kompetens 
                   istället för traditionella CV. Fokusera på vad kandidaterna kan göra, 
                   inte vad de har studerat eller tidigare roller.
                 </p>
@@ -100,7 +100,7 @@ const Companies = () => {
                   Fördelar för ditt företag
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Med NOCV får du en modernare och mer effektiv rekryteringsprocess som 
+                  Med NoCV får du en modernare och mer effektiv rekryteringsprocess som 
                   fokuserar på kandidaternas faktiska förmågor och potential.
                 </p>
               </>
@@ -160,7 +160,7 @@ const Companies = () => {
             ) : (
               <>
                 <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-4">
-                  Så fungerar NOCV för företag
+                  Så fungerar NoCV för företag
                 </h3>
                 <p className="text-lg text-muted-foreground mb-8">
                   Publicera dina lediga tjänster och låt vårt system automatiskt matcha och 
@@ -212,7 +212,7 @@ const Companies = () => {
                   Redo att förändra er rekrytering?
                 </h3>
                 <p className="text-lg text-muted-foreground mb-10">
-                  Upptäck hur NOCV kan hjälpa ert företag hitta rätt kandidater snabbare 
+                  Upptäck hur NoCV kan hjälpa ert företag hitta rätt kandidater snabbare 
                   och mer effektivt än traditionella metoder.
                 </p>
               </>

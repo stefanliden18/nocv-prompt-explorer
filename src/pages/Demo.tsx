@@ -94,10 +94,10 @@ const Demo = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Demo-jobb | NOCV - Testa vår plattform</title>
-        <meta name="description" content="Utforska våra demo-jobb och se hur NOCV:s rekryteringsplattform fungerar. Testa att ansöka utan CV." />
-        <meta property="og:title" content="Demo-jobb | NOCV" />
-        <meta property="og:description" content="Utforska våra demo-jobb och se hur NOCV:s rekryteringsplattform fungerar." />
+        <title>Demo-jobb | NoCV - Testa vår plattform</title>
+        <meta name="description" content="Utforska våra demo-jobb och se hur NoCV:s rekryteringsplattform fungerar. Testa att ansöka utan CV." />
+        <meta property="og:title" content="Demo-jobb | NoCV" />
+        <meta property="og:description" content="Utforska våra demo-jobb och se hur NoCV:s rekryteringsplattform fungerar." />
         <link rel="canonical" href="https://nocv.se/demo" />
       </Helmet>
 
@@ -112,7 +112,7 @@ const Demo = () => {
               Demo-jobb
             </Badge>
             <h1 className="text-4xl md:text-5xl font-bold font-heading text-foreground mb-4">
-              Testa NOCV:s plattform
+              Testa NoCV:s plattform
             </h1>
             <p className="text-xl text-muted-foreground">
               Här kan du utforska demo-jobb och se hur vår rekryteringsplattform fungerar. 
@@ -230,7 +230,7 @@ const Demo = () => {
                     💡 Om demo-jobb
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    Detta är demonstrationsjobb som visar hur NOCV:s rekryteringsprocess fungerar. 
+                    Detta är demonstrationsjobb som visar hur NoCV:s rekryteringsprocess fungerar. 
                     Du kan fritt testa att ansöka och utforska funktionerna - alla ansökningar är markerade som demo 
                     och kommer inte att behandlas som riktiga ansökningar.
                   </p>

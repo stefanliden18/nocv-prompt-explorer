@@ -109,10 +109,10 @@ export function TipNOCVDialog({ open, onOpenChange }: TipNOCVDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Lightbulb className="w-5 h-5 text-primary" />
-            Tipsa en vän om NOCV
+            Tipsa en vän om NoCV
           </DialogTitle>
           <DialogDescription>
-            Dela NOCV med någon som skulle ha nytta av vår tjänst
+            Dela NoCV med någon som skulle ha nytta av vår tjänst
           </DialogDescription>
         </DialogHeader>
 
@@ -121,7 +121,7 @@ export function TipNOCVDialog({ open, onOpenChange }: TipNOCVDialogProps) {
             <div className="mb-4 text-4xl">✅</div>
             <h3 className="text-lg font-semibold mb-2">Tips skickat!</h3>
             <p className="text-sm text-muted-foreground">
-              Din vän kommer snart få ett mail om NOCV.
+              Din vän kommer snart få ett mail om NoCV.
             </p>
           </div>
         ) : (
@@ -188,7 +188,7 @@ export function TipNOCVDialog({ open, onOpenChange }: TipNOCVDialogProps) {
                 <SelectContent>
                   <SelectItem value="jobseeker">Min vän söker jobb</SelectItem>
                   <SelectItem value="recruiter">Min vän rekryterar</SelectItem>
-                  <SelectItem value="general">Bara nyfiken på NOCV</SelectItem>
+                  <SelectItem value="general">Bara nyfiken på NoCV</SelectItem>
                 </SelectContent>
               </Select>
               {errors.category && (

@@ -1,6 +1,6 @@
 import { UserCheck, Zap, Brain } from "lucide-react";
 
-const WhyNOCV = () => {
+const WhyNoCV = () => {
   const features = [
     {
       icon: UserCheck,
@@ -27,7 +27,7 @@ const WhyNOCV = () => {
       <div className="container mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold font-heading text-foreground mb-6">
-            Varför NOCV?
+            Varför NoCV?
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             Vi rekryterar utan CV och fokuserar istället på kunskap och erfarenhet. 
@@ -73,4 +73,4 @@ const WhyNOCV = () => {
   );
 };
 
-export default WhyNOCV;
+export default WhyNoCV;

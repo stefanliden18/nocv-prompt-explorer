@@ -104,6 +104,7 @@ export type Database = {
           created_at: string
           cv_url: string | null
           email: string
+          email_sent: boolean
           gdpr_consent: boolean
           gdpr_consent_timestamp: string | null
           id: string
@@ -125,6 +126,7 @@ export type Database = {
           created_at?: string
           cv_url?: string | null
           email: string
+          email_sent?: boolean
           gdpr_consent?: boolean
           gdpr_consent_timestamp?: string | null
           id?: string
@@ -146,6 +148,7 @@ export type Database = {
           created_at?: string
           cv_url?: string | null
           email?: string
+          email_sent?: boolean
           gdpr_consent?: boolean
           gdpr_consent_timestamp?: string | null
           id?: string

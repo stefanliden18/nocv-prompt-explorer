@@ -123,6 +123,7 @@ const Jobs = () => {
           category,
           description_md,
           company_id,
+          hide_company_in_emails,
           companies (
             name,
             logo_url
@@ -373,7 +374,7 @@ const Jobs = () => {
                   >
                     <CardHeader className="pb-4">
                       {/* Company Logo */}
-                      {job.companies?.logo_url && (
+                      {!job.hide_company_in_emails && job.companies?.logo_url && (
                         <div className="mb-3 flex justify-center">
                           <img 
                             src={job.companies.logo_url} 
@@ -402,7 +403,7 @@ const Jobs = () => {
 
                     <CardContent className="pt-0 flex-grow">
                       <p className="text-muted-foreground text-sm mb-3 font-medium">
-                        {job.companies?.name || 'Okänt företag'}
+                        {job.hide_company_in_emails ? '' : (job.companies?.name || 'Okänt företag')}
                       </p>
                       <p className="text-foreground leading-relaxed line-clamp-3">
                         {getIntroText(job.description_md || '')}

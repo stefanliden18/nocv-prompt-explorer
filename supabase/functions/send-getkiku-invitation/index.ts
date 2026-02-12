@@ -48,6 +48,7 @@ const handler = async (req: Request): Promise<Response> => {
         id,
         title,
         kiku_interview_url,
+        hide_company_in_emails,
         companies (
           name
         )
@@ -71,13 +72,16 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const companyName = job.companies?.name || "företaget";
+    const hideCompany = job.hide_company_in_emails === true;
+    const companyName = hideCompany ? "arbetsgivaren" : (job.companies?.name || "företaget");
 
     // Send Getkiku invitation email
     const emailResponse = await resend.emails.send({
       from: "NOCV <noreply@nocv.se>",
       to: [email],
-      subject: `Din AI-intervju med Sara för ${job.title} hos ${companyName}`,
+      subject: hideCompany
+        ? `Din AI-intervju med Sara för ${job.title}`
+        : `Din AI-intervju med Sara för ${job.title} hos ${companyName}`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -92,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
               .content { padding: 40px 30px; }
               .content h2 { color: #1a1a1a; font-size: 22px; margin-top: 0; margin-bottom: 20px; }
               .content p { margin: 16px 0; color: #555; }
-              .cta-button { display: inline-block; background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+              .cta-button { display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
               .cta-button:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
               .tips-box { background-color: #f8f9fa; border-left: 4px solid #1a1a1a; padding: 20px; margin: 24px 0; border-radius: 4px; }
               .tips-box h3 { margin-top: 0; color: #1a1a1a; font-size: 18px; }
@@ -111,12 +115,12 @@ const handler = async (req: Request): Promise<Response> => {
               <div class="content">
                 <h2>Hej ${candidateName}!</h2>
                 
-                <p>Tack för ditt intresse för tjänsten som <strong>${job.title}</strong> hos <strong>${companyName}</strong>!</p>
+                <p>Tack för ditt intresse för tjänsten som <strong>${job.title}</strong>${hideCompany ? '' : ` hos <strong>${companyName}</strong>`}!</p>
                 
                 <p>För att slutföra din ansökan behöver du genomföra en kort AI-intervju med Sara via Getkiku. Intervjun tar cirka <strong>5-10 minuter</strong> och du kan göra den när det passar dig bäst.</p>
                 
                 <div style="text-align: center; margin: 32px 0;">
-                  <a href="${job.kiku_interview_url}" style="display: inline-block; background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                  <a href="${job.kiku_interview_url}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
                     🤖 Starta min AI-intervju
                   </a>
                 </div>

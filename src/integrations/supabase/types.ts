@@ -453,6 +453,7 @@ export type Database = {
           description_md: string | null
           driver_license: boolean | null
           employment_type: string | null
+          hide_company_in_emails: boolean
           id: string
           kiku_interview_url: string | null
           language: string | null
@@ -479,6 +480,7 @@ export type Database = {
           description_md?: string | null
           driver_license?: boolean | null
           employment_type?: string | null
+          hide_company_in_emails?: boolean
           id?: string
           kiku_interview_url?: string | null
           language?: string | null
@@ -505,6 +507,7 @@ export type Database = {
           description_md?: string | null
           driver_license?: boolean | null
           employment_type?: string | null
+          hide_company_in_emails?: boolean
           id?: string
           kiku_interview_url?: string | null
           language?: string | null

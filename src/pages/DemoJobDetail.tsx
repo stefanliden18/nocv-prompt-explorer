@@ -382,7 +382,11 @@ const DemoJobDetail = () => {
     temporary: 'Vikariat'
   };
 
-  const pageTitle = `[DEMO] ${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
+  const hideCompany = (job as any).hide_company_in_emails === true;
+
+  const pageTitle = hideCompany
+    ? `[DEMO] ${job.title} | NOCV`
+    : `[DEMO] ${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
   const pageDescription = `Detta är ett demojobb för säljpresentationer.`;
 
   return (
@@ -406,7 +410,7 @@ const DemoJobDetail = () => {
             Tillbaka
           </Button>
           
-          {job.companies?.logo_url && (
+          {!hideCompany && job.companies?.logo_url && (
             <div className="mb-6">
               <img 
                 src={job.companies.logo_url} 
@@ -438,7 +442,7 @@ const DemoJobDetail = () => {
             </h1>
             
             <div className="flex flex-wrap items-center gap-6 text-lg opacity-90">
-              {job.companies?.name && (
+              {!hideCompany && job.companies?.name && (
                 <div className="flex items-center">
                   <Building2 className="w-5 h-5 mr-2" />
                   {job.companies.name}

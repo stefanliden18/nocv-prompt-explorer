@@ -60,6 +60,7 @@ export default function JobEdit() {
   const [language, setLanguage] = useState('');
   const [slug, setSlug] = useState('');
   const [kikuInterviewUrl, setKikuInterviewUrl] = useState('');
+  const [hideCompanyInEmails, setHideCompanyInEmails] = useState(false);
   const [status, setStatus] = useState<'draft' | 'published' | 'archived' | 'demo' | 'inactive'>('draft');
   const [publishAt, setPublishAt] = useState<Date | undefined>(undefined);
   const [publishHour, setPublishHour] = useState<string>('09');
@@ -132,6 +133,7 @@ export default function JobEdit() {
         setLanguage(job.language || '');
         setSlug(job.slug);
         setKikuInterviewUrl(job.kiku_interview_url || '');
+        setHideCompanyInEmails((job as any).hide_company_in_emails || false);
         setStatus(job.status);
         
         // Handle requirement_profile
@@ -220,6 +222,7 @@ export default function JobEdit() {
         language: language.trim() || null,
         slug: slug,
         kiku_interview_url: kikuInterviewUrl.trim() || null,
+        hide_company_in_emails: hideCompanyInEmails,
         publish_at: (() => {
           if (!publishAt) return null;
           const publishAtUTC = stockholmToUTC(publishAt);
@@ -548,6 +551,20 @@ export default function JobEdit() {
                 <p className="text-xs text-muted-foreground">
                   Kandidater vidarebefordras automatiskt till denna länk efter att de bokat intervju.
                 </p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="hideCompanyInEmails"
+                  checked={hideCompanyInEmails}
+                  onCheckedChange={setHideCompanyInEmails}
+                />
+                <div>
+                  <Label htmlFor="hideCompanyInEmails">Dölj företagsnamn för kandidater</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Företaget visas inte i annonsen eller i mejl till kandidater
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">

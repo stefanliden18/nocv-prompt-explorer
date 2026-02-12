@@ -368,11 +368,17 @@ const JobDetail = () => {
     temporary: 'Vikariat'
   };
 
+  const hideCompany = (job as any).hide_company_in_emails === true;
+
   // Generate SEO metadata
-  const pageTitle = `${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
+  const pageTitle = hideCompany
+    ? `${job.title} | NOCV`
+    : `${job.title} - ${job.companies?.name || 'Okänt företag'} | NOCV`;
   const pageDescription = job.description_md 
     ? job.description_md.replace(/[#*_\[\]]/g, '').trim().substring(0, 155) + '...'
-    : `Ansök till ${job.title} hos ${job.companies?.name || 'företaget'} i ${job.city || 'Sverige'}. Sök jobb utan CV på NOCV.`;
+    : hideCompany
+      ? `Ansök till ${job.title} i ${job.city || 'Sverige'}. Sök jobb utan CV på NOCV.`
+      : `Ansök till ${job.title} hos ${job.companies?.name || 'företaget'} i ${job.city || 'Sverige'}. Sök jobb utan CV på NOCV.`;
 
   // Generate structured data for JobPosting
   const jobPostingSchema = {
@@ -383,7 +389,10 @@ const JobDetail = () => {
     "datePosted": job.publish_at || job.created_at,
     "validThrough": job.publish_at ? new Date(new Date(job.publish_at).getTime() + 90 * 24 * 60 * 60 * 1000).toISOString() : undefined, // 90 days from publish
     "employmentType": job.employment_type?.toUpperCase() || "FULL_TIME",
-    "hiringOrganization": {
+    "hiringOrganization": hideCompany ? {
+      "@type": "Organization",
+      "name": "NOCV"
+    } : {
       "@type": "Organization",
       "name": job.companies?.name || "Okänt företag",
       "sameAs": job.companies?.website || undefined,
@@ -452,7 +461,7 @@ const JobDetail = () => {
           </Button>
           
           {/* Company Logo */}
-          {job.companies?.logo_url && (
+          {!hideCompany && job.companies?.logo_url && (
             <div className="mb-6">
               <img 
                 src={job.companies.logo_url} 
@@ -481,7 +490,7 @@ const JobDetail = () => {
             </h1>
             
             <div className="flex flex-wrap items-center gap-6 text-lg opacity-90">
-              {job.companies?.name && (
+              {!hideCompany && job.companies?.name && (
                 <div className="flex items-center">
                   <Building2 className="w-5 h-5 mr-2" />
                   {job.companies.name}

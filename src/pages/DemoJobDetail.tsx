@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Helmet } from 'react-helmet-async';
 import { Button } from "@/components/ui/button";
@@ -478,11 +478,11 @@ const DemoJobDetail = () => {
                       await navigator.clipboard.writeText(jobUrl);
                       setLinkCopied(true);
                       setTimeout(() => setLinkCopied(false), 2000);
-                      toast({ title: "Länk kopierad!", description: jobUrl });
+                      toast({ title: "Länk kopierad!", description: React.createElement('a', { href: jobUrl, target: '_blank', rel: 'noopener noreferrer', className: 'underline break-all text-primary hover:text-primary/80 select-all cursor-pointer' }, jobUrl) });
                     } catch {
                       setLinkCopied(true);
                       setTimeout(() => setLinkCopied(false), 2000);
-                      toast({ title: "Kopiera länken nedan:", description: jobUrl });
+                      toast({ title: "Kopiera länken nedan:", description: React.createElement('a', { href: jobUrl, target: '_blank', rel: 'noopener noreferrer', className: 'underline break-all text-primary hover:text-primary/80 select-all cursor-pointer' }, jobUrl) });
                     }
                   }}
                 >

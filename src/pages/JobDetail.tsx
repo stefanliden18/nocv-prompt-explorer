@@ -669,7 +669,7 @@ const JobDetail = () => {
                   {!showApplication ? (
                     <div className="space-y-4">
                       <p className="text-muted-foreground">
-                        Boka en AI-intervju med {job.companies?.name || 'företaget'} genom att fylla i dina uppgifter nedan.
+                        Boka en AI-intervju med {hideCompany ? 'oss' : (job.companies?.name || 'företaget')} genom att fylla i dina uppgifter nedan.
                       </p>
                       <Button 
                         className="w-full"

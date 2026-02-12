@@ -13,14 +13,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ArrowLeft, Eye, Sparkles } from 'lucide-react';
+import { ArrowLeft, Eye, Sparkles, Copy, Info } from 'lucide-react';
 import { RequirementProfileForm } from '@/components/RequirementProfileForm';
 import type { RequirementProfile } from '@/types/requirementTemplate';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { SearchableSelect } from '@/components/ui/searchable-select';
 
 interface Company {
   id: string;
   name: string;
+}
+
+interface DuplicateJob {
+  id: string;
+  title: string;
+  city: string | null;
+  company_name: string;
 }
 
 // Helper function to generate unique slug for demo jobs
@@ -50,6 +58,70 @@ export default function JobForm() {
   const [slug, setSlug] = useState('');
   const [requirementProfile, setRequirementProfile] = useState<RequirementProfile | null>(null);
   const [isAIGenerated, setIsAIGenerated] = useState(false);
+
+  // Duplicate job state
+  const [duplicateFilter, setDuplicateFilter] = useState<'published' | 'inactive'>('published');
+  const [availableJobs, setAvailableJobs] = useState<DuplicateJob[]>([]);
+  const [isDuplicated, setIsDuplicated] = useState(false);
+  const [duplicatedFromTitle, setDuplicatedFromTitle] = useState('');
+
+  // Fetch available jobs for duplicate dropdown
+  useEffect(() => {
+    const fetchDuplicateJobs = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('jobs')
+          .select('id, title, city, company_id, companies(name)')
+          .eq('status', duplicateFilter)
+          .order('title');
+        
+        if (error) throw error;
+        setAvailableJobs(
+          (data || []).map((job: any) => ({
+            id: job.id,
+            title: job.title,
+            city: job.city,
+            company_name: job.companies?.name || '',
+          }))
+        );
+      } catch (error) {
+        console.error('Error fetching jobs for duplicate:', error);
+      }
+    };
+    fetchDuplicateJobs();
+  }, [duplicateFilter]);
+
+  const handleDuplicateSelect = async (jobId: string) => {
+    if (!jobId) return;
+    try {
+      const { data: job, error } = await supabase
+        .from('jobs')
+        .select('*')
+        .eq('id', jobId)
+        .single();
+      
+      if (error) throw error;
+      if (!job) return;
+
+      setTitle(job.title || '');
+      setCompanyId(job.company_id || '');
+      setCity(job.city || '');
+      setRegion(job.region || '');
+      setCategory(job.category || '');
+      setEmploymentType(job.employment_type || '');
+      setDescriptionHtml(job.description_md || '');
+      setDriverLicense(job.driver_license || false);
+      setHideCompanyInEmails(job.hide_company_in_emails || false);
+      setLanguage(job.language || '');
+      setRequirementProfile(job.requirement_profile as unknown as RequirementProfile | null);
+      setDuplicatedFromTitle(job.title || '');
+      setIsDuplicated(true);
+      toast.success(`Jobbdata laddad från "${job.title}"`);
+    } catch (error: any) {
+      console.error('Error duplicating job:', error);
+      toast.error('Kunde inte ladda jobbdata');
+    }
+  };
 
   // Check for prefilled data from customer interview form
   useEffect(() => {
@@ -251,6 +323,15 @@ export default function JobForm() {
           </div>
         </div>
 
+        {isDuplicated && (
+          <Alert className="border-blue-300 bg-blue-50 col-span-full">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-sm">
+              <strong>Duplicerat från "{duplicatedFromTitle}"</strong> — granska och ändra det som behövs innan du sparar.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {isAIGenerated && (
           <Alert className="border-primary/50 bg-primary/10 col-span-full">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -260,6 +341,47 @@ export default function JobForm() {
             </AlertDescription>
           </Alert>
         )}
+
+        {/* Duplicate from existing job */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <Copy className="h-4 w-4" />
+              <CardTitle className="text-lg">Duplicera från befintligt jobb</CardTitle>
+            </div>
+            <CardDescription>Välj ett befintligt jobb att utgå ifrån</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                size="sm"
+                variant={duplicateFilter === 'published' ? 'default' : 'outline'}
+                onClick={() => setDuplicateFilter('published')}
+              >
+                Aktiva jobb
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={duplicateFilter === 'inactive' ? 'default' : 'outline'}
+                onClick={() => setDuplicateFilter('inactive')}
+              >
+                Vilande jobb
+              </Button>
+            </div>
+            <SearchableSelect
+              options={availableJobs.map(job => ({
+                value: job.id,
+                label: `${job.title}${job.city ? ` — ${job.city}` : ''}${job.company_name ? ` (${job.company_name})` : ''}`,
+              }))}
+              onValueChange={handleDuplicateSelect}
+              placeholder="Sök och välj ett jobb..."
+              searchPlaceholder="Sök på jobbtitel, stad eller företag..."
+              emptyText="Inga jobb hittades."
+            />
+          </CardContent>
+        </Card>
 
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Form */}

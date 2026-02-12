@@ -1,40 +1,29 @@
 
 
-# Flytta "Dölj företagsnamn" direkt under Företag-fältet
+# Fix: Ansökningar blockeras av säkerhetspolicy
 
-## Vad som ändras
-Switchen "Dölj företagsnamn för kandidater" flyttas till en mer logisk position: **direkt under dropdownen där du väljer företag**. Så behöver du inte scrolla ner för att hitta den.
+## Orsak
+Den senaste säkerhetsmigreringen (för att åtgärda skanningsvarningar) tog bort policyn "Anyone can insert applications" från tabellen `applications`. Det var dock den enda PERMISSIVE INSERT-policyn. Kvar finns bara "Anonymous can insert applications" som är RESTRICTIVE -- och utan minst en permissive policy nekas alla insättningar.
 
-## Visuellt resultat
+Resultatet: **ingen kan skicka en ansökan**, varken anonyma eller inloggade användare.
 
-Formuläret kommer se ut så här i toppen:
+## Lösning
+Skapa en ny PERMISSIVE INSERT-policy på `applications`-tabellen som tillåter alla (anonyma och inloggade) att skicka ansökningar. Detta är korrekt beteende -- vem som helst ska kunna söka jobb.
 
-```text
-Titel *
-[ Servicetekniker till stort bilföretag i Norrort ]
+## Teknisk ändring
 
-Företag *
-[ Europeiska Motor                              v ]
-
-+--------------------------------------------------+
-| [toggle] Dölj företagsnamn för kandidater        |
-|          Företaget visas inte i annonsen eller    |
-|          i mejl till kandidater                   |
-+--------------------------------------------------+
-
-Stad *                    Region
-[ Stockholm ]             [ Stockholms län ]
+### Databasmigration (SQL)
+```sql
+-- Restore permissive INSERT policy for applications
+-- Anyone (anonymous or authenticated) should be able to apply for jobs
+CREATE POLICY "Anyone can insert applications"
+  ON public.applications
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
 ```
 
-Den amber-färgade ramen behålls så att switchen är tydlig och lätt att hitta.
+Denna policy ersätter den som togs bort av misstag i föregående migration. Ingen kodändring behövs -- felet ligger enbart i databasens säkerhetsinställningar.
 
-## Tekniska ändringar
-
-### src/pages/admin/JobEdit.tsx
-- **Ta bort** switchen från rad 531-543 (nuvarande position efter "Kräver körkort")
-- **Lägg till** samma switch-block direkt efter Företag-selecten (efter rad 454)
-
-### src/pages/admin/JobForm.tsx
-- Samma ändring: flytta switchen från nuvarande position till direkt efter Företag-fältet för konsistens
-
-Ingen funktionell ändring -- bara position i formuläret.
+## Verifiering
+Efter migreringen: gå till jobbannonsen "Skadetekniker i Norrort" och testa att skicka en ansökan igen.

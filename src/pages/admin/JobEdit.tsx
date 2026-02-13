@@ -279,7 +279,7 @@ export default function JobEdit() {
 
   const handlePreview = () => {
     if (id) {
-      window.open(`/jobs/${slug}`, '_blank');
+      window.open(`/admin/jobs/${id}/preview`, '_blank');
     }
   };
 

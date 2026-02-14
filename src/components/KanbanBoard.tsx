@@ -35,6 +35,8 @@ interface KanbanBoardProps {
   onEditStage: (stage: Stage) => void;
   onDeleteStage: (stageId: string) => void;
   onAddStage: () => void;
+  onArchiveApplication?: (id: string) => void;
+  onDeleteApplication?: (id: string) => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
@@ -48,6 +50,8 @@ export function KanbanBoard({
   onEditStage, 
   onDeleteStage,
   onAddStage,
+  onArchiveApplication,
+  onDeleteApplication,
   selectionMode,
   selectedIds,
   onToggleSelect,
@@ -118,6 +122,8 @@ export function KanbanBoard({
               onEditStage={onEditStage}
               onDeleteStage={onDeleteStage}
               onMoveApplication={handleMoveApplication}
+              onArchive={onArchiveApplication}
+              onDelete={onDeleteApplication}
               selectionMode={selectionMode}
               selectedIds={selectedIds}
               onToggleSelect={onToggleSelect}

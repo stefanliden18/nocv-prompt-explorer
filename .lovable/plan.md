@@ -1,66 +1,92 @@
 
 
-# Fix: Arkivera/Radera-menyn pa kandidatkort gar inte att klicka
+# Fix: Synliggör åtgärdsknappar och fixa kortets dropdown-meny
 
-## Identifierade fel
+## Problem 1: Knapparna syns inte
 
-### Fel 1 -- Drag-listeners blockerar klick (HUVUDPROBLEMET)
-I `KanbanCard.tsx` rad 83-84 sprids dnd-kit:s `{...attributes}` och `{...listeners}` pa hela `<Card>`-elementet. Nar dnd-kit fangar `onPointerDown` pa hela kortet sa "ater" det alla klick-event innan de nar DropdownMenu-triggern (tre-punkt-ikonen). Menyn renderas korrekt och syns vid hover -- men gar inte att klicka pa.
+Knapparna "Markera", "Arkiv" och "Hantera stadier" finns i koden men hamnar utanför synligt område. De placeras med `justify-between` i samma rad som titeln, men trycks bort till höger och döljs.
 
-### Fel 2 -- Overlappande knappar pa mobil
-Bade atgardsmenyn (rad 88: `absolute top-1 right-1`) och mobil-flytta-knappen (rad 138: `absolute top-1 right-1`) har exakt samma position, sa de overlappar varandra pa mobil.
+### Lösning
 
-## Atgard
+Flytta knapparna till en **egen rad under titeln** istället för att ha dem bredvid. Detta garanterar att de alltid syns oavsett skärmbredd.
 
-### src/components/KanbanCard.tsx
-
-**En enda andring:**
-
-1. **Ta bort** `{...attributes}` och `{...listeners}` fran `<Card>` (rad 83-84)
-2. **Flytta** dem till `<div>` som omsluter GripVertical-ikonen (rad 188)
-
-Fore (rad 75-84):
-```
-<Card
-  ref={setNodeRef}
-  style={style}
-  className={...}
-  onClick={handleClick}
-  {...attributes}    <-- PROBLEMET
-  {...listeners}     <-- PROBLEMET
->
+Före:
+```text
++------------------------------------------------------+
+| Rekryteringstavla          [Markera] [Arkiv] [Stadier]| <-- knappar osynliga
+| Visar 7 kandidater                                    |
++------------------------------------------------------+
 ```
 
 Efter:
-```
-<Card
-  ref={setNodeRef}
-  style={style}
-  className={...}
-  onClick={handleClick}
->
+```text
++------------------------------------------------------+
+| Rekryteringstavla                                     |
+| Visar 7 kandidater                                    |
+|                                                       |
+| [Markera]  [Arkiv (0)]  [Hantera stadier]             | <-- alltid synliga
++------------------------------------------------------+
 ```
 
-Och pa rad 188, lagg till listeners pa drag-handtaget:
-```
-<div
-  className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block"
-  {...attributes}
-  {...listeners}
->
-  <GripVertical ... />
+### Teknisk ändring i RecruitmentBoard.tsx (rad 459)
+
+Ändra layouten från en `sm:flex-row justify-between` till en vertikal layout med knapparna på egen rad:
+
+```tsx
+// Före:
+<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+  <div>...</div>
+  <div className="flex flex-wrap gap-2 w-full sm:w-auto">...</div>
+</div>
+
+// Efter:
+<div className="space-y-4">
+  <div>
+    <h1>Rekryteringstavla</h1>
+    <p>Visar X kandidater</p>
+  </div>
+  <div className="flex flex-wrap gap-2">
+    <Button>Markera</Button>
+    <Button>Arkiv</Button>
+    <Button>Hantera stadier</Button>
+  </div>
 </div>
 ```
 
-### Resultat
-- Drag kan bara initieras fran GripVertical-handtaget
-- DropdownMenu (Arkivera / Radera permanent) gar att klicka pa
-- Checkbox i markeringslage fungerar utan att trigga drag
-- Inga andra filer behover andras -- alla props och handlers ar redan korrekt kopplade
+---
 
-### Sammanfattning
+## Problem 2: Kortets dropdown-meny fungerar inte
 
-| Fil | Andring |
-|-----|---------|
-| `KanbanCard.tsx` | Flytta `{...attributes} {...listeners}` fran Card till GripVertical-wrappern (2 rader) |
+Hela kortet har `onClick={handleClick}` som navigerar till detaljsidan. Nar man klickar pa tre-punkt-menyn (MoreVertical) fangas klicket av Card-elementet och man navigeras bort istallet for att menyn oppnas.
+
+### Lösning
+
+Flytta `onClick={handleClick}` fran `<Card>` till den inre content-diven (som visar namn, rating, taggar). Da lever dropdown-menyn, checkboxen och drag-handtaget utanfor klickzonen.
+
+### Teknisk ändring i KanbanCard.tsx
+
+```tsx
+// Före:
+<Card ref={setNodeRef} style={style} className="..." onClick={handleClick}>
+  <div className="absolute ..."> {/* dropdown meny */} </div>
+  <div className="flex ..."> {/* content */} </div>
+</Card>
+
+// Efter:
+<Card ref={setNodeRef} style={style} className="...">
+  <div className="absolute ..."> {/* dropdown meny -- klickbar nu */} </div>
+  <div className="flex ..." onClick={handleClick}> {/* bara content navigerar */} </div>
+</Card>
+```
+
+---
+
+## Sammanfattning
+
+| Fil | Ändring | Löser |
+|-----|---------|-------|
+| `RecruitmentBoard.tsx` | Flytta knappar till egen rad under titeln | Knappar alltid synliga |
+| `KanbanCard.tsx` | Flytta onClick fran Card till content-div | Dropdown-meny fungerar |
+
+Inga andra filer eller databasändringar behövs.
 

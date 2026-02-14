@@ -80,8 +80,6 @@ export function KanbanCard({ application, tags, stages, onMoveToStage, onArchive
         application.interview_scheduled_at && "border-l-4 border-l-blue-500"
       )}
       onClick={handleClick}
-      {...attributes}
-      {...listeners}
     >
       {/* Action menu - visible on hover (desktop) or always on mobile */}
       {onArchive && onDelete && !selectionMode && (
@@ -185,7 +183,11 @@ export function KanbanCard({ application, tags, stages, onMoveToStage, onArchive
           </div>
         )}
         {!selectionMode && (
-          <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block">
+          <div
+            className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block"
+            {...attributes}
+            {...listeners}
+          >
             <GripVertical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
           </div>
         )}

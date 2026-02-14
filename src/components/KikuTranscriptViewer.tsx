@@ -46,6 +46,34 @@ function parseTranscript(text: string): QAPair[] | null {
     }));
   }
 
+  // Try question-mark based parsing: lines ending with ? are questions
+  const lines = text.split("\n");
+  const pairs: QAPair[] = [];
+  let currentQuestion: string | null = null;
+  let answerLines: string[] = [];
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) {
+      if (currentQuestion) answerLines.push("");
+      continue;
+    }
+    // Detect question: ends with ? optionally followed by (required) or similar
+    if (/\?\s*(\(.*?\))?\s*$/.test(trimmed)) {
+      if (currentQuestion) {
+        pairs.push({ question: currentQuestion, answer: answerLines.join("\n").trim() });
+      }
+      currentQuestion = trimmed;
+      answerLines = [];
+    } else if (currentQuestion) {
+      answerLines.push(trimmed);
+    }
+  }
+  if (currentQuestion) {
+    pairs.push({ question: currentQuestion, answer: answerLines.join("\n").trim() });
+  }
+  if (pairs.length > 0) return pairs;
+
   return null;
 }
 
@@ -113,11 +141,11 @@ export function KikuTranscriptViewer({ applicationId }: { applicationId: string 
                       {pairs.map((pair, i) => (
                         <div key={i} className="rounded-lg overflow-hidden border">
                           <div className="bg-muted/60 px-4 py-3 flex items-start gap-2">
-                            <HelpCircle className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                            <p className="text-sm font-medium leading-relaxed">{pair.question}</p>
+                            <span className="text-sm font-bold text-primary shrink-0">{i + 1}.</span>
+                            <p className="text-sm font-bold leading-relaxed">{pair.question}</p>
                           </div>
                           <div className="px-4 py-3 bg-background">
-                            <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap pl-6">
+                            <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap pl-7">
                               {pair.answer}
                             </p>
                           </div>

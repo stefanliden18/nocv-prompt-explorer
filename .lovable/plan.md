@@ -1,34 +1,77 @@
 
 
-# Fix: Förhandsgranska-knappen pekar fel
+# Visa Kiku-intervjusvar + ta bort "Importera jobb"
 
-## Problem
-Knappen "Förhandsgranska" i jobbredigeraren navigerar till `/jobs/${slug}` -- den publika jobbsidan. Den sidan visar bara publicerade jobb, sa utkast och vilande jobb hittas inte och man hamnar pa "Lediga jobb"-sidan istallet.
+## Vad som gors
 
-Det finns redan en dedikerad forhandsgranskningssida pa `/admin/jobs/:id/preview` (med `PreviewHeader`, gul banner, etc.) som kan visa jobb oavsett status. Men den anvands inte.
+### 1. Ta bort "Importera jobb"
+Funktionen tas bort fran sidomenyn, routern och filen raderas.
 
-## Losning
-Andra `handlePreview` i `JobEdit.tsx` sa den navigerar till den befintliga preview-sidan istallet.
+### 2. Ny komponent: KikuTranscriptViewer
+En snygg, strukturerad visning av kandidatens intervjusvar placeras pa ansokningssidan (ApplicationDetail), mellan kontaktinformation och AI-bedomning.
 
-## Teknisk andring
+Komponenten:
+- Hamtar alla transkiberingar fran `candidate_transcripts` for aktuell ansokan
+- Parsar texten till fragor och svar (stodjer bade "Fraga:/Svar:"-format och "Kiku:/Namn:"-dialogformat)
+- Visar varje transkribering i ett Accordion-kort med intervjutyp och datum
+- Varje fraga/svar-par visas strukturerat med tydlig visuell separation:
+  - Fragan i en markerad ruta med frageikon
+  - Svaret under med indrag och annan bakgrund
+- Om parsning inte lyckas (fritext utan tydligt format) visas texten som den ar med radbrytningar
 
-### src/pages/admin/JobEdit.tsx (rad 280-284)
-Fran:
-```js
-const handlePreview = () => {
-  if (id) {
-    window.open(`/jobs/${slug}`, '_blank');
-  }
-};
+### Visuellt resultat
+```text
++------------------------------------------+
+| Intervjusvar fran Kiku                   |
+| 2 intervjuer importerade                 |
++------------------------------------------+
+| v Screening - 14 feb 2026               |
+|   +--------------------------------------+
+|   | ? Berätta om din erfarenhet inom...  |
+|   +--------------------------------------+
+|   | Jag har arbetat som bilmekaniker i   |
+|   | 7 år. Jag är väl bekant med...       |
+|   +--------------------------------------+
+|                                          |
+|   +--------------------------------------+
+|   | ? Kan du grunda, lacka och polera?   |
+|   +--------------------------------------+
+|   | Ja, jag har god erfarenhet av...     |
+|   +--------------------------------------+
+|                                          |
+| > Djupintervju - 15 feb 2026            |
++------------------------------------------+
 ```
 
-Till:
-```js
-const handlePreview = () => {
-  if (id) {
-    window.open(`/admin/jobs/${id}/preview`, '_blank');
-  }
-};
-```
+## Tekniska andringar
 
-Det ar en enradsandring. Preview-sidan (`JobPreview.tsx`) hamtar jobbet direkt via ID utan statusfilter, sa den fungerar for utkast, vilande och publicerade jobb.
+### Filer som tas bort
+- `src/pages/admin/JobImport.tsx`
+
+### Filer som andras
+
+**src/App.tsx**
+- Ta bort import av `JobImport` och routen `/admin/jobs/import`
+
+**src/components/AdminSidebar.tsx**
+- Ta bort menyvalet "Importera jobb" fran `menuItems`
+
+**Ny fil: src/components/KikuTranscriptViewer.tsx**
+- Props: `applicationId: string`
+- Hamtar `candidate_transcripts` fran databasen
+- Parsningslogik som hanterar flera format:
+  - "Fraga: ... Svar: ..." (prefix-format)
+  - "Kiku: ... Namn: ..." (dialogformat med kanda namn)
+  - Fallback: visa ratan som whitespace-preserverad text
+- Anvander Accordion fran Radix for kollapsbar vy
+- Varje Q&A-par far en latt bakgrund for fragan och vit/transparent for svaret
+- Visar intervjutyp som Badge (Screening = bla, Djupintervju = lila)
+- Visar importdatum
+
+**src/pages/admin/ApplicationDetail.tsx**
+- Importera och placera `KikuTranscriptViewer` mellan kontaktkortet och `CandidateAssessment`
+- Komponenten renderas bara om det finns transkiberingar (den hanterar tomanvisning internt)
+
+### Inga databasandringar behovs
+All data finns redan i `candidate_transcripts` med ratt RLS-policies.
+

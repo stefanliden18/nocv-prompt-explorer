@@ -17,7 +17,7 @@ import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminJobs from "./pages/admin/Jobs";
 import AdminDemoJobs from "./pages/admin/DemoJobs";
-import JobImport from "./pages/admin/JobImport";
+
 import AdminApplications from "./pages/admin/Applications";
 import ApplicationDetail from "./pages/admin/ApplicationDetail";
 import CompareApplications from "./pages/admin/CompareApplications";
@@ -87,14 +87,6 @@ const App = () => (
               element={
                 <ProtectedRoute requireAdmin>
                   <JobForm />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin/jobs/import" 
-              element={
-                <ProtectedRoute requireAdmin>
-                  <JobImport />
                 </ProtectedRoute>
               } 
             />

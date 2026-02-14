@@ -16,6 +16,7 @@ import { StarRating } from '@/components/StarRating';
 import { TagManager } from '@/components/TagManager';
 import { InterviewBookingDialog } from '@/components/InterviewBookingDialog';
 import { CandidateAssessment } from '@/components/CandidateAssessment';
+import { KikuTranscriptViewer } from '@/components/KikuTranscriptViewer';
 import { utcToStockholm } from '@/lib/timezone';
 
 const statusMap = {
@@ -354,6 +355,9 @@ export default function ApplicationDetail() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Kiku Interview Answers */}
+            <KikuTranscriptViewer applicationId={application.id} />
 
             {/* AI Assessment Section */}
             <CandidateAssessment

@@ -1,45 +1,65 @@
 
 
-# Bulk-atgarder for markerade kandidater pa rekryteringstavlan
+# Lagg till radera-knapp pa kandidatkort
 
-## Oversikt
+## Problem
+Det finns ingen mojlighet att ta bort enskilda kandidater direkt fran rekryteringstavlan. Bulk-atgarderna (flytta, arkivera, radera) ar dolda bakom "Markera"-knappen och kraver flera steg.
 
-Utoka det befintliga markeringslaget sa att nar kandidater ar markerade visas en atgardsfalt med tre alternativ:
-1. **Arkivera** -- flytta till arkivet (redan implementerat)
-2. **Radera permanent** -- ta bort fran databasen med bekraftelsedialog
-3. **Flytta till stadie** -- valj ett stadie fran en dropdown och flytta alla markerade dit
+## Losning
 
-## Andringar
+### 1. Soptunne-ikon pa varje KanbanCard (synlig vid hover)
 
-### src/pages/admin/RecruitmentBoard.tsx
+Lagg till en liten soptunne-ikon i ovre hogra hornet pa varje kandidatkort. Ikonen visas bara nar man hovrar over kortet (desktopvy) eller alltid pa mobil.
 
-Uppdatera atgardsfalet som visas nar kandidater ar markerade (runt rad 280-295). Lagg till:
+Vid klick visas en liten popover/meny med tva val:
+- **Arkivera** -- flyttar kandidaten till arkivet (satter `archived_at`)
+- **Radera permanent** -- tar bort kandidaten fran databasen (med bekraftelse)
 
-- **Radera-knapp** med bekraftelsedialog (AlertDialog) som permanent raderar markerade kandidater
-- **Flytta till stadie-dropdown** (Select-komponent) som listar alla tillgangliga stadier och bulk-flyttar markerade kandidater till valt stadie
-- Ny funktion `handleBulkMoveToStage(stageId)` som uppdaterar `pipeline_stage_id` for alla markerade kandidater
+### 2. Andringar per fil
 
-Det befintliga atgardsfalet (Card med "X markerade" + Arkivera-knapp) byggs ut till:
+**`src/components/KanbanCard.tsx`**
+- Ny prop: `onArchive?: (id: string) => void`
+- Ny prop: `onDelete?: (id: string) => void`
+- Lagg till en `DropdownMenu` med Trash2-ikon i ovre hogra hornet
+- Menyn innehaller "Arkivera" och "Radera permanent"
+- "Radera permanent" anvander en `AlertDialog` for bekraftelse
+- Ikonen visas via CSS `group-hover` (dolj normalt, visa vid hover)
+
+**`src/components/KanbanColumn.tsx`**
+- Propaga `onArchive` och `onDelete` till varje KanbanCard
+
+**`src/components/KanbanBoard.tsx`**
+- Propaga `onArchiveApplication` och `onDeleteApplication` fran RecruitmentBoard till KanbanColumn
+
+**`src/pages/admin/RecruitmentBoard.tsx`**
+- Skapa `handleArchiveApplication(id: string)` -- arkiverar en enskild kandidat
+- Skapa `handleDeleteApplication(id: string)` -- raderar en enskild kandidat permanent
+- Skicka dessa som props till KanbanBoard
+
+### 3. Visuellt resultat
 
 ```text
-+----------------------------------------------------------------------+
-| 3 markerade  [Flytta till... v]  [Arkivera]  [Radera]  [Avmarkera]  |
-+----------------------------------------------------------------------+
++-----------------------------------+
+| Stefan Liden              [bin]   |  <-- bin syns vid hover
+| *****  (5/5)                      |
+| 15 okt, 09:00                     |
+| Saljare - Growio                  |
++-----------------------------------+
+
+Klick pa [bin] oppnar:
++-------------------+
+| Arkivera          |
+| Radera permanent  |
++-------------------+
 ```
-
-**Flytta till...** ar en Select-dropdown med alla stadier (med fargprickar).
-**Radera** oppnar en bekraftelsedialog innan permanent radering sker.
-
-### Tekniska detaljer
-
-- `handleBulkMoveToStage(stageId: string)`: Gor en `supabase.from('applications').update({ pipeline_stage_id: stageId }).in('id', ids)` och uppdaterar state optimistiskt
-- `handleDeleteSelected()`: Finns redan men laggs nu till i atgardsfalet med en AlertDialog-wrapper
-- Inga databasandringar behovs -- `archived_at` och `pipeline_stage_id` finns redan
-- Importera `Select, SelectContent, SelectItem, SelectTrigger, SelectValue` fran `@/components/ui/select`
 
 ### Sammanfattning
 
 | Fil | Andring |
 |-----|---------|
-| `RecruitmentBoard.tsx` | Utoka atgardsfalt med Flytta-dropdown, Radera-knapp med bekraftelse, och ny `handleBulkMoveToStage`-funktion |
+| `KanbanCard.tsx` | DropdownMenu med arkivera/radera-alternativ, synlig vid hover |
+| `KanbanColumn.tsx` | Propaga `onArchive` och `onDelete` |
+| `KanbanBoard.tsx` | Propaga `onArchiveApplication` och `onDeleteApplication` |
+| `RecruitmentBoard.tsx` | Nya handlers for enskild arkivering och radering |
 
+Inga databasandringar behovs -- `archived_at`-kolumnen finns redan och permanent radering anvander `.delete()`.

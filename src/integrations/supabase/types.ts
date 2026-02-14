@@ -100,6 +100,7 @@ export type Database = {
       }
       applications: {
         Row: {
+          archived_at: string | null
           candidate_name: string
           created_at: string
           cv_url: string | null
@@ -122,6 +123,7 @@ export type Database = {
           status: Database["public"]["Enums"]["application_status"]
         }
         Insert: {
+          archived_at?: string | null
           candidate_name: string
           created_at?: string
           cv_url?: string | null
@@ -144,6 +146,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["application_status"]
         }
         Update: {
+          archived_at?: string | null
           candidate_name?: string
           created_at?: string
           cv_url?: string | null

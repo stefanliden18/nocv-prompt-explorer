@@ -35,6 +35,9 @@ interface KanbanBoardProps {
   onEditStage: (stage: Stage) => void;
   onDeleteStage: (stageId: string) => void;
   onAddStage: () => void;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function KanbanBoard({ 
@@ -44,7 +47,10 @@ export function KanbanBoard({
   onDragEnd, 
   onEditStage, 
   onDeleteStage,
-  onAddStage 
+  onAddStage,
+  selectionMode,
+  selectedIds,
+  onToggleSelect,
 }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
   
@@ -112,6 +118,9 @@ export function KanbanBoard({
               onEditStage={onEditStage}
               onDeleteStage={onDeleteStage}
               onMoveApplication={handleMoveApplication}
+              selectionMode={selectionMode}
+              selectedIds={selectedIds}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         

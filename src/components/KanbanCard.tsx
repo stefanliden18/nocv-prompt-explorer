@@ -2,6 +2,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { StarRating } from '@/components/StarRating';
 import { GripVertical, Calendar, ExternalLink, MoveRight } from 'lucide-react';
@@ -30,9 +31,12 @@ interface KanbanCardProps {
   tags: Array<{ name: string }>;
   stages?: Array<{ id: string; name: string; color: string }>;
   onMoveToStage?: (applicationId: string, stageId: string) => void;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
-export function KanbanCard({ application, tags, stages, onMoveToStage }: KanbanCardProps) {
+export function KanbanCard({ application, tags, stages, onMoveToStage, selectionMode, selected, onToggleSelect }: KanbanCardProps) {
   const navigate = useNavigate();
   const {
     attributes,
@@ -53,9 +57,12 @@ export function KanbanCard({ application, tags, stages, onMoveToStage }: KanbanC
   const remainingCount = tags.length - 3;
 
   const handleClick = () => {
-    if (!isDragging) {
-      navigate(`/admin/applications/${application.id}`);
+    if (isDragging) return;
+    if (selectionMode && onToggleSelect) {
+      onToggleSelect(application.id);
+      return;
     }
+    navigate(`/admin/applications/${application.id}`);
   };
 
   return (
@@ -112,9 +119,20 @@ export function KanbanCard({ application, tags, stages, onMoveToStage }: KanbanC
       )}
       
       <div className="flex items-start gap-1 sm:gap-2">
-        <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block">
-          <GripVertical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
-        </div>
+        {selectionMode && (
+          <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+            <Checkbox
+              checked={selected}
+              onCheckedChange={() => onToggleSelect?.(application.id)}
+              className="h-4 w-4"
+            />
+          </div>
+        )}
+        {!selectionMode && (
+          <div className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block">
+            <GripVertical className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+          </div>
+        )}
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">

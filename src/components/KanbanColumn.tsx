@@ -32,6 +32,9 @@ interface KanbanColumnProps {
   onEditStage: (stage: Stage) => void;
   onDeleteStage: (stageId: string) => void;
   onMoveApplication: (applicationId: string, stageId: string) => void;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 export function KanbanColumn({ 
@@ -41,7 +44,10 @@ export function KanbanColumn({
   allStages,
   onEditStage, 
   onDeleteStage,
-  onMoveApplication
+  onMoveApplication,
+  selectionMode,
+  selectedIds,
+  onToggleSelect,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: stage.id,
@@ -111,6 +117,9 @@ export function KanbanColumn({
               tags={tags[application.id] || []}
               stages={allStages}
               onMoveToStage={onMoveApplication}
+              selectionMode={selectionMode}
+              selected={selectedIds?.has(application.id)}
+              onToggleSelect={onToggleSelect}
             />
           ))}
       </div>

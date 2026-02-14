@@ -5,7 +5,7 @@ import {
   FileText, 
   Building2, 
   Users, 
-  Upload,
+  
   Activity,
   FileEdit,
   LogOut,
@@ -33,7 +33,7 @@ const menuItems = [
   { title: "Jobb", url: "/admin/jobs", icon: Briefcase },
   { title: "Jobbbibliotek", url: "/admin/job-library", icon: FolderOpen },
   { title: "Demo-jobb", url: "/admin/demo-jobs", icon: Film },
-  { title: "Importera jobb", url: "/admin/jobs/import", icon: Upload },
+  
   { title: "Ansökningar", url: "/admin/applications", icon: FileText },
   { title: "Rekryteringstavla", url: "/admin/recruitment-board", icon: Kanban },
   { title: "Kravprofiler", url: "/admin/requirement-templates", icon: ClipboardList },

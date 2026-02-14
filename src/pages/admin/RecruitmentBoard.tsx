@@ -11,7 +11,8 @@ import { AIChat } from '@/components/AIChat';
 import { JobFilterChips } from '@/components/JobFilterChips';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Settings2, X, Filter, CheckSquare, Archive, RotateCcw, Trash2 } from 'lucide-react';
+import { Settings2, X, Filter, CheckSquare, Archive, RotateCcw, Trash2, ArrowRight } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DragEndEvent } from '@dnd-kit/core';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -296,7 +297,36 @@ export default function RecruitmentBoard() {
 
     toast({ title: 'Raderade', description: `${ids.length} kandidat(er) permanent raderade` });
     setSelectedIds(new Set());
+    setSelectionMode(false);
     fetchApplications();
+  };
+
+  const handleBulkMoveToStage = async (stageId: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+
+    // Optimistic update
+    setApplications(prev =>
+      prev.map(app =>
+        ids.includes(app.id) ? { ...app, pipeline_stage_id: stageId } : app
+      )
+    );
+
+    const { error } = await supabase
+      .from('applications')
+      .update({ pipeline_stage_id: stageId })
+      .in('id', ids);
+
+    if (error) {
+      toast({ title: 'Fel', description: 'Kunde inte flytta kandidater', variant: 'destructive' });
+      fetchApplications();
+      return;
+    }
+
+    const stageName = stages.find(s => s.id === stageId)?.name || 'valt stadie';
+    toast({ title: 'Flyttade', description: `${ids.length} kandidat(er) flyttade till ${stageName}` });
+    setSelectedIds(new Set());
+    setSelectionMode(false);
   };
 
   const getAllUniqueTags = (): MultiSelectOption[] => {
@@ -455,11 +485,58 @@ export default function RecruitmentBoard() {
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="py-3 px-4 flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium">{selectedIds.size} markerade</span>
-              <Button size="sm" variant="destructive" onClick={handleArchiveSelected}>
+              
+              <Select onValueChange={handleBulkMoveToStage}>
+                <SelectTrigger className="w-[180px] h-9 text-sm">
+                  <ArrowRight className="h-4 w-4 mr-1" />
+                  <SelectValue placeholder="Flytta till..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {stages
+                    .sort((a, b) => a.display_order - b.display_order)
+                    .map((stage) => (
+                      <SelectItem key={stage.id} value={stage.id}>
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: stage.color }}
+                          />
+                          {stage.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+
+              <Button size="sm" variant="outline" onClick={handleArchiveSelected}>
                 <Archive className="h-4 w-4 mr-2" />
                 Arkivera
               </Button>
-              <Button size="sm" variant="outline" onClick={() => setSelectedIds(new Set())}>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button size="sm" variant="destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Radera
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Radera {selectedIds.size} kandidat(er) permanent?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Detta kan inte ångras. Alla markerade kandidater och deras data kommer att tas bort permanent.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSelected} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Radera permanent
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>
                 Avmarkera alla
               </Button>
             </CardContent>

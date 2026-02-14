@@ -456,7 +456,7 @@ export default function RecruitmentBoard() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold">
               {showArchived ? 'Arkiv' : 'Rekryteringstavla'}
@@ -469,7 +469,7 @@ export default function RecruitmentBoard() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-2">
             {!showArchived && (
               <Button
                 variant={selectionMode ? "default" : "outline"}
@@ -477,7 +477,6 @@ export default function RecruitmentBoard() {
                   setSelectionMode(!selectionMode);
                   setSelectedIds(new Set());
                 }}
-                className="w-full sm:w-auto"
               >
                 <CheckSquare className="h-4 w-4 mr-2" />
                 {selectionMode ? 'Avsluta markering' : 'Markera'}
@@ -491,7 +490,6 @@ export default function RecruitmentBoard() {
                 setSelectionMode(false);
                 setSelectedIds(new Set());
               }}
-              className="w-full sm:w-auto"
             >
               <Archive className="h-4 w-4 mr-2" />
               {showArchived ? 'Tillbaka till tavlan' : `Arkiv (${archivedApplications.length})`}
@@ -501,7 +499,6 @@ export default function RecruitmentBoard() {
               <Button
                 variant="outline"
                 onClick={() => setManagementDialogOpen(true)}
-                className="w-full sm:w-auto"
               >
                 <Settings2 className="h-4 w-4 mr-2" />
                 Hantera stadier

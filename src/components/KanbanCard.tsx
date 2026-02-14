@@ -79,7 +79,6 @@ export function KanbanCard({ application, tags, stages, onMoveToStage, onArchive
         "group relative p-1.5 sm:p-2 mb-1 sm:mb-1.5 cursor-pointer hover:shadow-md transition-shadow bg-card",
         application.interview_scheduled_at && "border-l-4 border-l-blue-500"
       )}
-      onClick={handleClick}
     >
       {/* Action menu - visible on hover (desktop) or always on mobile */}
       {onArchive && onDelete && !selectionMode && (
@@ -172,7 +171,7 @@ export function KanbanCard({ application, tags, stages, onMoveToStage, onArchive
         </div>
       )}
       
-      <div className="flex items-start gap-1 sm:gap-2">
+      <div className="flex items-start gap-1 sm:gap-2" onClick={handleClick}>
         {selectionMode && (
           <div className="mt-1" onClick={(e) => e.stopPropagation()}>
             <Checkbox

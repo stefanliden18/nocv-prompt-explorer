@@ -16,6 +16,8 @@ interface PresentationRow {
   skill_scores: Json;
   applications: {
     candidate_name: string;
+    email: string;
+    phone: string | null;
     jobs: {
       title: string;
       companies: {
@@ -68,6 +70,8 @@ export default function CandidatePresentation() {
           skill_scores,
           applications (
             candidate_name,
+            email,
+            phone,
             jobs (
               title,
               companies (name)
@@ -152,6 +156,8 @@ export default function CandidatePresentation() {
 
     const presentationData: PresentationData = {
       candidateName,
+      candidateEmail: presentation?.applications?.email || undefined,
+      candidatePhone: presentation?.applications?.phone || undefined,
       roleName: assessment.role_profiles?.display_name || 'Yrkesroll',
       jobTitle: presentation?.applications?.jobs?.title || 'Tjänst',
       companyName: presentation?.applications?.jobs?.companies?.name || 'Företag',

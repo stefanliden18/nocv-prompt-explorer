@@ -21,7 +21,9 @@ import {
   User,
   Briefcase,
   Target,
-  MessageSquare
+  MessageSquare,
+  Mail,
+  Phone
 } from 'lucide-react';
 
 // Types for the presentation data
@@ -43,6 +45,8 @@ export interface Strength {
 
 export interface PresentationData {
   candidateName: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
   roleName: string;
   jobTitle: string;
   companyName: string;
@@ -224,6 +228,38 @@ export function CandidatePresentationView({ data, isPreview = false }: Candidate
             </div>
           </CardContent>
         </Card>
+
+        {/* Contact Information */}
+        {(data.candidateEmail || data.candidatePhone) && (
+          <Card className="mb-6 border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <User className="w-5 h-5 text-primary" />
+                Kontakta kandidaten för intervju
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {data.candidateEmail && (
+                <a
+                  href={`mailto:${data.candidateEmail}`}
+                  className="flex items-center gap-3 text-primary hover:underline"
+                >
+                  <Mail className="w-5 h-5" />
+                  <span>{data.candidateEmail}</span>
+                </a>
+              )}
+              {data.candidatePhone && (
+                <a
+                  href={`tel:${data.candidatePhone}`}
+                  className="flex items-center gap-3 text-primary hover:underline"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>{data.candidatePhone}</span>
+                </a>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Summary */}
         <Card className="mb-6 border-0 shadow-lg bg-gradient-to-r from-primary/5 to-accent/5">

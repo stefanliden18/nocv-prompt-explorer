@@ -4,13 +4,16 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { StarRating } from '@/components/StarRating';
-import { GripVertical, Calendar, ExternalLink, MoveRight } from 'lucide-react';
+import { GripVertical, Calendar, ExternalLink, MoveRight, MoreVertical, Archive, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { utcToStockholm } from '@/lib/timezone';
+import { useState } from 'react';
 
 interface KanbanCardProps {
   application: {
@@ -31,13 +34,16 @@ interface KanbanCardProps {
   tags: Array<{ name: string }>;
   stages?: Array<{ id: string; name: string; color: string }>;
   onMoveToStage?: (applicationId: string, stageId: string) => void;
+  onArchive?: (id: string) => void;
+  onDelete?: (id: string) => void;
   selectionMode?: boolean;
   selected?: boolean;
   onToggleSelect?: (id: string) => void;
 }
 
-export function KanbanCard({ application, tags, stages, onMoveToStage, selectionMode, selected, onToggleSelect }: KanbanCardProps) {
+export function KanbanCard({ application, tags, stages, onMoveToStage, onArchive, onDelete, selectionMode, selected, onToggleSelect }: KanbanCardProps) {
   const navigate = useNavigate();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const {
     attributes,
     listeners,
@@ -70,13 +76,63 @@ export function KanbanCard({ application, tags, stages, onMoveToStage, selection
       ref={setNodeRef}
       style={style}
       className={cn(
-        "relative p-1.5 sm:p-2 mb-1 sm:mb-1.5 cursor-pointer hover:shadow-md transition-shadow bg-card",
+        "group relative p-1.5 sm:p-2 mb-1 sm:mb-1.5 cursor-pointer hover:shadow-md transition-shadow bg-card",
         application.interview_scheduled_at && "border-l-4 border-l-blue-500"
       )}
       onClick={handleClick}
       {...attributes}
       {...listeners}
     >
+      {/* Action menu - visible on hover (desktop) or always on mobile */}
+      {onArchive && onDelete && !selectionMode && (
+        <div className="absolute top-1 right-1 z-10 opacity-0 group-hover:opacity-100 md:transition-opacity">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6 bg-card/80 hover:bg-muted"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+              <DropdownMenuItem onClick={() => onArchive(application.id)}>
+                <Archive className="h-4 w-4 mr-2" />
+                Arkivera
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Radera permanent
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Radera {application.candidate_name}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Detta kan inte ångras. Kandidaten och all tillhörande data kommer att tas bort permanent.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(application.id)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Radera permanent
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
       {/* Move button - endast mobil */}
       {stages && onMoveToStage && (
         <div className="md:hidden absolute top-1 right-1 z-10">

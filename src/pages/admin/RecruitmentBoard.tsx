@@ -301,6 +301,36 @@ export default function RecruitmentBoard() {
     fetchApplications();
   };
 
+  const handleArchiveApplication = async (id: string) => {
+    const { error } = await supabase
+      .from('applications')
+      .update({ archived_at: new Date().toISOString() } as any)
+      .eq('id', id);
+
+    if (error) {
+      toast({ title: 'Fel', description: 'Kunde inte arkivera kandidaten', variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Arkiverad', description: 'Kandidaten har arkiverats' });
+    fetchApplications();
+  };
+
+  const handleDeleteApplication = async (id: string) => {
+    const { error } = await supabase
+      .from('applications')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      toast({ title: 'Fel', description: 'Kunde inte radera kandidaten', variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: 'Raderad', description: 'Kandidaten har raderats permanent' });
+    fetchApplications();
+  };
+
   const handleBulkMoveToStage = async (stageId: string) => {
     const ids = Array.from(selectedIds);
     if (ids.length === 0) return;
@@ -711,6 +741,8 @@ export default function RecruitmentBoard() {
               onEditStage={() => setManagementDialogOpen(true)}
               onDeleteStage={() => setManagementDialogOpen(true)}
               onAddStage={() => setManagementDialogOpen(true)}
+              onArchiveApplication={handleArchiveApplication}
+              onDeleteApplication={handleDeleteApplication}
               selectionMode={selectionMode}
               selectedIds={selectedIds}
               onToggleSelect={handleToggleSelect}

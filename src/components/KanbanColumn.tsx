@@ -32,6 +32,8 @@ interface KanbanColumnProps {
   onEditStage: (stage: Stage) => void;
   onDeleteStage: (stageId: string) => void;
   onMoveApplication: (applicationId: string, stageId: string) => void;
+  onArchive?: (id: string) => void;
+  onDelete?: (id: string) => void;
   selectionMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string) => void;
@@ -45,6 +47,8 @@ export function KanbanColumn({
   onEditStage, 
   onDeleteStage,
   onMoveApplication,
+  onArchive,
+  onDelete,
   selectionMode,
   selectedIds,
   onToggleSelect,
@@ -117,6 +121,8 @@ export function KanbanColumn({
               tags={tags[application.id] || []}
               stages={allStages}
               onMoveToStage={onMoveApplication}
+              onArchive={onArchive}
+              onDelete={onDelete}
               selectionMode={selectionMode}
               selected={selectedIds?.has(application.id)}
               onToggleSelect={onToggleSelect}

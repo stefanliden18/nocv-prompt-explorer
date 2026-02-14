@@ -1,65 +1,66 @@
 
 
-# Lagg till radera-knapp pa kandidatkort
+# Fix: Arkivera/Radera-menyn pa kandidatkort gar inte att klicka
 
-## Problem
-Det finns ingen mojlighet att ta bort enskilda kandidater direkt fran rekryteringstavlan. Bulk-atgarderna (flytta, arkivera, radera) ar dolda bakom "Markera"-knappen och kraver flera steg.
+## Identifierade fel
 
-## Losning
+### Fel 1 -- Drag-listeners blockerar klick (HUVUDPROBLEMET)
+I `KanbanCard.tsx` rad 83-84 sprids dnd-kit:s `{...attributes}` och `{...listeners}` pa hela `<Card>`-elementet. Nar dnd-kit fangar `onPointerDown` pa hela kortet sa "ater" det alla klick-event innan de nar DropdownMenu-triggern (tre-punkt-ikonen). Menyn renderas korrekt och syns vid hover -- men gar inte att klicka pa.
 
-### 1. Soptunne-ikon pa varje KanbanCard (synlig vid hover)
+### Fel 2 -- Overlappande knappar pa mobil
+Bade atgardsmenyn (rad 88: `absolute top-1 right-1`) och mobil-flytta-knappen (rad 138: `absolute top-1 right-1`) har exakt samma position, sa de overlappar varandra pa mobil.
 
-Lagg till en liten soptunne-ikon i ovre hogra hornet pa varje kandidatkort. Ikonen visas bara nar man hovrar over kortet (desktopvy) eller alltid pa mobil.
+## Atgard
 
-Vid klick visas en liten popover/meny med tva val:
-- **Arkivera** -- flyttar kandidaten till arkivet (satter `archived_at`)
-- **Radera permanent** -- tar bort kandidaten fran databasen (med bekraftelse)
+### src/components/KanbanCard.tsx
 
-### 2. Andringar per fil
+**En enda andring:**
 
-**`src/components/KanbanCard.tsx`**
-- Ny prop: `onArchive?: (id: string) => void`
-- Ny prop: `onDelete?: (id: string) => void`
-- Lagg till en `DropdownMenu` med Trash2-ikon i ovre hogra hornet
-- Menyn innehaller "Arkivera" och "Radera permanent"
-- "Radera permanent" anvander en `AlertDialog` for bekraftelse
-- Ikonen visas via CSS `group-hover` (dolj normalt, visa vid hover)
+1. **Ta bort** `{...attributes}` och `{...listeners}` fran `<Card>` (rad 83-84)
+2. **Flytta** dem till `<div>` som omsluter GripVertical-ikonen (rad 188)
 
-**`src/components/KanbanColumn.tsx`**
-- Propaga `onArchive` och `onDelete` till varje KanbanCard
-
-**`src/components/KanbanBoard.tsx`**
-- Propaga `onArchiveApplication` och `onDeleteApplication` fran RecruitmentBoard till KanbanColumn
-
-**`src/pages/admin/RecruitmentBoard.tsx`**
-- Skapa `handleArchiveApplication(id: string)` -- arkiverar en enskild kandidat
-- Skapa `handleDeleteApplication(id: string)` -- raderar en enskild kandidat permanent
-- Skicka dessa som props till KanbanBoard
-
-### 3. Visuellt resultat
-
-```text
-+-----------------------------------+
-| Stefan Liden              [bin]   |  <-- bin syns vid hover
-| *****  (5/5)                      |
-| 15 okt, 09:00                     |
-| Saljare - Growio                  |
-+-----------------------------------+
-
-Klick pa [bin] oppnar:
-+-------------------+
-| Arkivera          |
-| Radera permanent  |
-+-------------------+
+Fore (rad 75-84):
 ```
+<Card
+  ref={setNodeRef}
+  style={style}
+  className={...}
+  onClick={handleClick}
+  {...attributes}    <-- PROBLEMET
+  {...listeners}     <-- PROBLEMET
+>
+```
+
+Efter:
+```
+<Card
+  ref={setNodeRef}
+  style={style}
+  className={...}
+  onClick={handleClick}
+>
+```
+
+Och pa rad 188, lagg till listeners pa drag-handtaget:
+```
+<div
+  className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hidden md:block"
+  {...attributes}
+  {...listeners}
+>
+  <GripVertical ... />
+</div>
+```
+
+### Resultat
+- Drag kan bara initieras fran GripVertical-handtaget
+- DropdownMenu (Arkivera / Radera permanent) gar att klicka pa
+- Checkbox i markeringslage fungerar utan att trigga drag
+- Inga andra filer behover andras -- alla props och handlers ar redan korrekt kopplade
 
 ### Sammanfattning
 
 | Fil | Andring |
 |-----|---------|
-| `KanbanCard.tsx` | DropdownMenu med arkivera/radera-alternativ, synlig vid hover |
-| `KanbanColumn.tsx` | Propaga `onArchive` och `onDelete` |
-| `KanbanBoard.tsx` | Propaga `onArchiveApplication` och `onDeleteApplication` |
-| `RecruitmentBoard.tsx` | Nya handlers for enskild arkivering och radering |
+| `KanbanCard.tsx` | Flytta `{...attributes} {...listeners}` fran Card till GripVertical-wrappern (2 rader) |
 
-Inga databasandringar behovs -- `archived_at`-kolumnen finns redan och permanent radering anvander `.delete()`.

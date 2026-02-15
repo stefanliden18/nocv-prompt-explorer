@@ -91,6 +91,11 @@ export default function AdminApplications() {
     }
   };
 
+  const visibleApplications = applications.filter(app => {
+    if (!showDemoApplications && app.is_demo) return false;
+    return true;
+  });
+
   const filteredApplications = applications.filter(app => {
     // Demo filter
     if (!showDemoApplications && app.is_demo) {
@@ -220,11 +225,11 @@ export default function AdminApplications() {
           selectedTags={selectedTags}
           onTagsChange={setSelectedTags}
           applicationCounts={{
-            total: applications.length,
-            new: applications.filter(a => a.status === 'new').length,
-            viewed: applications.filter(a => a.status === 'viewed').length,
-            booked: applications.filter(a => a.status === 'booked').length,
-            rejected: applications.filter(a => a.status === 'rejected').length,
+            total: visibleApplications.length,
+            new: visibleApplications.filter(a => a.status === 'new').length,
+            viewed: visibleApplications.filter(a => a.status === 'viewed').length,
+            booked: visibleApplications.filter(a => a.status === 'booked').length,
+            rejected: visibleApplications.filter(a => a.status === 'rejected').length,
           }}
         />
 

@@ -1,92 +1,39 @@
 
+# Fix: Räknarna i statusfiltret matchar inte visade ansökningar
 
-# Fix: Synliggör åtgärdsknappar och fixa kortets dropdown-meny
+## Problemet
 
-## Problem 1: Knapparna syns inte
+Statusfiltrets räknare (t.ex. "Nya (27)") räknar **alla** ansökningar, inklusive demo-ansökningar som är dolda. Tabellen filtrerar korrekt bort demo-ansökningar, men räknarna gör det inte. Därför ser man "Nya (27)" men "Visar 0 av 34 ansökningar".
 
-Knapparna "Markera", "Arkiv" och "Hantera stadier" finns i koden men hamnar utanför synligt område. De placeras med `justify-between` i samma rad som titeln, men trycks bort till höger och döljs.
+## Lösningen
 
-### Lösning
+Skapa en mellanliggande lista `visibleApplications` som respekterar demo-filtret, och använd den för räknarna.
 
-Flytta knapparna till en **egen rad under titeln** istället för att ha dem bredvid. Detta garanterar att de alltid syns oavsett skärmbredd.
+### Ändring i src/pages/admin/Applications.tsx
 
-Före:
-```text
-+------------------------------------------------------+
-| Rekryteringstavla          [Markera] [Arkiv] [Stadier]| <-- knappar osynliga
-| Visar 7 kandidater                                    |
-+------------------------------------------------------+
-```
-
-Efter:
-```text
-+------------------------------------------------------+
-| Rekryteringstavla                                     |
-| Visar 7 kandidater                                    |
-|                                                       |
-| [Markera]  [Arkiv (0)]  [Hantera stadier]             | <-- alltid synliga
-+------------------------------------------------------+
-```
-
-### Teknisk ändring i RecruitmentBoard.tsx (rad 459)
-
-Ändra layouten från en `sm:flex-row justify-between` till en vertikal layout med knapparna på egen rad:
+**Steg 1** -- Lägg till `visibleApplications` (efter rad 92, före `filteredApplications`):
 
 ```tsx
-// Före:
-<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-  <div>...</div>
-  <div className="flex flex-wrap gap-2 w-full sm:w-auto">...</div>
-</div>
-
-// Efter:
-<div className="space-y-4">
-  <div>
-    <h1>Rekryteringstavla</h1>
-    <p>Visar X kandidater</p>
-  </div>
-  <div className="flex flex-wrap gap-2">
-    <Button>Markera</Button>
-    <Button>Arkiv</Button>
-    <Button>Hantera stadier</Button>
-  </div>
-</div>
+const visibleApplications = applications.filter(app => {
+  if (!showDemoApplications && app.is_demo) return false;
+  return true;
+});
 ```
 
----
-
-## Problem 2: Kortets dropdown-meny fungerar inte
-
-Hela kortet har `onClick={handleClick}` som navigerar till detaljsidan. Nar man klickar pa tre-punkt-menyn (MoreVertical) fangas klicket av Card-elementet och man navigeras bort istallet for att menyn oppnas.
-
-### Lösning
-
-Flytta `onClick={handleClick}` fran `<Card>` till den inre content-diven (som visar namn, rating, taggar). Da lever dropdown-menyn, checkboxen och drag-handtaget utanfor klickzonen.
-
-### Teknisk ändring i KanbanCard.tsx
+**Steg 2** -- Uppdatera `applicationCounts` (rad 222-228) att använda `visibleApplications` istället för `applications`:
 
 ```tsx
-// Före:
-<Card ref={setNodeRef} style={style} className="..." onClick={handleClick}>
-  <div className="absolute ..."> {/* dropdown meny */} </div>
-  <div className="flex ..."> {/* content */} </div>
-</Card>
-
-// Efter:
-<Card ref={setNodeRef} style={style} className="...">
-  <div className="absolute ..."> {/* dropdown meny -- klickbar nu */} </div>
-  <div className="flex ..." onClick={handleClick}> {/* bara content navigerar */} </div>
-</Card>
+applicationCounts={{
+  total: visibleApplications.length,
+  new: visibleApplications.filter(a => a.status === 'new').length,
+  viewed: visibleApplications.filter(a => a.status === 'viewed').length,
+  booked: visibleApplications.filter(a => a.status === 'booked').length,
+  rejected: visibleApplications.filter(a => a.status === 'rejected').length,
+}}
 ```
 
----
+### Resultat
 
-## Sammanfattning
-
-| Fil | Ändring | Löser |
-|-----|---------|-------|
-| `RecruitmentBoard.tsx` | Flytta knappar till egen rad under titeln | Knappar alltid synliga |
-| `KanbanCard.tsx` | Flytta onClick fran Card till content-div | Dropdown-meny fungerar |
-
-Inga andra filer eller databasändringar behövs.
-
+- När demo är dolt och alla ansökningar är demo: räknarna visar "Nya (0)" istället för "Nya (27)"
+- När demo visas: räknarna visar korrekta siffror inklusive demo
+- En fil, två små ändringar

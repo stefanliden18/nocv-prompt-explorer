@@ -690,10 +690,13 @@ const JobDetail = () => {
                   ) : isSubmitted ? (
                     <div className="text-center py-4">
                       <h4 className="text-lg font-semibold text-foreground mb-2">
-                        Intervju bokad!
+                        Snyggt!
                       </h4>
                       <p className="text-muted-foreground mb-4">
-                        Vi har skickat en intervjulänk till din e-post. Om du inte hittar mailet inom några minuter, kontrollera din skräppost.
+                        Du har tagit första steget. Om en minut landar ett mail i din inbox med en länk till din intervju. Den tar drygt 10 minuter och handlar om dina motorkunskaper — inga kuggfrågor, bara riktiga grejer du kan. Ingen ser dig, ingen dömer dig. Du svarar i din egen takt. Lycka till!
+                      </p>
+                      <p className="text-xs text-muted-foreground italic mb-4">
+                        Hittar du inget mail? Kolla skräpposten — ibland hamnar det där.
                       </p>
                       <Button 
                         variant="outline"
@@ -709,6 +712,9 @@ const JobDetail = () => {
                   ) : (
                     <Form {...form}>
                       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Du som hör på en motor om något är fel — det här är din chans. Vi har byggt en intervju som testar hur du tänker, inte hur du skriver. Inga CV, inga ansökningsbrev, inga konstigheter. Fyll i nedan så skickar vi en länk. Tar ungefär 10 minuter och du gör det när du vill — i soffan, på lunchen eller i verkstaden (vi skvallrar inte). Det är bara att köra igång när det passar dig 😊
+                        </p>
                         <FormField
                           control={form.control}
                           name="name"

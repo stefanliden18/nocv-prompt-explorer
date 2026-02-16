@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -200,10 +200,26 @@ export function FinalAssessment({
   const copyShareLink = () => {
     if (!presentation?.share_token) return;
     const link = `${window.location.origin}/presentation/${presentation.share_token}`;
-    navigator.clipboard.writeText(link);
-    toast({
-      title: 'Länk kopierad',
-      description: 'Delningslänken har kopierats till urklipp',
+    navigator.clipboard.writeText(link).then(() => {
+      toast({
+        title: 'Länk kopierad',
+        description: React.createElement('a', { 
+          href: link, 
+          target: '_blank', 
+          rel: 'noopener noreferrer', 
+          className: 'underline break-all text-primary hover:text-primary/80 select-all cursor-pointer' 
+        }, link),
+      });
+    }).catch(() => {
+      toast({
+        title: 'Kopiera länken nedan:',
+        description: React.createElement('a', { 
+          href: link, 
+          target: '_blank', 
+          rel: 'noopener noreferrer', 
+          className: 'underline break-all text-primary hover:text-primary/80 select-all cursor-pointer' 
+        }, link),
+      });
     });
   };
 

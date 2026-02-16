@@ -1,63 +1,73 @@
 
-# Fix: Förhandsvisning av utkast fungerar inte (timing-problem)
+
+# Fix: Sparade ändringar visas inte i presentationsförhandsgranskningen
 
 ## Problemet
 
-Koden vi lade till (`if (!isAdmin)`) är korrekt i sig, men det finns ett timing-problem:
+Nar du redigerar texter (sammanfattning, styrkor, utvecklingsomraden etc.) och klickar "Spara", sa sparas andringarna till databasen men den grona forhandsgranskningen pa samma sida uppdateras INTE. Det beror pa att:
 
-1. Presentationssidan oppnas i en **ny flik**
-2. I den nya fliken startar `isAdmin` som `false` (standardvardet)
-3. `useEffect` kör `fetchPresentation()` direkt (beror bara på `token`)
-4. Frågan körs med `isAdmin = false`, vilket lägger till `.eq('status', 'published')`
-5. John Walkers presentation har `status = 'draft'` -- den hittas inte
-6. Erst **efter** att frågan redan körts hinner auth-kontexten ladda och sätta `isAdmin = true`
+1. Editorn sparar till databasen -- det fungerar
+2. Men editorn meddelar aldrig foraldern om vad som andrats
+3. Den grona forhandsgranskningen visar fortfarande den gamla datan fran nar sidan laddades
 
-Resultatet: admin ser "Presentationen hittades inte" trots att de är inloggade.
+## Losning
 
-## Lösningen
+Tva andringar i `FinalAssessment.tsx`:
 
-Vänta tills auth har laddats klart innan frågan körs. AuthContext exponerar redan `loading` -- vi använder den.
+### 1. Skicka med `onAssessmentUpdate` till editorn
 
-### Ändring i src/pages/CandidatePresentation.tsx
+Editorn har redan stod for en `onAssessmentUpdate`-callback men den skickas aldrig med fran `FinalAssessment`. Vi lagger till den och nar den anropas uppdaterar vi `existingAssessment`-statet via en ny callback upp till `CandidateAssessment`.
 
-**Steg 1** -- Hämta `loading` från auth-kontexten (utöver `isAdmin`):
+### 2. Lagg till en `onAssessmentUpdate`-prop pa `FinalAssessment` och hantera den i `CandidateAssessment`
 
-```tsx
-const { isAdmin, loading: authLoading } = useAuth();
-```
+`CandidateAssessment` behover en funktion som uppdaterar sitt `finalAssessment`-state nar editorn sparar.
 
-**Steg 2** -- Lägg till `isAdmin` och `authLoading` i useEffect-beroendena och vänta tills auth är klar:
+## Tekniska detaljer
 
-```tsx
-useEffect(() => {
-  if (authLoading) return; // Vänta tills auth är klar
-  fetchPresentation();
-}, [token, isAdmin, authLoading]);
-```
+### Fil 1: `src/components/CandidateAssessment.tsx`
 
-**Steg 3** -- Visa laddningsskelett även medan auth laddar (uppdatera loading-checken):
+- Lagg till en `handleAssessmentUpdate`-funktion som mergar in uppdateringar i `finalAssessment`-statet:
 
 ```tsx
-if (loading || authLoading) {
-  return (
-    <div className="min-h-screen bg-muted/30 p-4">
-      ...skeleton...
-    </div>
-  );
-}
+const handleAssessmentUpdate = (updates: Partial<FinalResult>) => {
+  setFinalAssessment(prev => prev ? { ...prev, ...updates } : prev);
+};
 ```
 
-### Varfor detta löser problemet
+- Skicka med `onAssessmentUpdate={handleAssessmentUpdate}` till `FinalAssessment`
 
-- `authLoading` startar som `true` medan sessionen hämtas
-- `useEffect` väntar tills `authLoading` blir `false`
-- Vid den tidpunkten har `isAdmin` rätt värde (`true` för admin)
-- Frågan körs utan `.eq('status', 'published')` och John Walkers utkast hittas
+### Fil 2: `src/components/FinalAssessment.tsx`
+
+- Lagg till `onAssessmentUpdate` i props-interfacet:
+
+```tsx
+onAssessmentUpdate?: (updates: Partial<FinalResult>) => void;
+```
+
+- Destrukturera den i komponenten
+- Skicka vidare till `CandidatePresentationEditor`:
+
+```tsx
+<CandidatePresentationEditor
+  ...
+  onAssessmentUpdate={(updates) => {
+    // Uppdatera foraldern sa den grona forhandsgranskningen visar ratt data
+    onAssessmentUpdate?.({
+      summary: updates.summary ?? existingAssessment.summary,
+      technical_assessment: updates.technical_assessment ?? existingAssessment.technical_assessment,
+      soft_skills_assessment: updates.soft_skills_assessment ?? existingAssessment.soft_skills_assessment,
+      strengths: updates.strengths ?? existingAssessment.strengths,
+      concerns: updates.concerns ?? existingAssessment.concerns,
+    });
+  }}
+/>
+```
 
 ### Sammanfattning
 
-| Fil | Ändring |
+| Fil | Andring |
 |-----|---------|
-| `CandidatePresentation.tsx` | Lägg till `authLoading` check innan frågan körs, uppdatera useEffect-beroenden |
+| `CandidateAssessment.tsx` | Ny `handleAssessmentUpdate`-funktion, skicka som prop till FinalAssessment |
+| `FinalAssessment.tsx` | Ny prop `onAssessmentUpdate`, skicka vidare till CandidatePresentationEditor |
 
-En fil, tre små ändringar. Ingen databas- eller backend-ändring behövs.
+Tva filer, sma andringar. Resultatet: nar du trycker "Spara" uppdateras bade databasen och den grona forhandsgranskningen direkt.

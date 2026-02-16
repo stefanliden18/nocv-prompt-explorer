@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import { CandidatePresentationView, type PresentationData } from '@/components/CandidatePresentationView';
@@ -42,6 +43,7 @@ interface PresentationRow {
 
 export default function CandidatePresentation() {
   const { token } = useParams();
+  const { isAdmin } = useAuth();
   const [presentation, setPresentation] = useState<PresentationRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export default function CandidatePresentation() {
     }
 
     try {
-      const { data, error: fetchError } = await supabase
+      let query = supabase
         .from('candidate_presentations')
         .select(`
           id,
@@ -91,9 +93,13 @@ export default function CandidatePresentation() {
             )
           )
         `)
-        .eq('share_token', token)
-        .eq('status', 'published')
-        .maybeSingle();
+        .eq('share_token', token);
+
+      if (!isAdmin) {
+        query = query.eq('status', 'published');
+      }
+
+      const { data, error: fetchError } = await query.maybeSingle();
 
       if (fetchError) throw fetchError;
 
@@ -180,6 +186,11 @@ export default function CandidatePresentation() {
           <title>Kandidatpresentation - {candidateName}</title>
           <meta name="robots" content="noindex, nofollow" />
         </Helmet>
+        {presentation?.status === 'draft' && isAdmin && (
+          <div className="bg-warning text-warning-foreground px-4 py-2 text-center text-sm font-medium">
+            Förhandsvisning – denna presentation är ännu inte publicerad
+          </div>
+        )}
         <CandidatePresentationView data={presentationData} />
       </HelmetProvider>
     );

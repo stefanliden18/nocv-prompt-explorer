@@ -1,39 +1,59 @@
 
-# Fix: Räknarna i statusfiltret matchar inte visade ansökningar
 
-## Problemet
+# Uppdatera "Boka intervju"-flödet med tydligare kommunikation
 
-Statusfiltrets räknare (t.ex. "Nya (27)") räknar **alla** ansökningar, inklusive demo-ansökningar som är dolda. Tabellen filtrerar korrekt bort demo-ansökningar, men räknarna gör det inte. Därför ser man "Nya (27)" men "Visar 0 av 34 ansökningar".
+## Vad ändras
 
-## Lösningen
+Tre saker uppdateras i sidebar-kortet på både `JobDetail.tsx` och `DemoJobDetail.tsx`:
 
-Skapa en mellanliggande lista `visibleApplications` som respekterar demo-filtret, och använd den för räknarna.
+### 1. Byt rubrik och knapptext
 
-### Ändring i src/pages/admin/Applications.tsx
+- **Rubrik**: "Boka tid för intervju" -> "Boka intervju"
+- **CTA-knapp** (innan formuläret visas): "Boka tid för intervju" -> "Boka intervju"
+- **Submit-knapp** (i formuläret): "Boka tid för intervju" -> "Boka intervju"
 
-**Steg 1** -- Lägg till `visibleApplications` (efter rad 92, före `filteredApplications`):
+### 2. Lägg till info-ruta efter submit-knappen
 
-```tsx
-const visibleApplications = applications.filter(app => {
-  if (!showDemoApplications && app.is_demo) return false;
-  return true;
-});
+Under submit-knappen i formuläret läggs en liten informationstext till som förbereder användaren:
+
+```text
++------------------------------------------+
+|  [mail-ikon] En intervjulänk skickas      |
+|  till din e-post. Kontrollera din         |
+|  skräppost om du inte fått mailet         |
+|  inom några minuter.                      |
++------------------------------------------+
 ```
 
-**Steg 2** -- Uppdatera `applicationCounts` (rad 222-228) att använda `visibleApplications` istället för `applications`:
+Denna visas som en diskret `text-muted-foreground text-xs`-text med en mail-ikon, placerad direkt under "Boka intervju"-knappen men före "Avbryt".
+
+### 3. Förbättra bekräftelsemeddelandet
+
+Efter lyckad bokning uppdateras texten:
+
+- **Före**: "Vi har skickat en bekräftelse till din e-post. Du kommer snart få information om när din AI-intervju äger rum."
+- **Efter**: "Vi har skickat en intervjulänk till din e-post. Om du inte hittar mailet inom några minuter, kontrollera din skräppost."
+
+## Tekniska detaljer
+
+### Filer som ändras
+
+| Fil | Ändringar |
+|-----|-----------|
+| `src/pages/JobDetail.tsx` | Byt rubrik (rad 670), CTA-text (rad 687), submit-text (rad 810), bekräftelsetext (rad 694-696), lägg till info-text under submit |
+| `src/pages/DemoJobDetail.tsx` | Samma ändringar (rad 565, 582, 703, 590-592) |
+
+### Ny info-ruta (kod)
+
+Läggs till mellan submit-knappen och avbryt-knappen:
 
 ```tsx
-applicationCounts={{
-  total: visibleApplications.length,
-  new: visibleApplications.filter(a => a.status === 'new').length,
-  viewed: visibleApplications.filter(a => a.status === 'viewed').length,
-  booked: visibleApplications.filter(a => a.status === 'booked').length,
-  rejected: visibleApplications.filter(a => a.status === 'rejected').length,
-}}
+<p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+  <Mail className="w-3 h-3" />
+  En intervjulänk skickas till din e-post. Kolla skräpposten om mailet dröjer.
+</p>
 ```
 
-### Resultat
+`Mail`-ikonen importeras redan inte -- den behöver läggas till i lucide-react-importen.
 
-- När demo är dolt och alla ansökningar är demo: räknarna visar "Nya (0)" istället för "Nya (27)"
-- När demo visas: räknarna visar korrekta siffror inklusive demo
-- En fil, två små ändringar
+Inga databas- eller backend-ändringar behövs.

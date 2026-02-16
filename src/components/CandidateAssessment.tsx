@@ -187,6 +187,10 @@ export function CandidateAssessment({
     setPresentation(pres);
   };
 
+  const handleAssessmentUpdate = (updates: Partial<FinalResult>) => {
+    setFinalAssessment(prev => prev ? { ...prev, ...updates } : prev);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -255,6 +259,7 @@ export function CandidateAssessment({
               screeningCompleted={!!screeningAssessment}
               onComplete={handleFinalComplete}
               onPublish={handlePresentationPublished}
+              onAssessmentUpdate={handleAssessmentUpdate}
             />
           </TabsContent>
         </Tabs>

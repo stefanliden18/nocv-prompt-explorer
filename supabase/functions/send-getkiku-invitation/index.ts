@@ -79,9 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "NoCV <noreply@nocv.se>",
       to: [email],
-      subject: hideCompany
-        ? `Din AI-intervju med Sara för ${job.title}`
-        : `Din AI-intervju med Sara för ${job.title} hos ${companyName}`,
+      subject: `Din motorintervju väntar — inga fällor, vi lovar 😄`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -96,12 +94,10 @@ const handler = async (req: Request): Promise<Response> => {
               .content { padding: 40px 30px; }
               .content h2 { color: #1a1a1a; font-size: 22px; margin-top: 0; margin-bottom: 20px; }
               .content p { margin: 16px 0; color: #555; }
-              .cta-button { display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-              .cta-button:hover { box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
-              .tips-box { background-color: #f8f9fa; border-left: 4px solid #1a1a1a; padding: 20px; margin: 24px 0; border-radius: 4px; }
-              .tips-box h3 { margin-top: 0; color: #1a1a1a; font-size: 18px; }
-              .tips-box ul { margin: 12px 0; padding-left: 20px; }
-              .tips-box li { margin: 8px 0; color: #555; }
+              .info-box { background-color: #f8f9fa; border-left: 4px solid #1a1a1a; padding: 20px; margin: 24px 0; border-radius: 4px; }
+              .info-box h3 { margin-top: 0; color: #1a1a1a; font-size: 18px; }
+              .info-box ul { margin: 12px 0; padding-left: 20px; list-style: none; }
+              .info-box li { margin: 8px 0; color: #555; }
               .footer { background-color: #f8f9fa; padding: 30px; text-align: center; color: #777; font-size: 14px; }
               .footer a { color: #1a1a1a; text-decoration: none; }
             </style>
@@ -109,39 +105,38 @@ const handler = async (req: Request): Promise<Response> => {
           <body>
             <div class="container">
               <div class="header">
-                <h1>🤖 Din AI-intervju med Sara väntar!</h1>
+                <h1>🔧 Din motorintervju väntar!</h1>
               </div>
               
               <div class="content">
                 <h2>Hej ${candidateName}!</h2>
                 
-                <p>Tack för ditt intresse för tjänsten som <strong>${job.title}</strong>${hideCompany ? '' : ` hos <strong>${companyName}</strong>`}!</p>
+                <p>Kul att du vill testa! Här kommer länken till din intervju.</p>
                 
-                <p>För att slutföra din ansökan behöver du genomföra en kort AI-intervju med Sara via Getkiku. Intervjun tar cirka <strong>5-10 minuter</strong> och du kan göra den när det passar dig bäst.</p>
+                <div class="info-box">
+                  <h3>Tre saker du bör veta innan du klickar:</h3>
+                  <ul>
+                    <li>⏱️ Det tar ca 10–15 minuter.</li>
+                    <li>🕐 Du svarar när det passar dig — mitt i natten om du vill.</li>
+                    <li>🧠 Det finns inga rätt eller fel, vi vill bara se hur du tänker kring fordon.</li>
+                  </ul>
+                </div>
+                
+                <p>Ingen video, ingen stress. Bara du och några frågor om det du redan kan.</p>
                 
                 <div style="text-align: center; margin: 32px 0;">
                   <a href="${job.kiku_interview_url}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    🤖 Starta min AI-intervju
+                    🚀 Starta min intervju
                   </a>
-                </div>
-                
-                <div class="tips-box">
-                  <h3>💡 Tips innan du börjar:</h3>
-                  <ul>
-                    <li>Se till att du har en fungerande mikrofon</li>
-                    <li>Välj en lugn plats där du kan prata ostört</li>
-                    <li>Svara ärligt och var dig själv</li>
-                    <li>Du kan genomföra intervjun när det passar dig</li>
-                  </ul>
                 </div>
                 
                 <p style="color: #777; font-size: 14px; margin-top: 32px;">
                   <strong>Problem att starta intervjun?</strong><br>
-                  Klicka på länken igen eller kopiera denna URL till din webbläsare:<br>
+                  Kopiera denna URL till din webbläsare:<br>
                   <a href="${job.kiku_interview_url}" style="color: #1a1a1a; word-break: break-all;">${job.kiku_interview_url}</a>
                 </p>
                 
-                <p style="margin-top: 32px;">Lycka till med intervjun!</p>
+                <p style="margin-top: 32px;">Stort lycka till! 💪</p>
                 
                 <p style="margin-top: 24px;">
                   Med vänliga hälsningar,<br>

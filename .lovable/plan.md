@@ -1,26 +1,28 @@
 
-# Gör skräppost-texten kursiv
+
+# Ändra stil på skräppost-texten
 
 ## Vad vi gör
 
-Lägger till `italic` i CSS-klassen på raden "En intervjulänk skickas till din e-post. Kolla skräpposten om mailet dröjer." i bokningsformuläret. Storleken (text-xs) behålls som den är.
+Ändrar texten "En intervjulänk skickas till din e-post. Kolla skräpposten om mailet dröjer." till större storlek, fet och kursiv stil.
 
 ## Filer som ändras
 
-| Fil | Rad | Ändring |
-|-----|-----|---------|
-| `src/pages/JobDetail.tsx` | ~819 | Lägg till `italic` i className |
-| `src/pages/DemoJobDetail.tsx` | ~712 | Samma ändring |
+| Fil | Ändring |
+|-----|---------|
+| `src/pages/JobDetail.tsx` | Ändra className från `text-xs ... italic` till `text-sm ... font-bold italic` |
+| `src/pages/DemoJobDetail.tsx` | Samma ändring |
 
 ## Tekniska detaljer
 
 Ändrar klassen från:
 ```
-text-xs text-muted-foreground text-center flex items-center justify-center gap-1
+text-xs text-muted-foreground italic text-center flex items-center justify-center gap-1
 ```
 till:
 ```
-text-xs text-muted-foreground italic text-center flex items-center justify-center gap-1
+text-sm text-muted-foreground font-bold italic text-center flex items-center justify-center gap-1
 ```
 
-En enda CSS-klass tillagd per fil, inget annat ändras.
+`text-xs` blir `text-sm` (större) och `font-bold` läggs till (fet). `italic` finns redan kvar.
+

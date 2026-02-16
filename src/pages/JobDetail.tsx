@@ -818,7 +818,7 @@ const JobDetail = () => {
 
                           <p className="text-sm text-muted-foreground font-bold italic text-center flex items-center justify-center gap-1">
                             <Mail className="w-3 h-3" />
-                            En intervjulänk skickas till din e-post. Kolla skräpposten om mailet dröjer.
+                            OBS: Om du inte har fått ett mail om några minuter, kolla skräpkorgen!
                           </p>
                           
                           <Button 

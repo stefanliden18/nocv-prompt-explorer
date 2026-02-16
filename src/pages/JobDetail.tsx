@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { MapPin, Building2, Clock, ArrowLeft, Send, Share2, Check, X } from "lucide-react";
+import { MapPin, Building2, Clock, ArrowLeft, Send, Share2, Check, X, Mail } from "lucide-react";
 import { 
   LinkedinShareButton, 
   FacebookShareButton, 
@@ -667,7 +667,7 @@ const JobDetail = () => {
             <div className="lg:col-span-1">
               <Card className="bg-white border border-border sticky top-6">
                 <CardHeader>
-                  <CardTitle className="text-xl font-heading">Boka tid för intervju</CardTitle>
+                  <CardTitle className="text-xl font-heading">Boka intervju</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {!showApplication ? (
@@ -684,7 +684,7 @@ const JobDetail = () => {
                         }}
                       >
                         <Send className="w-4 h-4 mr-2" />
-                        Boka tid för intervju
+                        Boka intervju
                       </Button>
                     </div>
                   ) : isSubmitted ? (
@@ -693,7 +693,7 @@ const JobDetail = () => {
                         Intervju bokad!
                       </h4>
                       <p className="text-muted-foreground mb-4">
-                        Vi har skickat en bekräftelse till din e-post. Du kommer snart få information om när din AI-intervju äger rum.
+                        Vi har skickat en intervjulänk till din e-post. Om du inte hittar mailet inom några minuter, kontrollera din skräppost.
                       </p>
                       <Button 
                         variant="outline"
@@ -807,8 +807,13 @@ const JobDetail = () => {
                             variant="cta-primary"
                             disabled={isLoading}
                           >
-                            {isLoading ? "Bokar..." : "Boka tid för intervju"}
+                            {isLoading ? "Bokar..." : "Boka intervju"}
                           </Button>
+
+                          <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+                            <Mail className="w-3 h-3" />
+                            En intervjulänk skickas till din e-post. Kolla skräpposten om mailet dröjer.
+                          </p>
                           
                           <Button 
                             type="button"

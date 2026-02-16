@@ -1,59 +1,68 @@
 
 
-# Uppdatera "Boka intervju"-flödet med tydligare kommunikation
+# Fix: "Oppna forhandsvisning" fungerar inte for utkast
 
-## Vad ändras
+## Problemet
 
-Tre saker uppdateras i sidebar-kortet på både `JobDetail.tsx` och `DemoJobDetail.tsx`:
+Knappen "Oppna forhandsvisning" oppnar `/presentation/:token` i en ny flik. Men sidan (`CandidatePresentation.tsx`) filtrerar pa `status = 'published'` (rad 95), sa utkast ("draft") hittas aldrig. Dessutom kraver RLS-policyn for publik atkomst att `status = 'published'`.
 
-### 1. Byt rubrik och knapptext
+Resultatet: admin klickar pa knappen, en ny flik oppnas, men presentationen visas inte eftersom den annu ar ett utkast.
 
-- **Rubrik**: "Boka tid för intervju" -> "Boka intervju"
-- **CTA-knapp** (innan formuläret visas): "Boka tid för intervju" -> "Boka intervju"
-- **Submit-knapp** (i formuläret): "Boka tid för intervju" -> "Boka intervju"
+## Losning
 
-### 2. Lägg till info-ruta efter submit-knappen
+Ge inloggade admins mojlighet att forhandsgranska utkast genom att ta bort `status`-filtret i fragan nar anvandaren ar inloggad som admin, och behalla det for publika besokare.
 
-Under submit-knappen i formuläret läggs en liten informationstext till som förbereder användaren:
+### Andring i src/pages/CandidatePresentation.tsx
 
-```text
-+------------------------------------------+
-|  [mail-ikon] En intervjulänk skickas      |
-|  till din e-post. Kontrollera din         |
-|  skräppost om du inte fått mailet         |
-|  inom några minuter.                      |
-+------------------------------------------+
-```
+Uppdatera `fetchPresentation`-funktionen sa att:
 
-Denna visas som en diskret `text-muted-foreground text-xs`-text med en mail-ikon, placerad direkt under "Boka intervju"-knappen men före "Avbryt".
+1. Importera `useAuth` fran AuthContext
+2. Om anvandaren ar admin: fraga utan `.eq('status', 'published')` -- detta fungerar tack vare den befintliga RLS-policyn "Admins can view all presentations"
+3. Om anvandaren inte ar admin (publik besokare): behall filtret `.eq('status', 'published')` som forut
+4. Visa en tydlig banner langst upp pa sidan nar presentationen ar ett utkast, sa att admin vet att det ar en forhandsvisning
 
-### 3. Förbättra bekräftelsemeddelandet
+### Tekniska detaljer
 
-Efter lyckad bokning uppdateras texten:
+**Fil: src/pages/CandidatePresentation.tsx**
 
-- **Före**: "Vi har skickat en bekräftelse till din e-post. Du kommer snart få information om när din AI-intervju äger rum."
-- **Efter**: "Vi har skickat en intervjulänk till din e-post. Om du inte hittar mailet inom några minuter, kontrollera din skräppost."
-
-## Tekniska detaljer
-
-### Filer som ändras
-
-| Fil | Ändringar |
-|-----|-----------|
-| `src/pages/JobDetail.tsx` | Byt rubrik (rad 670), CTA-text (rad 687), submit-text (rad 810), bekräftelsetext (rad 694-696), lägg till info-text under submit |
-| `src/pages/DemoJobDetail.tsx` | Samma ändringar (rad 565, 582, 703, 590-592) |
-
-### Ny info-ruta (kod)
-
-Läggs till mellan submit-knappen och avbryt-knappen:
-
+Steg 1 -- Importera `useAuth`:
 ```tsx
-<p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
-  <Mail className="w-3 h-3" />
-  En intervjulänk skickas till din e-post. Kolla skräpposten om mailet dröjer.
-</p>
+import { useAuth } from "@/contexts/AuthContext";
 ```
 
-`Mail`-ikonen importeras redan inte -- den behöver läggas till i lucide-react-importen.
+Steg 2 -- Anvand `useAuth` i komponenten:
+```tsx
+const { isAdmin } = useAuth();
+```
 
-Inga databas- eller backend-ändringar behövs.
+Steg 3 -- Uppdatera fragan (rad 60-96):
+```tsx
+let query = supabase
+  .from('candidate_presentations')
+  .select(`...`) // samma select som idag
+  .eq('share_token', token);
+
+// Bara filtrera pa published for icke-admins
+if (!isAdmin) {
+  query = query.eq('status', 'published');
+}
+
+const { data, error: fetchError } = await query.maybeSingle();
+```
+
+Steg 4 -- Lagg till utkast-banner i renderingen:
+```tsx
+{data?.status === 'draft' && isAdmin && (
+  <div className="bg-warning text-warning-foreground px-4 py-2 text-center text-sm font-medium">
+    Forhandsvisning -- denna presentation ar annu inte publicerad
+  </div>
+)}
+```
+
+### Sammanfattning
+
+| Fil | Andring |
+|-----|---------|
+| `CandidatePresentation.tsx` | Ta bort `status = published`-filter for admins, lagg till utkast-banner |
+
+En fil, en enkel andring. Inga databas- eller backend-andringar behovs -- den befintliga RLS-policyn for admins tillater redan lasning av alla presentationer.

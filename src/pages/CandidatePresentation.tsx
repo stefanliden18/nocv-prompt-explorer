@@ -43,14 +43,15 @@ interface PresentationRow {
 
 export default function CandidatePresentation() {
   const { token } = useParams();
-  const { isAdmin } = useAuth();
+  const { isAdmin, loading: authLoading } = useAuth();
   const [presentation, setPresentation] = useState<PresentationRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     fetchPresentation();
-  }, [token]);
+  }, [token, isAdmin, authLoading]);
 
   const fetchPresentation = async () => {
     if (!token) {
@@ -118,7 +119,7 @@ export default function CandidatePresentation() {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-muted/30 p-4">
         <div className="max-w-3xl mx-auto space-y-4">

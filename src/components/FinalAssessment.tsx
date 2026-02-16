@@ -47,6 +47,7 @@ interface FinalAssessmentProps {
   screeningCompleted: boolean;
   onComplete: (result: FinalResult, presentation: PresentationInfo) => void;
   onPublish: (presentation: PresentationInfo) => void;
+  onAssessmentUpdate?: (updates: Partial<FinalResult>) => void;
 }
 
 export function FinalAssessment({
@@ -60,6 +61,7 @@ export function FinalAssessment({
   screeningCompleted,
   onComplete,
   onPublish,
+  onAssessmentUpdate,
 }: FinalAssessmentProps) {
   const { toast } = useToast();
   const [transcriptText, setTranscriptText] = useState('');
@@ -330,6 +332,15 @@ export function FinalAssessment({
                 initialSoftValuesNotes={extendedPresentation?.soft_values_notes}
                 initialSkillScores={extendedPresentation?.skill_scores}
                 onSave={fetchExtendedPresentationData}
+                onAssessmentUpdate={(updates) => {
+                  onAssessmentUpdate?.({
+                    summary: updates.summary ?? existingAssessment.summary,
+                    technical_assessment: updates.technical_assessment ?? existingAssessment.technical_assessment,
+                    soft_skills_assessment: updates.soft_skills_assessment ?? existingAssessment.soft_skills_assessment,
+                    strengths: updates.strengths ?? existingAssessment.strengths,
+                    concerns: updates.concerns ?? existingAssessment.concerns,
+                  });
+                }}
               />
             </CollapsibleContent>
           </Collapsible>

@@ -1,68 +1,63 @@
 
-
-# Fix: "Oppna forhandsvisning" fungerar inte for utkast
+# Fix: Förhandsvisning av utkast fungerar inte (timing-problem)
 
 ## Problemet
 
-Knappen "Oppna forhandsvisning" oppnar `/presentation/:token` i en ny flik. Men sidan (`CandidatePresentation.tsx`) filtrerar pa `status = 'published'` (rad 95), sa utkast ("draft") hittas aldrig. Dessutom kraver RLS-policyn for publik atkomst att `status = 'published'`.
+Koden vi lade till (`if (!isAdmin)`) är korrekt i sig, men det finns ett timing-problem:
 
-Resultatet: admin klickar pa knappen, en ny flik oppnas, men presentationen visas inte eftersom den annu ar ett utkast.
+1. Presentationssidan oppnas i en **ny flik**
+2. I den nya fliken startar `isAdmin` som `false` (standardvardet)
+3. `useEffect` kör `fetchPresentation()` direkt (beror bara på `token`)
+4. Frågan körs med `isAdmin = false`, vilket lägger till `.eq('status', 'published')`
+5. John Walkers presentation har `status = 'draft'` -- den hittas inte
+6. Erst **efter** att frågan redan körts hinner auth-kontexten ladda och sätta `isAdmin = true`
 
-## Losning
+Resultatet: admin ser "Presentationen hittades inte" trots att de är inloggade.
 
-Ge inloggade admins mojlighet att forhandsgranska utkast genom att ta bort `status`-filtret i fragan nar anvandaren ar inloggad som admin, och behalla det for publika besokare.
+## Lösningen
 
-### Andring i src/pages/CandidatePresentation.tsx
+Vänta tills auth har laddats klart innan frågan körs. AuthContext exponerar redan `loading` -- vi använder den.
 
-Uppdatera `fetchPresentation`-funktionen sa att:
+### Ändring i src/pages/CandidatePresentation.tsx
 
-1. Importera `useAuth` fran AuthContext
-2. Om anvandaren ar admin: fraga utan `.eq('status', 'published')` -- detta fungerar tack vare den befintliga RLS-policyn "Admins can view all presentations"
-3. Om anvandaren inte ar admin (publik besokare): behall filtret `.eq('status', 'published')` som forut
-4. Visa en tydlig banner langst upp pa sidan nar presentationen ar ett utkast, sa att admin vet att det ar en forhandsvisning
+**Steg 1** -- Hämta `loading` från auth-kontexten (utöver `isAdmin`):
 
-### Tekniska detaljer
-
-**Fil: src/pages/CandidatePresentation.tsx**
-
-Steg 1 -- Importera `useAuth`:
 ```tsx
-import { useAuth } from "@/contexts/AuthContext";
+const { isAdmin, loading: authLoading } = useAuth();
 ```
 
-Steg 2 -- Anvand `useAuth` i komponenten:
+**Steg 2** -- Lägg till `isAdmin` och `authLoading` i useEffect-beroendena och vänta tills auth är klar:
+
 ```tsx
-const { isAdmin } = useAuth();
+useEffect(() => {
+  if (authLoading) return; // Vänta tills auth är klar
+  fetchPresentation();
+}, [token, isAdmin, authLoading]);
 ```
 
-Steg 3 -- Uppdatera fragan (rad 60-96):
-```tsx
-let query = supabase
-  .from('candidate_presentations')
-  .select(`...`) // samma select som idag
-  .eq('share_token', token);
+**Steg 3** -- Visa laddningsskelett även medan auth laddar (uppdatera loading-checken):
 
-// Bara filtrera pa published for icke-admins
-if (!isAdmin) {
-  query = query.eq('status', 'published');
+```tsx
+if (loading || authLoading) {
+  return (
+    <div className="min-h-screen bg-muted/30 p-4">
+      ...skeleton...
+    </div>
+  );
 }
-
-const { data, error: fetchError } = await query.maybeSingle();
 ```
 
-Steg 4 -- Lagg till utkast-banner i renderingen:
-```tsx
-{data?.status === 'draft' && isAdmin && (
-  <div className="bg-warning text-warning-foreground px-4 py-2 text-center text-sm font-medium">
-    Forhandsvisning -- denna presentation ar annu inte publicerad
-  </div>
-)}
-```
+### Varfor detta löser problemet
+
+- `authLoading` startar som `true` medan sessionen hämtas
+- `useEffect` väntar tills `authLoading` blir `false`
+- Vid den tidpunkten har `isAdmin` rätt värde (`true` för admin)
+- Frågan körs utan `.eq('status', 'published')` och John Walkers utkast hittas
 
 ### Sammanfattning
 
-| Fil | Andring |
+| Fil | Ändring |
 |-----|---------|
-| `CandidatePresentation.tsx` | Ta bort `status = published`-filter for admins, lagg till utkast-banner |
+| `CandidatePresentation.tsx` | Lägg till `authLoading` check innan frågan körs, uppdatera useEffect-beroenden |
 
-En fil, en enkel andring. Inga databas- eller backend-andringar behovs -- den befintliga RLS-policyn for admins tillater redan lasning av alla presentationer.
+En fil, tre små ändringar. Ingen databas- eller backend-ändring behövs.

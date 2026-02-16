@@ -1,73 +1,40 @@
 
 
-# Fix: Sparade ändringar visas inte i presentationsförhandsgranskningen
+# Lägg till motiverande texter i bokningsflödet
 
-## Problemet
+## Översikt
 
-Nar du redigerar texter (sammanfattning, styrkor, utvecklingsomraden etc.) och klickar "Spara", sa sparas andringarna till databasen men den grona forhandsgranskningen pa samma sida uppdateras INTE. Det beror pa att:
+Två textändringar i bokningsflödet för att få kandidater att känna sig trygga och våga genomföra intervjun.
 
-1. Editorn sparar till databasen -- det fungerar
-2. Men editorn meddelar aldrig foraldern om vad som andrats
-3. Den grona forhandsgranskningen visar fortfarande den gamla datan fran nar sidan laddades
+## Ändring 1: Motiverande text ovanför namnfältet
 
-## Losning
+Visas i formuläret, precis ovanför "Namn *":
 
-Tva andringar i `FinalAssessment.tsx`:
+> Du som hör på en motor om något är fel -- det här är din chans. Vi har byggt en intervju som testar hur du tänker, inte hur du skriver. Inga CV, inga ansökningsbrev, inga konstigheter. Fyll i nedan så skickar vi en länk. Tar ungefär 10 minuter och du gör det när du vill -- i soffan, på lunchen eller i verkstaden (vi skvallrar inte). Det är bara att köra igång när det passar dig :)
 
-### 1. Skicka med `onAssessmentUpdate` till editorn
+## Ändring 2: Ny bekräftelsetext efter bokning
 
-Editorn har redan stod for en `onAssessmentUpdate`-callback men den skickas aldrig med fran `FinalAssessment`. Vi lagger till den och nar den anropas uppdaterar vi `existingAssessment`-statet via en ny callback upp till `CandidateAssessment`.
+Ersätter nuvarande bekräftelsemeddelande med:
 
-### 2. Lagg till en `onAssessmentUpdate`-prop pa `FinalAssessment` och hantera den i `CandidateAssessment`
+**Rubrik:** "Snyggt!"
 
-`CandidateAssessment` behover en funktion som uppdaterar sitt `finalAssessment`-state nar editorn sparar.
+**Text:**
+> Du har tagit första steget. Om en minut landar ett mail i din inbox med en länk till din intervju. Den tar drygt 10 minuter och handlar om dina motorkunskaper -- inga kuggfrågor, bara riktiga grejer du kan. Ingen ser dig, ingen dömer dig. Du svarar i din egen takt. Lycka till!
+>
+> Hittar du inget mail? Kolla skräpposten -- ibland hamnar det där.
+
+## Filer som ändras
+
+| Fil | Ändring |
+|-----|---------|
+| `src/pages/JobDetail.tsx` | Motiverande text ovanför namnfältet + ny bekräftelsetext med skräppost-tips |
+| `src/pages/DemoJobDetail.tsx` | Samma ändringar i demo-versionen |
 
 ## Tekniska detaljer
 
-### Fil 1: `src/components/CandidateAssessment.tsx`
+Motiverande texten läggs in som ett `<p>`-element med klassen `text-sm text-muted-foreground leading-relaxed` direkt efter `<form>`-taggen och före det första formulärfältet.
 
-- Lagg till en `handleAssessmentUpdate`-funktion som mergar in uppdateringar i `finalAssessment`-statet:
+Bekräftelsetexten uppdateras i det befintliga "success"-blocket. Rubriken ändras till "Snyggt!" och beskrivningen byts ut. Skräppost-tipset visas som en separat rad med kursiv stil.
 
-```tsx
-const handleAssessmentUpdate = (updates: Partial<FinalResult>) => {
-  setFinalAssessment(prev => prev ? { ...prev, ...updates } : prev);
-};
-```
+Inga backend-ändringar behövs.
 
-- Skicka med `onAssessmentUpdate={handleAssessmentUpdate}` till `FinalAssessment`
-
-### Fil 2: `src/components/FinalAssessment.tsx`
-
-- Lagg till `onAssessmentUpdate` i props-interfacet:
-
-```tsx
-onAssessmentUpdate?: (updates: Partial<FinalResult>) => void;
-```
-
-- Destrukturera den i komponenten
-- Skicka vidare till `CandidatePresentationEditor`:
-
-```tsx
-<CandidatePresentationEditor
-  ...
-  onAssessmentUpdate={(updates) => {
-    // Uppdatera foraldern sa den grona forhandsgranskningen visar ratt data
-    onAssessmentUpdate?.({
-      summary: updates.summary ?? existingAssessment.summary,
-      technical_assessment: updates.technical_assessment ?? existingAssessment.technical_assessment,
-      soft_skills_assessment: updates.soft_skills_assessment ?? existingAssessment.soft_skills_assessment,
-      strengths: updates.strengths ?? existingAssessment.strengths,
-      concerns: updates.concerns ?? existingAssessment.concerns,
-    });
-  }}
-/>
-```
-
-### Sammanfattning
-
-| Fil | Andring |
-|-----|---------|
-| `CandidateAssessment.tsx` | Ny `handleAssessmentUpdate`-funktion, skicka som prop till FinalAssessment |
-| `FinalAssessment.tsx` | Ny prop `onAssessmentUpdate`, skicka vidare till CandidatePresentationEditor |
-
-Tva filer, sma andringar. Resultatet: nar du trycker "Spara" uppdateras bade databasen och den grona forhandsgranskningen direkt.

@@ -12,11 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserInviteDialog } from '@/components/UserInviteDialog';
+import { UserDeleteDialog } from '@/components/UserDeleteDialog';
 import { UserRoleDialog } from '@/components/UserRoleDialog';
 import { UserStatusToggle } from '@/components/UserStatusToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
-import { UserPlus, Search, Loader2, MoreHorizontal } from 'lucide-react';
+import { UserPlus, Search, Loader2, MoreHorizontal, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -37,6 +38,7 @@ export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [activeAdminCount, setActiveAdminCount] = useState(0);
 
@@ -128,6 +130,11 @@ export default function AdminUsers() {
   const handleRoleChange = (user: UserData) => {
     setSelectedUser(user);
     setRoleDialogOpen(true);
+  };
+
+  const handleDeleteUser = (user: UserData) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
   };
 
   return (
@@ -228,6 +235,15 @@ export default function AdminUsers() {
                                 <DropdownMenuItem onClick={() => handleRoleChange(user)}>
                                   Byt roll
                                 </DropdownMenuItem>
+                                {!isLastAdmin(user) && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteUser(user)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Ta bort användare
+                                  </DropdownMenuItem>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </TableCell>
@@ -256,6 +272,16 @@ export default function AdminUsers() {
           currentRole={selectedUser.role}
           userEmail={selectedUser.email}
           isLastAdmin={isLastAdmin(selectedUser)}
+          onSuccess={fetchUsers}
+        />
+      )}
+
+      {selectedUser && (
+        <UserDeleteDialog
+          open={deleteDialogOpen}
+          onOpenChange={setDeleteDialogOpen}
+          userId={selectedUser.id}
+          userEmail={selectedUser.email}
           onSuccess={fetchUsers}
         />
       )}

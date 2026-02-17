@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from 'react-markdown';
 import DOMPurify from 'isomorphic-dompurify';
 import { analytics } from "@/lib/analytics";
+import { trackMetaEvent } from "@/lib/metaPixel";
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { utcToStockholm } from '@/lib/timezone';
@@ -90,6 +91,11 @@ const JobDetail = () => {
   useEffect(() => {
     if (job) {
       analytics.trackJobView(job.id, job.title);
+      trackMetaEvent('ViewContent', {
+        content_name: job.title,
+        content_ids: [job.id],
+        content_type: 'job',
+      });
     }
   }, [job]);
 

@@ -1,57 +1,45 @@
 
 
-# Ta bort obehörig användare och stäng registrering
+# Installera Meta Pixel
 
-## Bakgrund
+## Oversikt
 
-Inloggningssidan (`/auth`) har en offentlig "Registrera"-flik som tillater vem som helst att skapa ett konto. Det ar sa "gino_bmw@hotmail.com" kom in. Vi behover atgarda detta pa tva satt.
+Vi installerar Meta Pixel med ID `506887683107389` pa hela hemsidan. Pixeln spaarar sidvisningar automatiskt och vi laegger till haendelsespaaring for viktiga handlingar.
 
-## Steg 1: Ta bort Gino
+## Filer som skapas/aendras
 
-Ginos konto har hittats i databasen:
-- E-post: gino_bmw@hotmail.com
-- ID: `76cca22b-4fe3-4284-8c97-c7f843c22ab6`
-- Roll: user
-
-Vi skapar en edge function (`delete-user`) som:
-- Verifierar att anroparen ar admin
-- Tar bort anvandaren fran `auth.users` (som kaskaderar till `profiles` och `user_roles`)
-
-Alternativt kan vi ta bort anvandaren direkt via en databasmigration.
-
-## Steg 2: Ta bort registreringsfliken
-
-Filen `src/pages/Auth.tsx` har en "Registrera"-flik (rad 78, 138-169) som tillater offentlig registrering. Vi tar bort den helt sa att:
-- Bara "Logga in" och "Magic Link" visas
-- Ingen kan langre skapa konton sjalv
-- Nya anvandare kan bara skapas via admin-panelen ("Ny anvandare"-knappen)
-
-## Steg 3: Lagg till "Ta bort"-alternativ i admin-panelen
-
-Vi lagger till ett "Ta bort anvandare"-alternativ i atgardsmenyn (dropdown) pa anvandarsidan, sa att administratorer kan ta bort anvandare i framtiden.
-
-## Filer som andras
-
-| Fil | Andring |
+| Fil | Aendring |
 |-----|---------|
-| `src/pages/Auth.tsx` | Ta bort "Registrera"-fliken helt, behall bara inloggning |
-| `supabase/functions/delete-user/index.ts` | Ny edge function for att ta bort anvandare (admin-skyddad) |
-| `src/pages/admin/Users.tsx` | Lagg till "Ta bort"-alternativ i dropdown-menyn |
+| `src/components/MetaPixel.tsx` | Ny komponent som laddar pixelskriptet och spaarar sidvisningar vid navigation |
+| `src/lib/metaPixel.ts` | Hjaelpfunktioner for att skicka haendelser (Lead, Contact, ViewContent) |
+| `src/App.tsx` | Importera och rendera MetaPixel-komponenten |
+| `src/pages/JobDetail.tsx` | Laegga till ViewContent-haendelse vid jobbvisning |
+| `src/pages/Contact.tsx` | Laegga till Lead-haendelse vid inskickat kontaktformular |
 
 ## Tekniska detaljer
 
-### Auth.tsx
-- Ta bort `Tabs`, `TabsList`, `TabsTrigger` och `TabsContent value="signup"` 
-- Behall inloggningsformularet och Magic Link-formularet utan flikar
-- Ta bort `signUp`-importen fran `useAuth`
+### MetaPixel.tsx
+- Injicerar Meta Pixel-baskoden i `<head>` via `useEffect`
+- Initierar pixeln med ID `506887683107389`
+- Lyssnar pa route-forandringar via `useLocation` fran react-router-dom och skickar `PageView` vid varje navigering
+- Inkluderar `<noscript>`-fallback via en dold bild
 
-### delete-user edge function
+### metaPixel.ts
 ```typescript
-// Verifierar admin-roll via token
-// Anropar supabaseAdmin.auth.admin.deleteUser(userId)
-// Returnerar success/error
+// Deklarera fbq pa window-objektet
+declare global {
+  interface Window { fbq: any; }
+}
+
+export const trackMetaEvent = (eventName: string, params?: Record<string, any>) => {
+  if (window.fbq) {
+    window.fbq('track', eventName, params);
+  }
+};
 ```
 
-### Users.tsx
-- Lagg till en `DropdownMenuItem` for "Ta bort anvandare" med bekraftelsedialog
-- Forhindra borttagning av sista adminen
+### Haendelser som spaaras
+- **PageView** - automatiskt vid varje sidnavigering
+- **ViewContent** - naar naagon tittar pa en jobbannons
+- **Lead** - naar naagon skickar kontaktformularet
+

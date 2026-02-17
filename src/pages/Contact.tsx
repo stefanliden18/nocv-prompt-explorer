@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ange ditt namn"),
@@ -81,6 +82,7 @@ const Contact = () => {
         description: "Vi återkommer till dig inom kort.",
       });
       
+      trackMetaEvent('Lead', { content_name: 'Contact Form' });
       form.reset();
       setIsSubmitted(true);
       

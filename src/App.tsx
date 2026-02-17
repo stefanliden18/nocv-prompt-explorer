@@ -37,6 +37,7 @@ import CompaniesEdit from "./pages/admin/CompaniesEdit";
 import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
 import RequirementTemplates from "./pages/admin/RequirementTemplates";
 import CandidatePresentation from "./pages/CandidatePresentation";
+import MetaPixel from "./components/MetaPixel";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
         <AuthProvider>
           <Toaster />
         <Sonner />
+        <MetaPixel />
         <Routes>
             <Route path="/" element={<Index />} />
           <Route path="/jobs" element={<Jobs />} />

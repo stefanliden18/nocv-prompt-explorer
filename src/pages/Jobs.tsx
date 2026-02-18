@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { MapPin, Building2, Search } from "lucide-react";
+import JobsInfoBubble from "@/components/JobsInfoBubble";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { supabase } from "@/integrations/supabase/client";
@@ -332,10 +333,11 @@ const Jobs = () => {
 
           {/* Results counter */}
           {!loading && (
-            <div className="text-center mb-8">
+            <div className="flex items-center justify-center gap-2 mb-8">
               <p className="text-white/80 drop-shadow-md">
                 Visar {filteredJobs.length > 0 ? startIndex + 1 : 0}-{Math.min(startIndex + filteredJobs.length, totalCount)} av {totalCount} jobb
               </p>
+              <JobsInfoBubble />
             </div>
           )}
         </div>

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileCheck, Clock, Target, MessageSquare } from "lucide-react";
+import { FileCheck, Clock, Target, MessageSquare, MousePointerClick, BarChart3, Handshake } from "lucide-react";
+import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 
@@ -53,7 +54,50 @@ const Candidates = () => {
         </div>
       </section>
 
-      {/* How it works */}
+      {/* Så funkar det — compact */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-4">
+              Så funkar det
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Fyra enkla steg — från klick till jobbmatchning.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto mb-10">
+            {[
+              { number: 1, icon: MousePointerClick, title: "Välj roll och starta", time: "30 sek", color: "text-primary" },
+              { number: 2, icon: MessageSquare, title: "Svara på yrkesfrågor", time: "~10 min", color: "text-secondary" },
+              { number: 3, icon: BarChart3, title: "Vi förstår din nivå", time: "Automatiskt", color: "text-primary" },
+              { number: 4, icon: Handshake, title: "Matchning med arbetsgivare", time: "Vi hör av oss", color: "text-secondary" },
+            ].map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <Card key={index} className="bg-white border border-border hover:shadow-card transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <CardContent className="p-6 text-center">
+                    <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold font-heading text-sm mx-auto mb-3">
+                      {step.number}
+                    </div>
+                    <Icon size={32} className={`${step.color} mx-auto mb-3`} strokeWidth={1.5} />
+                    <h3 className="font-semibold font-heading text-foreground mb-1 text-sm">{step.title}</h3>
+                    <span className="text-xs font-medium text-secondary">{step.time}</span>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          <div className="text-center">
+            <Button variant="cta-primary" size="lg" asChild>
+              <Link to="/jobs">Testa nu — se lediga jobb</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits */}
       <section className="py-20 bg-background">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center mb-16">

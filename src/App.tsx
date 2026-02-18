@@ -37,6 +37,7 @@ import CompaniesEdit from "./pages/admin/CompaniesEdit";
 import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
 import RequirementTemplates from "./pages/admin/RequirementTemplates";
 import CandidatePresentation from "./pages/CandidatePresentation";
+import HowItWorks from "./pages/HowItWorks";
 import MetaPixel from "./components/MetaPixel";
 
 const queryClient = new QueryClient();
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/companies" element={<Companies />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/om-oss" element={<About />} />
+            <Route path="/sa-funkar-det" element={<HowItWorks />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/admin" 

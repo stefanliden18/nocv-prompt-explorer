@@ -1,45 +1,47 @@
 
 
-# Installera Meta Pixel
+# Uppdatera avsandaradresser till nocv.se
 
 ## Oversikt
 
-Vi installerar Meta Pixel med ID `506887683107389` pa hela hemsidan. Pixeln spaarar sidvisningar automatiskt och vi laegger till haendelsespaaring for viktiga handlingar.
+Din doman ar verifierad i Resend (DKIM, SPF, MX — alla grona). Nu behoever vi uppdatera de fyra backend-funktioner som fortfarande anvaender testadressen `onboarding@resend.dev` till `noreply@nocv.se`.
 
-## Filer som skapas/aendras
+## Vad som aendras
 
-| Fil | Aendring |
-|-----|---------|
-| `src/components/MetaPixel.tsx` | Ny komponent som laddar pixelskriptet och spaarar sidvisningar vid navigation |
-| `src/lib/metaPixel.ts` | Hjaelpfunktioner for att skicka haendelser (Lead, Contact, ViewContent) |
-| `src/App.tsx` | Importera och rendera MetaPixel-komponenten |
-| `src/pages/JobDetail.tsx` | Laegga till ViewContent-haendelse vid jobbvisning |
-| `src/pages/Contact.tsx` | Laegga till Lead-haendelse vid inskickat kontaktformular |
+Fyra filer behoever uppdateras — samma aendring i alla: byta `from`-adressen.
+
+| Funktion | Nuvarande avsandare | Ny avsandare |
+|----------|---------------------|--------------|
+| send-interview-cancellation | `NoCV <onboarding@resend.dev>` | `NoCV <noreply@nocv.se>` |
+| send-interview-reminder | `NoCV <onboarding@resend.dev>` | `NoCV <noreply@nocv.se>` |
+| send-interview-invitation | `NoCV <onboarding@resend.dev>` | `NoCV <noreply@nocv.se>` |
+| send-user-invitation | `NoCV <onboarding@resend.dev>` | `NoCV <noreply@nocv.se>` |
+
+## Funktioner som redan ar klara
+
+Dessa anvaender redan ratt adress och behoever inte aendras:
+
+- send-contact-email (`noreply@nocv.se`)
+- send-job-tip (`noreply@nocv.se`)
+- send-getkiku-invitation (`noreply@nocv.se`)
+- send-application-email (`noreply@nocv.se`)
+- send-nocv-tip (`noreply@nocv.se`)
+
+## Resultat
+
+Efter uppdateringen kan alla e-postutskick (intervjuinbjudningar, paeminnelser, avbokningar, anvaendarinbjudningar) skickas till vilken mottagare som helst — inte bara testadresser.
 
 ## Tekniska detaljer
 
-### MetaPixel.tsx
-- Injicerar Meta Pixel-baskoden i `<head>` via `useEffect`
-- Initierar pixeln med ID `506887683107389`
-- Lyssnar pa route-forandringar via `useLocation` fran react-router-dom och skickar `PageView` vid varje navigering
-- Inkluderar `<noscript>`-fallback via en dold bild
+Aendringen aer enkel — en rad per fil. Exempelvis:
 
-### metaPixel.ts
-```typescript
-// Deklarera fbq pa window-objektet
-declare global {
-  interface Window { fbq: any; }
-}
+```
+// Fore:
+from: "NoCV <onboarding@resend.dev>"
 
-export const trackMetaEvent = (eventName: string, params?: Record<string, any>) => {
-  if (window.fbq) {
-    window.fbq('track', eventName, params);
-  }
-};
+// Efter:
+from: "NoCV <noreply@nocv.se>"
 ```
 
-### Haendelser som spaaras
-- **PageView** - automatiskt vid varje sidnavigering
-- **ViewContent** - naar naagon tittar pa en jobbannons
-- **Lead** - naar naagon skickar kontaktformularet
+Funktionerna distribueras automatiskt efter aendringen.
 

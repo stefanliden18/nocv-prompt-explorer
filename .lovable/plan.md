@@ -1,57 +1,85 @@
 
-# Komplett intervjubokningsflöde i kundportalen
 
-## Problem idag
-- Kandidater i portalen har ingen e-postadress lagrad
-- Ingen e-post skickas vid bokning
-- Ingen kalenderintegration (iCal) finns
-- Ingen spårning av om kandidaten bekraftat
+# Inbjudningsflode for kundportal-anvandare
 
-## Plan
+## Oversikt
+Bygga ett admin-granssnitt dar NoCV-admins kan bjuda in kundportal-anvandare. Flödet: admin valjer foretag, anger e-post och namn, skickar inbjudan. Systemet skapar auth-anvandare, `company_users`-koppling och skickar portalspecifikt valkomstmail.
 
-### 1. Lagg till e-post pa portal_candidates
-Ny databaskolumn `email` (text, nullable) pa tabellen `portal_candidates`.
+## Komponenter som skapas/andras
 
-### 2. Skicka bokningsmail vid intervjubokning
-Nar en intervju bokas i `PortalBooking.tsx`, anropa en edge function som skickar ett snyggt mail till kandidaten med:
-- Datum och tid
-- Plats/moteeslank
-- Eventuella anteckningar
-- En iCal-bilaga (.ics-fil) som kandidaten kan lagga till i sin kalender
+### 1. Ny komponent: `PortalUserInviteDialog`
+En dialog med:
+- Dropdown for att valja foretag (hamtas fran `companies`-tabellen)
+- Inputfalt for e-post och namn
+- Knapp "Skicka inbjudan"
 
-### 3. Skapa edge function: send-portal-interview-invitation
-En ny backend-funktion som:
-- Tar emot `portalInterviewId`
-- Hamtar kandidat- och intervjudata fran databasen
-- Genererar en iCal-fil (.ics) som e-postbilaga
-- Skickar mailet via Resend (avsandare: noreply@nocv.se)
+Placeras pa admin Users-sidan (`/admin/users`) med en extra knapp "Bjud in portalanvandare" bredvid den befintliga "Ny anvandare"-knappen.
 
-### 4. Uppdatera PortalBooking.tsx
-Efter lyckad bokning, anropa edge-funktionen for att skicka mailet. Visa tydlig feedback om att mail skickats (eller ej, om e-post saknas).
+### 2. Ny edge function: `invite-portal-user`
+Hanterar hela flödet server-side:
+1. Validerar att anroparen ar admin (via `getClaims`)
+2. Skapar auth-anvandare via `supabase.auth.admin.inviteUserByEmail`
+3. Skapar `company_users`-rad som kopplar anvandaren till valt foretag (med namn och roll "viewer")
+4. Anropar `send-portal-invitation` for att skicka valkomstmail
 
-### 5. Visa bekraftelsestatus (enkel version)
-Lagg till en kolumn `email_sent` (boolean) pa `portal_interviews` sa att det syns i intervjulistan om mail gatt ut. Kalenderbekraftelse fran kandidaten kan **inte** sparas automatiskt utan en extern tjanst (Google/Outlook API), men iCal-bilagan gor det enkelt for kandidaten att lagga in motet.
+### 3. Ny edge function: `send-portal-invitation`
+Skickar portal-specifikt valkomstmail via Resend med:
+- Foretagsnamn
+- Lanken pekar till `/auth` (samma inloggningssida)
+- Portal-specifik design och text som forklarar att de kan se kandidater och boka intervjuer
 
----
+### 4. Andring i `src/pages/admin/Users.tsx`
+- Lagg till knappen "Bjud in portalanvandare"
+- Importera och rendera `PortalUserInviteDialog`
 
 ## Tekniska detaljer
 
-### Databasandringar
-```sql
-ALTER TABLE portal_candidates ADD COLUMN email text;
-ALTER TABLE portal_interviews ADD COLUMN email_sent boolean DEFAULT false;
+### Edge function: `invite-portal-user`
+```text
+supabase/functions/invite-portal-user/index.ts
+
+Input: { email, name, companyId }
+1. Validera admin via getClaims()
+2. Skapa Supabase admin-klient med service role
+3. Kolla om anvandare redan finns (listUsers)
+   - Om ja: skapa company_users-koppling om den saknas
+   - Om nej: inviteUserByEmail, sen skapa company_users
+4. Anropa send-portal-invitation med email, name, foretagsnamn, inviteLink
+5. Returnera resultat
 ```
 
-### Ny edge function: send-portal-interview-invitation
-- Hamtar intervju + kandidatdata via service role
-- Bygger iCal (.ics) innehall som textbilaga
-- Skickar via Resend med HTML-mall liknande befintliga intervjumail
-- Returnerar success/failure
+### Edge function: `send-portal-invitation`
+```text
+supabase/functions/send-portal-invitation/index.ts
 
-### Filandringar
-- `supabase/functions/send-portal-interview-invitation/index.ts` (ny)
-- `src/pages/portal/PortalBooking.tsx` (anropa edge function efter bokning)
-- `src/pages/portal/PortalCandidateProfile.tsx` (visa e-post om den finns)
+Input: { email, name, companyName, inviteLink }
+Skicka e-post via Resend fran "NoCV <noreply@nocv.se>"
+Innehall: Valkommen till kundportalen, du kan se kandidater for [foretagsnamn]
+```
 
-### Begrensningar
-- Kalenderbekraftelse (RSVP-tracking) kraver integration med Google Calendar API eller Microsoft Graph — ligger utanfor scope. iCal-bilagan ar den pragmatiska losningen.
+### Config (supabase/config.toml)
+```text
+[functions.invite-portal-user]
+verify_jwt = false
+
+[functions.send-portal-invitation]
+verify_jwt = false
+```
+
+### Flode
+
+```text
+Admin klickar "Bjud in portalanvandare"
+  -> Valjer foretag, anger e-post + namn
+  -> Frontend anropar invite-portal-user
+  -> Edge function:
+     1. Verifierar admin
+     2. Skapar/hittar auth-anvandare
+     3. Skapar company_users-rad
+     4. Skickar valkomstmail
+  -> Kunden far mail med lank till /auth
+  -> Kunden loggar in -> AuthContext ser company_users -> redirect till /portal
+```
+
+Inga databasmigrationer behovs -- `company_users`-tabellen finns redan med ratt kolumner (`user_id`, `company_id`, `name`, `role`).
+

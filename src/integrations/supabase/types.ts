@@ -422,6 +422,44 @@ export type Database = {
         }
         Relationships: []
       }
+      company_users: {
+        Row: {
+          calendar_url: string | null
+          company_id: string
+          created_at: string
+          id: string
+          name: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          calendar_url?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          calendar_url?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_users_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gdpr_policies: {
         Row: {
           created_at: string
@@ -600,6 +638,199 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      portal_candidates: {
+        Row: {
+          audio_url: string | null
+          created_at: string
+          experience_years: number | null
+          id: string
+          name: string
+          position_id: string
+          presented_at: string | null
+          skill_level: string | null
+          status: string
+          strengths: string[] | null
+          summary: string | null
+          video_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          name: string
+          position_id: string
+          presented_at?: string | null
+          skill_level?: string | null
+          status?: string
+          strengths?: string[] | null
+          summary?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          created_at?: string
+          experience_years?: number | null
+          id?: string
+          name?: string
+          position_id?: string
+          presented_at?: string | null
+          skill_level?: string | null
+          status?: string
+          strengths?: string[] | null
+          summary?: string | null
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_candidates_position_id_fkey"
+            columns: ["position_id"]
+            isOneToOne: false
+            referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_interviews: {
+        Row: {
+          candidate_id: string
+          company_user_id: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          location_details: string | null
+          location_type: string
+          notes: string | null
+          scheduled_at: string
+          status: string
+        }
+        Insert: {
+          candidate_id: string
+          company_user_id: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          location_details?: string | null
+          location_type?: string
+          notes?: string | null
+          scheduled_at: string
+          status?: string
+        }
+        Update: {
+          candidate_id?: string
+          company_user_id?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          location_details?: string | null
+          location_type?: string
+          notes?: string | null
+          scheduled_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_interviews_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "portal_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_interviews_company_user_id_fkey"
+            columns: ["company_user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portal_notifications: {
+        Row: {
+          company_user_id: string
+          created_at: string
+          id: string
+          message: string
+          read: boolean
+          related_candidate_id: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          company_user_id: string
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          related_candidate_id?: string | null
+          title: string
+          type?: string
+        }
+        Update: {
+          company_user_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          read?: boolean
+          related_candidate_id?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_notifications_company_user_id_fkey"
+            columns: ["company_user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_notifications_related_candidate_id_fkey"
+            columns: ["related_candidate_id"]
+            isOneToOne: false
+            referencedRelation: "portal_candidates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      positions: {
+        Row: {
+          company_id: string
+          created_at: string
+          description: string | null
+          experience_level: string | null
+          id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          description?: string | null
+          experience_level?: string | null
+          id?: string
+          status?: string
+          title: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          experience_level?: string | null
+          id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "positions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -789,6 +1020,7 @@ export type Database = {
         Args: { p_email: string }
         Returns: undefined
       }
+      get_user_company_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

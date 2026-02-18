@@ -135,6 +135,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const getLoginRedirect = async (userId: string): Promise<string> => {
+    // Check if user is a portal user (company_users)
+    const { data: companyUser } = await supabase
+      .from('company_users')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (companyUser) return '/portal';
+    return '/admin';
+  };
+
   const signUp = async (email: string, password: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -149,13 +161,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      // Vänta på att rollen är klar innan vi navigerar
       if (data.user) {
         await checkAdminStatus(data.user.id);
+        const redirect = await getLoginRedirect(data.user.id);
+        navigate(redirect);
       }
       
       toast.success('Konto skapat! Du är nu inloggad.');
-      navigate('/admin');
     } catch (error: any) {
       toast.error(error.message || 'Kunde inte skapa konto');
       throw error;
@@ -171,13 +183,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) throw error;
       
-      // Vänta på att rollen är klar innan vi navigerar
       if (data.user) {
         await checkAdminStatus(data.user.id);
+        const redirect = await getLoginRedirect(data.user.id);
+        toast.success('Inloggad!');
+        navigate(redirect);
       }
-      
-      toast.success('Inloggad!');
-      navigate('/admin');
     } catch (error: any) {
       toast.error(error.message || 'Kunde inte logga in');
       throw error;

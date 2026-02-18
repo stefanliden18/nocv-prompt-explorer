@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User, Star, Calendar, Mail, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, User, Star, Calendar, Mail, Pencil, Check, X, FileText, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import PortalLayout from '@/components/portal/PortalLayout';
 import PortalStatusBadge from '@/components/portal/PortalStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
@@ -17,6 +19,7 @@ const skillLabels: Record<string, string> = {
 
 export default function PortalCandidateProfile() {
   const { id } = useParams<{ id: string }>();
+  const { isAdmin } = useAuth();
   const [candidate, setCandidate] = useState<any>(null);
   const [positionTitle, setPositionTitle] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,18 +27,30 @@ export default function PortalCandidateProfile() {
   const [emailDraft, setEmailDraft] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
 
+  // Presentation linking (admin only)
+  const [presentations, setPresentations] = useState<any[]>([]);
+  const [loadingPresentations, setLoadingPresentations] = useState(false);
+  const [savingPresentation, setSavingPresentation] = useState(false);
+
+  // Linked presentation data
+  const [linkedShareToken, setLinkedShareToken] = useState<string | null>(null);
+
   useEffect(() => {
     if (!id) return;
-    const fetch = async () => {
+    const fetchData = async () => {
       const { data } = await supabase
         .from('portal_candidates')
-        .select('*, positions(title, id)')
+        .select('*, positions(title, id), candidate_presentations(share_token, status)')
         .eq('id', id)
         .single();
 
       if (data) {
         setCandidate(data);
         setPositionTitle((data.positions as any)?.title || '');
+        const pres = data.candidate_presentations as any;
+        if (pres?.share_token && pres?.status === 'published') {
+          setLinkedShareToken(pres.share_token);
+        }
         // Mark as reviewed if new
         if (data.status === 'new') {
           await supabase.from('portal_candidates').update({ status: 'reviewed' }).eq('id', id);
@@ -43,8 +58,24 @@ export default function PortalCandidateProfile() {
       }
       setLoading(false);
     };
-    fetch();
+    fetchData();
   }, [id]);
+
+  // Fetch available presentations for admin linking
+  useEffect(() => {
+    if (!isAdmin || !candidate) return;
+    const fetchPresentations = async () => {
+      setLoadingPresentations(true);
+      const { data } = await supabase
+        .from('candidate_presentations')
+        .select('id, share_token, status, applications(candidate_name, jobs(title))')
+        .order('created_at', { ascending: false })
+        .limit(200);
+      setPresentations(data || []);
+      setLoadingPresentations(false);
+    };
+    fetchPresentations();
+  }, [isAdmin, candidate]);
 
   if (loading) {
     return (
@@ -87,6 +118,25 @@ export default function PortalCandidateProfile() {
       setCandidate({ ...candidate, email: trimmed || null });
       setEditingEmail(false);
       toast({ title: 'E-post uppdaterad' });
+    }
+  };
+
+  const handleLinkPresentation = async (presentationId: string) => {
+    setSavingPresentation(true);
+    const value = presentationId === '__none__' ? null : presentationId;
+    const { error } = await supabase
+      .from('portal_candidates')
+      .update({ presentation_id: value })
+      .eq('id', candidate.id);
+    setSavingPresentation(false);
+    if (error) {
+      toast({ title: 'Kunde inte koppla', description: error.message, variant: 'destructive' });
+    } else {
+      const linked = presentations.find((p: any) => p.id === value);
+      const token = linked?.share_token && linked?.status === 'published' ? linked.share_token : null;
+      setLinkedShareToken(token);
+      setCandidate({ ...candidate, presentation_id: value });
+      toast({ title: value ? 'Matchningsprofil kopplad' : 'Matchningsprofil borttagen' });
     }
   };
 
@@ -171,6 +221,67 @@ export default function PortalCandidateProfile() {
             </div>
           </div>
         </div>
+
+        {/* Matching Profile (Presentation) */}
+        {(linkedShareToken || isAdmin) && (
+          <div className="bg-card rounded-xl p-6 shadow-card mb-6">
+            <h2 className="text-lg font-heading font-semibold text-foreground mb-3 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Matchningsprofil
+            </h2>
+
+            {linkedShareToken && (
+              <div className="mb-4">
+                <Button asChild variant="outline" className="gap-2">
+                  <a href={`/presentation/${linkedShareToken}`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4" />
+                    Visa matchningsprofil
+                  </a>
+                </Button>
+              </div>
+            )}
+
+            {!linkedShareToken && !isAdmin && (
+              <p className="text-sm text-muted-foreground">Ingen matchningsprofil kopplad ännu.</p>
+            )}
+
+            {isAdmin && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {candidate.presentation_id ? 'Byt kopplad presentation:' : 'Koppla en kandidatpresentation:'}
+                </p>
+                <Select
+                  value={candidate.presentation_id || '__none__'}
+                  onValueChange={handleLinkPresentation}
+                  disabled={savingPresentation || loadingPresentations}
+                >
+                  <SelectTrigger className="w-full max-w-md">
+                    <SelectValue placeholder="Välj presentation..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Ingen koppling</SelectItem>
+                    {presentations.map((p: any) => {
+                      const app = p.applications as any;
+                      const name = app?.candidate_name || 'Okänd';
+                      const job = app?.jobs?.title || '';
+                      const statusLabel = p.status === 'published' ? '✅' : '⚠️ utkast';
+                      return (
+                        <SelectItem key={p.id} value={p.id}>
+                          {name} – {job} {statusLabel}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                {candidate.presentation_id && !linkedShareToken && (
+                  <p className="text-xs text-muted-foreground">
+                    ⚠️ Presentationen är inte publicerad ännu — kunden kan inte se den förrän den publiceras.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* AI Summary */}
         {candidate.summary && (

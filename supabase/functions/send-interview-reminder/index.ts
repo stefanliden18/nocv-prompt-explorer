@@ -70,7 +70,7 @@ serve(async (req) => {
         );
 
         const { error: emailError } = await resend.emails.send({
-          from: "NoCV <onboarding@resend.dev>",
+          from: "NoCV <noreply@nocv.se>",
           to: [app.email],
           subject: `Påminnelse: Intervju imorgon - ${jobTitle}`,
           html: emailHtml,

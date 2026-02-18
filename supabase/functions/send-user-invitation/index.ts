@@ -32,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     const emailResponse = await resend.emails.send({
-      from: "NoCV <onboarding@resend.dev>",
+      from: "NoCV <noreply@nocv.se>",
       to: [email],
       subject: "Inbjudan till NoCV",
       html: `

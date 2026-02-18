@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, Target, Clock } from "lucide-react";
+import { Eye, UserPlus, Zap } from "lucide-react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +11,6 @@ import { useNavigate } from "react-router-dom";
 const Companies = () => {
   const navigate = useNavigate();
   
-  // Fetch content from database
   const { data: contentSections } = useQuery({
     queryKey: ['page-content', 'companies'],
     queryFn: async () => {
@@ -33,23 +32,36 @@ const Companies = () => {
 
   const benefits = [
     {
-      icon: Users,
-      title: "Effektivare urval",
-      description: "Hitta kandidater baserat på faktiska kunskaper och erfarenhet istället för hur bra de är på att skriva CV.",
+      icon: Eye,
+      title: "Ni ser kompetens, inte CV",
+      description: "Våra AI-intervjuer testar kandidaterna på riktiga yrkesfrågor. Ni får en bedömning av deras faktiska kunskapsnivå – inte hur bra de är på att skriva om sig själva.",
       color: "text-primary"
     },
     {
-      icon: Target,
-      title: "Fler relevanta kandidater",
-      description: "Vårt system matchar kompetens med behov, vilket ger dig tillgång till fler kvalificerade kandidater.",
+      icon: UserPlus,
+      title: "Kandidater ni annars aldrig hittar",
+      description: "Många av de bästa teknikerna söker aldrig jobb med CV. De byter jobb genom kontakter. Med NoCV når ni dem – en snabb intervju på mobilen är enklare än att uppdatera ett CV.",
       color: "text-secondary"
     },
     {
-      icon: Clock,
-      title: "Kortare rekryteringstid",
-      description: "Automatiserade intervjuer och smart matchning minskar tiden från annons till anställning avsevärt.",
+      icon: Zap,
+      title: "Från annons till kandidat på dagar, inte veckor",
+      description: "Vår AI intervjuar dygnet runt. Kandidaten svarar när det passar dem – kväll, helg, lunch. Ni får färdigbedömda kandidater utan att lägga tid på första gallringen.",
       color: "text-primary"
     }
+  ];
+
+  const steps = [
+    { num: "1", title: "Berätta vad ni söker", desc: "Vilken roll, vilken nivå, vilka kunskaper? Vi sätter upp intervjufrågor anpassade efter er tjänst – på 24 timmar.", color: "text-primary" },
+    { num: "2", title: "Vi hittar och intervjuar", desc: "Vår AI publicerar tjänsten och intervjuar kandidater automatiskt via chatt eller röst. Dygnet runt, utan att ni behöver göra något.", color: "text-secondary" },
+    { num: "3", title: "Ni får bedömda kandidater", desc: "Vi levererar kandidater med en tydlig bedömning av deras kunskapsnivå. Ni ser direkt vem som är junior, erfaren eller senior.", color: "text-primary" },
+    { num: "4", title: "Ni väljer och träffar", desc: "Ni bestämmer vilka ni vill träffa. Vi bokar in mötet. Enkelt.", color: "text-secondary" },
+  ];
+
+  const stats = [
+    { value: "3–4 dgr", label: "Genomsnittlig tid till första kandidatpresentation" },
+    { value: "93 %", label: "Av företag som testat NoCV rekryterar igen med oss" },
+    { value: "Dygnet runt", label: "Vår AI intervjuar medan ni fokuserar på verkstaden" },
   ];
 
   return (
@@ -63,20 +75,24 @@ const Companies = () => {
             {heroSection ? (
               <div 
                 className="prose prose-lg max-w-none dark:prose-invert prose-headings:text-white prose-p:text-white prose-p:opacity-90 animate-fade-in"
-                dangerouslySetInnerHTML={{ 
-                  __html: DOMPurify.sanitize(heroSection.content_html) 
-                }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(heroSection.content_html) }}
               />
             ) : (
               <>
                 <h1 className="text-4xl md:text-6xl font-bold font-heading mb-6 leading-tight animate-fade-in">
-                  Snabbare rekrytering utan CV
+                  Sluta leta i CV-högar. Träffa rätt kandidat direkt.
                 </h1>
-                <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in">
-                  NoCV hjälper ditt företag hitta rätt kandidater baserat på kunskaper och kompetens 
-                  istället för traditionella CV. Fokusera på vad kandidaterna kan göra, 
-                  inte vad de har studerat eller tidigare roller.
+                <p className="text-xl md:text-2xl leading-relaxed opacity-90 animate-fade-in mb-8">
+                  Vi intervjuar mekaniker, skadetekniker och fordonstekniker åt er med AI – innan ni ens behöver lyfta luren. Ni får kandidater som redan visat att de kan jobbet.
                 </p>
+                <Button 
+                  variant="cta-primary" 
+                  size="xl"
+                  className="hover-scale"
+                  onClick={() => navigate('/contact')}
+                >
+                  Boka en demo
+                </Button>
               </>
             )}
           </div>
@@ -90,18 +106,15 @@ const Companies = () => {
             {benefitsIntroSection ? (
               <div 
                 className="prose prose-lg max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ 
-                  __html: DOMPurify.sanitize(benefitsIntroSection.content_html) 
-                }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(benefitsIntroSection.content_html) }}
               />
             ) : (
               <>
                 <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
-                  Fördelar för ditt företag
+                  Varför verkstäder väljer NoCV
                 </h2>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Med NoCV får du en modernare och mer effektiv rekryteringsprocess som 
-                  fokuserar på kandidaternas faktiska förmågor och potential.
+                  Traditionell rekrytering tar veckor och ger en hög med CV:n som inte säger ett dugg om hur bra någon är på att felsöka en motor. Vi gör det annorlunda.
                 </p>
               </>
             )}
@@ -123,21 +136,11 @@ const Companies = () => {
                           ? 'from-primary/10 to-primary/20' 
                           : 'from-secondary/10 to-secondary/20'
                       }`}>
-                        <Icon 
-                          size={48} 
-                          className={`${benefit.color} transition-transform hover:scale-110`}
-                          strokeWidth={1.5}
-                        />
+                        <Icon size={48} className={`${benefit.color} transition-transform hover:scale-110`} strokeWidth={1.5} />
                       </div>
                     </div>
-                    
-                    <h3 className="text-xl font-semibold font-heading text-foreground mb-4">
-                      {benefit.title}
-                    </h3>
-                    
-                    <p className="text-muted-foreground leading-relaxed">
-                      {benefit.description}
-                    </p>
+                    <h3 className="text-xl font-semibold font-heading text-foreground mb-4">{benefit.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{benefit.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -146,51 +149,52 @@ const Companies = () => {
         </div>
       </section>
 
-      {/* How it works for companies */}
+      {/* How it works */}
       <section className="py-16 bg-muted/30">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
             {howItWorksSection ? (
               <div 
                 className="prose prose-lg max-w-none dark:prose-invert mb-8"
-                dangerouslySetInnerHTML={{ 
-                  __html: DOMPurify.sanitize(howItWorksSection.content_html) 
-                }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(howItWorksSection.content_html) }}
               />
             ) : (
               <>
                 <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-4">
-                  Så fungerar NoCV för företag
+                  Så enkelt är det
                 </h3>
                 <p className="text-lg text-muted-foreground mb-8">
-                  Publicera dina lediga tjänster och låt vårt system automatiskt matcha och 
-                  intervjua kandidater baserat på de kunskaper och erfarenheter du söker.
+                  Fyra steg från att ni behöver personal till att ni träffar rätt person.
                 </p>
               </>
             )}
             
             <div className="grid md:grid-cols-4 gap-6 text-center">
-              <div className="bg-white p-6 rounded-lg border border-border">
-                <div className="text-3xl font-bold text-primary mb-2">1</div>
-                <div className="text-sm font-semibold text-foreground mb-2">Vi publicerar tjänsten</div>
-                <div className="text-sm text-muted-foreground">Beskriv vilka kunskaper och erfarenheter ni söker</div>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-border">
-                <div className="text-3xl font-bold text-secondary mb-2">2</div>
-                <div className="text-sm font-semibold text-foreground mb-2">Automatisk matchning</div>
-                <div className="text-sm text-muted-foreground">Vårt system hittar och intervjuar relevanta kandidater</div>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-border">
-                <div className="text-3xl font-bold text-primary mb-2">3</div>
-                <div className="text-sm font-semibold text-foreground mb-2">Fysisk intervju</div>
-                <div className="text-sm text-muted-foreground">Vi väljer ut de kandidater som bäst matchar tjänsten och genomför intervjuer</div>
-              </div>
-              <div className="bg-white p-6 rounded-lg border border-border">
-                <div className="text-3xl font-bold text-secondary mb-2">4</div>
-                <div className="text-sm font-semibold text-foreground mb-2">Träffa kandidater</div>
-                <div className="text-sm text-muted-foreground">Få presentationer av kvalificerade kandidater direkt</div>
-              </div>
+              {steps.map((step) => (
+                <div key={step.num} className="bg-white p-6 rounded-lg border border-border">
+                  <div className={`text-3xl font-bold ${step.color} mb-2`}>{step.num}</div>
+                  <div className="text-sm font-semibold text-foreground mb-2">{step.title}</div>
+                  <div className="text-sm text-muted-foreground">{step.desc}</div>
+                </div>
+              ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social proof / stats */}
+      <section className="py-20 bg-gradient-hero text-white">
+        <div className="container mx-auto px-6">
+          <h3 className="text-2xl md:text-3xl font-bold font-heading text-center mb-12">
+            Det här har vi levererat
+          </h3>
+          <div className="grid md:grid-cols-3 gap-10 max-w-4xl mx-auto text-center">
+            {stats.map((stat) => (
+              <div key={stat.value}>
+                <div className="text-4xl md:text-5xl font-bold font-heading mb-3">{stat.value}</div>
+                <p className="text-lg opacity-90">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -202,18 +206,15 @@ const Companies = () => {
             {ctaSection ? (
               <div 
                 className="prose prose-lg max-w-none dark:prose-invert mb-10"
-                dangerouslySetInnerHTML={{ 
-                  __html: DOMPurify.sanitize(ctaSection.content_html) 
-                }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(ctaSection.content_html) }}
               />
             ) : (
               <>
                 <h3 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
-                  Redo att förändra er rekrytering?
+                  Testa med er nästa rekrytering
                 </h3>
                 <p className="text-lg text-muted-foreground mb-10">
-                  Upptäck hur NoCV kan hjälpa ert företag hitta rätt kandidater snabbare 
-                  och mer effektivt än traditionella metoder.
+                  Boka en demo så visar vi hur det fungerar – 15 minuter, inga förpliktelser. Har ni ett akut behov kan vi ha kandidater redo inom en vecka.
                 </p>
               </>
             )}
@@ -224,8 +225,11 @@ const Companies = () => {
               className="hover-scale"
               onClick={() => navigate('/contact')}
             >
-              Kontakta oss för demo
+              Boka demo – 15 min
             </Button>
+            <p className="mt-6 text-muted-foreground">
+              Eller ring oss direkt: <a href="tel:+46812345678" className="text-primary font-semibold hover:underline">08-123 45 67</a>
+            </p>
           </div>
         </div>
       </section>

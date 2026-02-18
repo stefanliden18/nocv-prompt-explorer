@@ -1,71 +1,171 @@
 
 
-# Omdesign av Om oss-sidan med redigerbart innehall
+# NoCV Kundportal -- Fas 1 (MVP)
 
 ## Oversikt
 
-Om oss-sidan byggs om till en visuellt engagerande layout med hero, pull-quote, bild, siffror, varderingskort och CTA. Alla textsektioner hamtas fran databasen (`page_content`-tabellen) sa att de kan redigeras via admin-panelen. Nya sektioner laggs till i databasen, och AboutEdit-sidan uppgraderas med en editor per sektion.
+En separat kundportal byggs vid sidan av det befintliga admin-systemet. Kunder (verkstader/foretag) loggar in med magic link och far tillgang till sina kandidater, kan granska profiler och boka intervjuer. Portalen anvander era befintliga farger och typsnitt -- inte de generiska fargerna fran mockupen.
+
+Portalen lever under `/portal/`-routes och har ett eget sidebar-layout, helt separerat fran admin-panelen.
 
 ## Databasandringar
 
-Nya rader laggs till i `page_content`-tabellen (page_key = `about`). Befintlig hero-rad behalles. Nya sektioner:
+### Nya tabeller
 
-| section_key | title | display_order | Standardinnehall |
-|---|---|---|---|
-| `hero` (finns redan) | Om NOCV | 1 | Befintlig text |
-| `pull_quote` | Pull-quote | 2 | "Du kan vara den basta mekanikern i branschen men ha varldens trakigaste CV." |
-| `body_1` | Stycke 1 | 3 | Forsta stycket fran befintlig text |
-| `body_2` | Stycke 2 | 4 | Andra stycket |
-| `body_3` | Stycke 3 | 5 | Tredje stycket |
+**`company_users`** -- Kopplar inloggade anvandare till foretag
+| Kolumn | Typ | Beskrivning |
+|---|---|---|
+| id | uuid PK | |
+| user_id | uuid FK (auth.users) | Supabase auth-anvandare |
+| company_id | uuid FK (companies) | Befintlig companies-tabell |
+| name | text | Kontaktpersonens namn |
+| role | text | 'admin' eller 'viewer' (default 'admin') |
+| calendar_url | text | Calendly/Cal.com-lank (valfritt) |
+| created_at | timestamptz | |
 
-Siffror, varderingar och CTA ar statiska (inte CMS-styrda) eftersom de ar strukturerade med ikoner/knappar och inte enbart text.
+**`positions`** -- Tjanster/roller som rekryteras
+| Kolumn | Typ | Beskrivning |
+|---|---|---|
+| id | uuid PK | |
+| company_id | uuid FK (companies) | |
+| title | text | T.ex. "Mekaniker -- Toyota Kista" |
+| description | text | Rollbeskrivning |
+| experience_level | text | 'junior', 'mid', 'senior' |
+| status | text | 'active', 'paused', 'filled' (default 'active') |
+| created_at | timestamptz | |
 
-## Andringar i detalj
+**`portal_candidates`** -- Kandidater presenterade till kunder
+| Kolumn | Typ | Beskrivning |
+|---|---|---|
+| id | uuid PK | |
+| position_id | uuid FK (positions) | |
+| name | text | |
+| summary | text | AI-intervjusammanfattning |
+| strengths | text[] | Lista med styrkor |
+| experience_years | integer | |
+| skill_level | text | 'junior', 'mid', 'senior' |
+| video_url | text | Valfritt |
+| audio_url | text | Valfritt |
+| status | text | 'new', 'reviewed', 'interview_booked', 'hired', 'rejected' (default 'new') |
+| presented_at | timestamptz | Nar kandidaten presenterades |
+| created_at | timestamptz | |
 
-### 1. `src/pages/About.tsx` -- Total omskrivning
+**`portal_interviews`** -- Bokade intervjuer
+| Kolumn | Typ | Beskrivning |
+|---|---|---|
+| id | uuid PK | |
+| candidate_id | uuid FK (portal_candidates) | |
+| company_user_id | uuid FK (company_users) | Vem som bokade |
+| scheduled_at | timestamptz | |
+| duration_minutes | integer | Default 30 |
+| location_type | text | 'onsite', 'teams', 'phone' |
+| location_details | text | Adress eller lank |
+| notes | text | |
+| status | text | 'scheduled', 'completed', 'cancelled' (default 'scheduled') |
+| created_at | timestamptz | |
 
-**Hero-sektion**: Mork bakgrund (`bg-gradient-hero`), stor vit rubrik "Vi tror inte pa CV:n. Vi tror pa manniskor." -- hamtas fran CMS (`hero`-sektionen), med statisk fallback.
+**`portal_notifications`** -- Notifieringar till kundanvandare
+| Kolumn | Typ | Beskrivning |
+|---|---|---|
+| id | uuid PK | |
+| company_user_id | uuid FK (company_users) | |
+| type | text | 'new_candidate', 'interview_reminder', 'status_update' |
+| title | text | |
+| message | text | |
+| read | boolean | Default false |
+| related_candidate_id | uuid | Valfritt, for direktlank |
+| created_at | timestamptz | |
 
-**Stycke 1**: Max 680px bredd, centrerat. Innehall fran CMS (`body_1`).
+### RLS-policyer
 
-**Pull-quote**: Orange text, stor storlek, centrerat. Innehall fran CMS (`pull_quote`).
+Alla tabeller far Row Level Security. Grundprincipen:
 
-**Stycke 2**: Max 680px. Innehall fran CMS (`body_2`).
+- **company_users**: Anvandare kan se sin egen rad; admins kan se allt
+- **positions**: Anvandare ser bara positioner for sitt foretag (via company_users-koppling)
+- **portal_candidates**: Anvandare ser bara kandidater kopplade till positioner i sitt foretag
+- **portal_interviews**: Anvandare ser bara intervjuer i sitt foretag
+- **portal_notifications**: Anvandare ser bara sina egna notifieringar
+- **NoCV-admins** (med app_role 'admin') har full tillgang till alla tabeller for att kunna lagga in kandidater och hantera data
 
-**Bild**: Befintlig `about-hero-industrial-team.jpg`, full bredd med rundade horn.
+En databasfunktion `get_user_company_id(uuid)` skapas som SECURITY DEFINER for att slippa rekursiva RLS-problem.
 
-**Stycke 3**: Max 680px. Innehall fran CMS (`body_3`).
+### Trigger
 
-**Siffror**: Statisk sektion med tre kolumner (30+ ar, 100%, 0 dokument).
+En trigger pa `portal_candidates` skapar automatiskt en notification i `portal_notifications` nar en ny kandidat laggs till, riktad till alla company_users i det aktuella foretaget.
 
-**Varderingar**: Statisk sektion med tre kort (Heart, Award, Smartphone-ikoner).
+## Nya filer och routes
 
-**CTA**: Statisk sektion med tva knappar till `/jobs` och `/companies`.
+### Sidkomponenter (src/pages/portal/)
 
-Admin-knappen "Redigera sida" behalles for inloggade admins.
+| Fil | Route | Beskrivning |
+|---|---|---|
+| `PortalDashboard.tsx` | `/portal` | Valkomstsida med 3 sammanfattningskort, senaste kandidater, kommande intervjuer |
+| `PortalPositions.tsx` | `/portal/positions` | Lista aktiva tjanster med kandidatraking |
+| `PortalCandidateList.tsx` | `/portal/positions/:id/candidates` | Kandidatlista per position med filter (Alla/Nya/Granskade/Bokade) |
+| `PortalCandidateProfile.tsx` | `/portal/candidates/:id` | Detaljprofil med AI-sammanfattning, styrkor, tidslinje, boka-knapp |
+| `PortalBooking.tsx` | `/portal/candidates/:id/book` | 3-stegs bokningsflode (valj tid, bekrafta detaljer, bekraftelse) |
+| `PortalInterviews.tsx` | `/portal/interviews` | Oversikt av alla intervjuer med avboka/boka om |
+| `PortalSettings.tsx` | `/portal/settings` | Foretags- och kalenderinstallningar |
 
-### 2. `src/pages/admin/AboutEdit.tsx` -- Uppgradering med flera sektioner
+### Layoutkomponenter (src/components/portal/)
 
-Bygger ut editorn fran en enda RichTextEditor till en editor per CMS-sektion:
-- **Hero-rubrik** (hero)
-- **Stycke 1** (body_1)
-- **Pull-quote** (pull_quote) -- enkel textarea eller rik editor
-- **Stycke 2** (body_2)
-- **Stycke 3** (body_3)
+| Fil | Beskrivning |
+|---|---|
+| `PortalLayout.tsx` | Wrapper med sidebar + huvudinnehall |
+| `PortalSidebar.tsx` | Dark sidebar med NoCV-branding, navigation (Dashboard, Tjanster, Intervjuer, Installningar), anvandarprofil |
+| `PortalStatCard.tsx` | Sammanfattningskort (antal, ikon, farg) |
+| `PortalCandidateCard.tsx` | Kandidatkort med badges och knappar |
+| `PortalStatusBadge.tsx` | Statusbadge-komponent med ratt farger |
+| `PortalProtectedRoute.tsx` | Skyddar portal-routes -- kravet ar att anvandaren ar inloggad OCH har en rad i company_users |
 
-Varje sektion far sin egen RichTextEditor med tydlig rubrik. En gemensam "Spara"-knapp sparar alla sektioner pa en gang. Forhandsvisning visar hela sidan i hogerspalten.
+### Hooks (src/hooks/)
 
-### 3. Databasinsattning
+| Fil | Beskrivning |
+|---|---|
+| `usePortalAuth.ts` | Hook som hamtar company_user-data for den inloggade anvandaren och exponerar company_id, company_name, user_role |
+| `usePortalCandidates.ts` | Hook for att hamta/filtrera kandidater per position |
+| `usePortalInterviews.ts` | Hook for att hamta intervjuer |
 
-Nya rader lags in i `page_content` med INSERT for de sektioner som inte redan finns (`pull_quote`, `body_1`, `body_2`, `body_3`). Befintlig `hero`-rad behalles oforandrad.
+### Routing
+
+Nya routes laggs till i `App.tsx` under `/portal/*`, skyddade av `PortalProtectedRoute` som kontrollerar att anvandaren har en company_users-rad.
+
+## Designprinciper
+
+- Sidebaren anvander `bg-nocv-dark-blue` (inte generisk slate-900)
+- CTA-knappar anvander `bg-nocv-orange` med `hover:bg-nocv-orange-hover`
+- Statuskort och badges foljer mockupens monster men med era befintliga designtokens
+- Typsnitt: era befintliga `font-heading` och `font-body`
+- Responsivt: sidebar kollapsar pa mobil till hamburger-meny
+
+## Inloggningsflode
+
+Befintlig Auth-sida (`/auth`) anvands. Nar en anvandare loggar in kontrolleras om de har en rad i `company_users`:
+- Om ja: omdirigeras till `/portal`
+- Om nej men har admin/recruiter-roll: omdirigeras till `/admin` (befintligt beteende)
+- Om nej och vanlig user: visas ett "Ingen kundportal kopplad"-meddelande
+
+## MVP-scope (detta bygge)
+
+1. Databastabeller med RLS
+2. Portal-layout med sidebar
+3. Dashboard med sammanfattningskort
+4. Positionslista
+5. Kandidatlista per position med filter
+6. Kandidatprofil med AI-sammanfattning och styrkor
+7. Enkelt bokningsflode (3 steg: valj tid, bekrafta, klart)
+8. Intervjuoversikt
+9. Grundlaggande installningssida
+
+Det som INTE ingar i MVP: e-postnotifikationer vid ny kandidat, kalenderintegration (Google Calendar), video/ljudspelare, kandidatjamforelse, statistik/rapporter, admin-panel for kundhantering.
 
 ## Teknisk sammanfattning
 
-| Fil | Andring |
+| Andring | Detalj |
 |---|---|
-| `page_content` (databas) | INSERT 4 nya rader: `pull_quote`, `body_1`, `body_2`, `body_3` med page_key `about` |
-| `src/pages/About.tsx` | Total omskrivning: hero med mork bakgrund, uppdelad CMS-text, pull-quote, bild, siffror, varderingar, CTA. Alla textsektioner hamtas fran databasen. |
-| `src/pages/admin/AboutEdit.tsx` | Uppgradering: en RichTextEditor per sektion (hero, body_1, pull_quote, body_2, body_3). Gemensam spara-knapp. |
-
-Inga nya routes eller nya filer behovs. Befintlig RLS-policy pa `page_content` tillater redan publikt lasande och admin-redigering.
+| Databas | 5 nya tabeller + RLS-policyer + helper-funktion + trigger |
+| Nya filer | ~15 nya filer (7 sidor, 6 komponenter, 3 hooks) |
+| App.tsx | 7 nya routes under `/portal/*` |
+| AuthContext.tsx | Utoka med company_user-kontroll vid inloggning |
+| ProtectedRoute | Ny `PortalProtectedRoute` for kundrutter |
 

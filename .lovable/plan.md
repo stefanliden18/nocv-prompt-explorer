@@ -1,50 +1,49 @@
 
 
-# Uppgraderad informationsbubbla -- storre, animerad och synlig pa jobbsidan
+# Omskrivning av Företagssidan
 
 ## Oversikt
 
-Gora informationsbubblan (JobsInfoBubble) betydligt storre, ge den en pulserande animation sa den sticker ut, och aven lagga till den i hogerspalten pa jobbdetaljsidan (JobDetail).
+Hela innehallet pa `/companies`-sidan byts ut med ny, skarpt och branschriktad copy. Dessutom laggs en helt ny sektion till med siffror/socialt bevis. Allt gors i en fil: `src/pages/Companies.tsx`.
 
-## Andringar
+## Andringar i detalj
 
-### 1. Uppgradera JobsInfoBubble-komponenten (`src/components/JobsInfoBubble.tsx`)
+### 1. Hero-sektion
+- **Rubrik**: "Sluta leta i CV-hogar. Traffa ratt kandidat direkt."
+- **Undertext**: "Vi intervjuar mekaniker, skadetekniker och fordonstekniker at er med AI -- innan ni ens behover lyfta luren. Ni far kandidater som redan visat att de kan jobbet."
+- **CTA**: "Boka en demo" (behalles som orange `cta-primary`)
 
-**Storlek**: Oka fran `w-9 h-9` till `w-14 h-14` med storre ikon (`w-7 h-7`).
+### 2. Fordelar-sektion
+- **Rubrik**: "Varfor verkstader valjer NoCV"
+- **Undertext**: "Traditionell rekrytering tar veckor och ger en hog med CV:n som inte sager ett dugg om hur bra nagon ar pa att felsoka en motor. Vi gor det annorlunda."
+- **Kort 1** (ikon: `Eye` eller `Search`): "Ni ser kompetens, inte CV" -- ny beskrivning
+- **Kort 2** (ikon: `UserPlus` eller `Users`): "Kandidater ni annars aldrig hittar" -- ny beskrivning
+- **Kort 3** (ikon: `Zap` eller `Clock`): "Fran annons till kandidat pa dagar, inte veckor" -- ny beskrivning
 
-**Animation**: Lagg till en pulserande glod-effekt med en `animate-pulse` ring runt bubblan som drar ogat dit. Effekten ar subtil men tydlig -- en yttre ring som pulserar i `bg-primary/30`.
+### 3. Sa fungerar det-sektion
+- **Rubrik**: "Sa enkelt ar det"
+- **Undertext**: "Fyra steg fran att ni behover personal till att ni traffar ratt person."
+- Alla fyra steg byts ut med ny copy enligt specifikationen
 
-**Hover**: Skala upp till `hover:scale-115` med mjuk shadow.
+### 4. Ny sektion: Siffror / socialt bevis
+Placeras mellan "Sa fungerar det" och CTA-sektionen. Tre kolumner med stora siffror:
+- **3--4 dgr** -- "Genomsnittlig tid till forsta kandidatpresentation"
+- **93%** -- "Av foretag som testat NoCV rekryterar igen med oss"
+- **Dygnet runt** -- "Var AI intervjuar medan ni fokuserar pa verkstaden"
 
-### 2. Lagga till bubblan i JobDetail-sidans hogerkolumn (`src/pages/JobDetail.tsx`)
+Rubrik ovanfor: "Det har har vi levererat"
 
-Placera en ny sektion under det befintliga "Boka intervju"-kortet i hogerspalten (line ~672). Det blir ett eget kort med:
-
-- Rubriken "Hur funkar det?"
-- De 4 stegen i kompakt lista
-- Trust-bar (10 min, Inget CV, Mobil, Tryggt)
-- "Las mer"-knapp till `/sa-funkar-det`
-
-Alternativt: Ateranvand `JobsInfoBubble` som en standalone-komponent placerad under "Boka intervju"-kortet, fast i en utfallbar variant som ar oppnad som standard pa desktop.
-
-**Vald losning**: Skapa en ny komponent `JobsHowItWorks` som visar informationen direkt synligt (inte bakom en klick) i ett eget kort. Detta ar mer effektivt for konvertering -- kandidaten ser processen utan att behova klicka.
-
-### 3. Ny komponent: `src/components/JobsHowItWorks.tsx`
-
-Ett kort som visar:
-- Rubrik: "Sa har enkelt soker du" (avslappnad ton)
-- 4 steg med numrerade cirklar och korta beskrivningar
-- Trust-badges: 10 min | Inget CV | Mobil | Tryggt
-- CTA-knapp: "Las mer om hur det funkar" som lankar till `/sa-funkar-det`
-
-Designad med `bg-white border-border`, samma kort-stil som ovriga sajten. Sticky tillsammans med "Boka intervju"-kortet.
+### 5. CTA-sektion
+- **Rubrik**: "Testa med er nasta rekrytering"
+- **Undertext**: "Boka en demo sa visar vi hur det fungerar -- 15 minuter, inga forpliktelser. Har ni ett akut behov kan vi ha kandidater redo inom en vecka."
+- **Knapptext**: "Boka demo -- 15 min"
+- **Under knappen**: "Eller ring oss direkt: 08-123 45 67" (platshallare -- ni byter till ert riktiga nummer)
 
 ## Teknisk sammanfattning
 
 | Fil | Andring |
 |-----|---------|
-| `src/components/JobsInfoBubble.tsx` | Storre bubbla (w-14 h-14), pulserande animation med yttre ring |
-| `src/components/JobsHowItWorks.tsx` | **Ny fil** -- "Sa funkar det"-kort for jobbdetaljsidans hogerkolumn |
-| `src/pages/JobDetail.tsx` | Importera och lagga till `JobsHowItWorks` under "Boka intervju"-kortet i hogerspalten |
+| `src/pages/Companies.tsx` | Byt all statisk copy i hero, fordelar, steg och CTA. Lagg till ny siffror-sektion. Uppdatera ikoner i benefits-arrayen. |
 
-Ingen databasandring kravs.
+Inga nya filer, inga databasandringar. Sidans CMS-fallback (database content) behalles -- den nya texten ar fallback-varden som visas om inget CMS-innehall finns.
+

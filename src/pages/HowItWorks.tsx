@@ -1,0 +1,259 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Clock, CheckCircle, Smartphone, Shield, MousePointerClick, MessageSquare, BarChart3, Handshake, Quote } from "lucide-react";
+import { Link } from "react-router-dom";
+import Footer from "@/components/Footer";
+import { Helmet } from "react-helmet-async";
+
+const steps = [
+  {
+    number: 1,
+    icon: MousePointerClick,
+    title: "Välj roll och starta",
+    description: "Klicka på en tjänst som intresserar dig och starta intervjun direkt. Funkar på mobilen, inget att ladda ner.",
+    time: "30 sek",
+    color: "text-primary" as const,
+  },
+  {
+    number: 2,
+    icon: MessageSquare,
+    title: "Svara på yrkesfrågor",
+    description: "Vår AI ställer frågor kopplade till din roll. Inga kuggfrågor — bara vardagligt yrkessnack.",
+    time: "~10 min",
+    color: "text-secondary" as const,
+  },
+  {
+    number: 3,
+    icon: BarChart3,
+    title: "Vi förstår din nivå",
+    description: "Baserat på dina svar ser vi om du är junior, erfaren eller senior. Inga rätt eller fel — bara din erfarenhet.",
+    time: "Automatiskt",
+    color: "text-primary" as const,
+  },
+  {
+    number: 4,
+    icon: Handshake,
+    title: "Matchning med arbetsgivare",
+    description: "Finns ett jobb som passar dig kontaktar vi dig. Ingen spam — bara relevanta möjligheter.",
+    time: "Vi hör av oss",
+    color: "text-secondary" as const,
+  },
+];
+
+const trustItems = [
+  { icon: Clock, label: "10 minuter" },
+  { icon: CheckCircle, label: "Inget CV krävs" },
+  { icon: Smartphone, label: "Funkar på mobilen" },
+  { icon: Shield, label: "Dina svar är trygga" },
+];
+
+const faqItems = [
+  {
+    question: "Behöver jag förbereda mig?",
+    answer: "Nej, det är frågor om saker du redan kan. Tänk på det som ett vanligt samtal om ditt yrke — inget du behöver plugga inför.",
+  },
+  {
+    question: "Kan jag misslyckas?",
+    answer: "Nej, det finns inga rätt eller fel. Vi vill förstå din erfarenhet och dina kunskaper, inte testa dig.",
+  },
+  {
+    question: "Hur lång tid tar det?",
+    answer: "Cirka 10 minuter. Du kan göra det var som helst — på bussen, i soffan eller på lunchen.",
+  },
+  {
+    question: "Funkar det på mobilen?",
+    answer: "Ja, helt och hållet. Intervjun fungerar lika bra på mobilen som på datorn. Ingen app behöver laddas ner.",
+  },
+  {
+    question: "Vad händer efter intervjun?",
+    answer: "Vi matchar dig med relevanta jobb baserat på dina svar. Passar något hör vi av oss — ingen spam, bara relevanta möjligheter.",
+  },
+];
+
+const HowItWorks = () => {
+  return (
+    <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Så funkar det — Sök jobb utan CV | NoCV</title>
+        <meta name="description" content="Sök jobb som att snacka med en kollega. Inget CV, inga personliga brev — svara på frågor om ditt yrke och bli matchad med rätt arbetsgivare på 10 minuter." />
+      </Helmet>
+
+      {/* Minimal Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
+              <h2 className="text-2xl font-bold font-heading text-primary">NoCV</h2>
+            </Link>
+            <Button variant="cta-primary" asChild>
+              <Link to="/jobs">Testa nu</Link>
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="pt-24 pb-16 bg-gradient-hero text-white">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl md:text-6xl font-bold font-heading mb-6 leading-tight animate-fade-in">
+              Sök jobb som att snacka med en kollega
+            </h1>
+            <p className="text-xl md:text-2xl leading-relaxed opacity-90 mb-10 animate-fade-in">
+              Inget CV. Inget personligt brev. Svara på frågor om ditt yrke via chatt eller röst — klart på 10 minuter.
+            </p>
+            <Button variant="cta-primary" size="xl" asChild className="animate-fade-in">
+              <Link to="/jobs">Testa nu</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Så funkar det — 4 steg */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-4">
+              Så funkar det
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Fyra enkla steg — från klick till jobbmatchning.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {steps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <Card
+                  key={index}
+                  className="bg-white border border-border hover:shadow-card transition-all duration-300 animate-fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <CardContent className="p-8">
+                    <div className="flex items-start gap-5">
+                      <div className="flex-shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold font-heading text-lg">
+                          {step.number}
+                        </div>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <Icon size={24} className={step.color} strokeWidth={1.5} />
+                          <h3 className="text-xl font-semibold font-heading text-foreground">
+                            {step.title}
+                          </h3>
+                        </div>
+                        <p className="text-muted-foreground leading-relaxed mb-3">
+                          {step.description}
+                        </p>
+                        <span className="inline-block text-sm font-medium text-secondary bg-secondary/10 px-3 py-1 rounded-full">
+                          {step.time}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust-bar */}
+      <section className="py-12 bg-muted/30">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            {trustItems.map((item, index) => {
+              const Icon = item.icon;
+              return (
+                <div key={index} className="flex items-center justify-center gap-3 py-3">
+                  <Icon size={24} className="text-primary flex-shrink-0" strokeWidth={1.5} />
+                  <span className="font-medium text-foreground">{item.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-6 text-center">
+          <div className="max-w-3xl mx-auto">
+            <h3 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-6">
+              Redo att testa?
+            </h3>
+            <Button variant="cta-primary" size="xl" asChild>
+              <Link to="/jobs">Testa nu</Link>
+            </Button>
+            <p className="text-muted-foreground mt-6">
+              Ingen registrering. Starta direkt.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonial */}
+      <section className="py-16 bg-gradient-hero text-white">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <Quote size={48} className="mx-auto mb-6 text-white/40" strokeWidth={1} />
+            <blockquote className="text-xl md:text-2xl leading-relaxed text-white/90 mb-8 italic">
+              "Jag trodde det skulle vara nåt krångligt test, men det var bara frågor om det jag gör varje dag. Tog 10 min på mobilen."
+            </blockquote>
+            <div>
+              <p className="font-semibold text-nocv-orange text-lg">Marcus</p>
+              <p className="text-white/60">Servicetekniker i Stockholm</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-20 bg-background">
+        <div className="container mx-auto px-6">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold font-heading text-foreground mb-10 text-center">
+              Vanliga frågor
+            </h2>
+            <Accordion type="single" collapsible className="w-full">
+              {faqItems.map((item, index) => (
+                <AccordionItem key={index} value={`faq-${index}`}>
+                  <AccordionTrigger className="text-left text-lg font-heading">
+                    {item.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground leading-relaxed text-base">
+                    {item.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Avslutande CTA */}
+      <section className="py-16 bg-muted/30">
+        <div className="container mx-auto px-6 text-center">
+          <div className="max-w-3xl mx-auto">
+            <h3 className="text-2xl md:text-3xl font-bold font-heading text-foreground mb-6">
+              Din kompetens förtjänar att synas
+            </h3>
+            <p className="text-lg text-muted-foreground mb-8">
+              Börja din resa mot ett jobb där din erfarenhet verkligen räknas.
+            </p>
+            <Button variant="cta-primary" size="xl" asChild>
+              <Link to="/jobs">Se lediga jobb</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default HowItWorks;

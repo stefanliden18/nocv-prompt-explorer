@@ -1,15 +1,34 @@
 
-## Bredda e-postfältet pa kandidatprofilen
+## Uppdatera intervjumailets ämnesrad
 
 ### Problem
-Nar man redigerar e-postadressen pa en portalkandidat ar input-faltet for smalt for att visa hela adressen.
+Ämnesraden i intervjumailet visar bara "Inbjudan till intervju -- [datum] kl [tid]". Kunden vill att det ska stå företagsnamnet (t.ex. "Hedin Bil") i ämnesraden istället.
 
 ### Losning
-Gora input-faltet bredare genom att lagga till en `min-w` och `w-full` pa Input-komponenten i `PortalCandidateProfile.tsx`, samt se till att containern tillater att faltet expanderar.
+Uppdatera edge-funktionen `send-portal-interview-invitation` att:
+
+1. Hämta företagsnamnet genom att följa relationskedjan: `portal_interviews` -> `company_users` -> `companies`
+2. Ändra ämnesraden från:
+   - `Inbjudan till intervju — 5 juni 2025 kl 14:00`
+   - till: `Inbjudan till intervju — Hedin Bil`
+3. Uppdatera e-postmallens rubrik (h1) från "Inbjudan till intervju" till "Inbjudan till intervju" (behålla som är, den är redan bra)
 
 ### Teknisk detalj
-I filen `src/pages/portal/PortalCandidateProfile.tsx` rad 188-200:
-- Andra container-div fran `flex items-center gap-1` till `flex items-center gap-1 w-full`
-- Lagga till `min-w-[250px] flex-1` pa Input-komponenten sa att den tar upp tillgangligt utrymme och har en minsta bredd pa 250px
 
-Ingen databas- eller backend-andring behovs.
+I `supabase/functions/send-portal-interview-invitation/index.ts`:
+
+- Utöka select-frågan på rad 41-42 till att även joina `companies`-tabellen via `company_users`:
+  ```
+  .select("*, portal_candidates(name, email), company_users(name, companies(name))")
+  ```
+- Extrahera företagsnamnet:
+  ```
+  const companyName = interview.company_users?.companies?.name || "";
+  ```
+- Ändra ämnesraden (rad 98) till:
+  ```
+  subject: `Inbjudan till intervju — ${companyName}`
+  ```
+- Skicka med `companyName` till e-postmallen och visa det i mailet så kandidaten vet vilket företag som bjuder in.
+
+Inga databasändringar behövs.

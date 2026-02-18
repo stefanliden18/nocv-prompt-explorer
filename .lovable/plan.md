@@ -1,34 +1,27 @@
 
-## Uppdatera intervjumailets ämnesrad
+
+## Ändra kalenderhändelsens titel till företagsnamn
 
 ### Problem
-Ämnesraden i intervjumailet visar bara "Inbjudan till intervju -- [datum] kl [tid]". Kunden vill att det ska stå företagsnamnet (t.ex. "Hedin Bil") i ämnesraden istället.
+I .ics-filen (kalenderinbjudan) sätts SUMMARY till "Intervju med [rekryterarens namn]" (t.ex. "Intervju med Stefan Liden"). Användaren vill att det ska stå "Intervju med Hedin Bil" (företagsnamnet).
 
 ### Losning
-Uppdatera edge-funktionen `send-portal-interview-invitation` att:
-
-1. Hämta företagsnamnet genom att följa relationskedjan: `portal_interviews` -> `company_users` -> `companies`
-2. Ändra ämnesraden från:
-   - `Inbjudan till intervju — 5 juni 2025 kl 14:00`
-   - till: `Inbjudan till intervju — Hedin Bil`
-3. Uppdatera e-postmallens rubrik (h1) från "Inbjudan till intervju" till "Inbjudan till intervju" (behålla som är, den är redan bra)
+Ändra en rad i edge-funktionen `send-portal-interview-invitation`.
 
 ### Teknisk detalj
+I `supabase/functions/send-portal-interview-invitation/index.ts`, ändra `summary`-parametern i `buildICalEvent`-anropet:
 
-I `supabase/functions/send-portal-interview-invitation/index.ts`:
+**Fran:**
+```
+summary: `Intervju med ${bookerName}`,
+```
 
-- Utöka select-frågan på rad 41-42 till att även joina `companies`-tabellen via `company_users`:
-  ```
-  .select("*, portal_candidates(name, email), company_users(name, companies(name))")
-  ```
-- Extrahera företagsnamnet:
-  ```
-  const companyName = interview.company_users?.companies?.name || "";
-  ```
-- Ändra ämnesraden (rad 98) till:
-  ```
-  subject: `Inbjudan till intervju — ${companyName}`
-  ```
-- Skicka med `companyName` till e-postmallen och visa det i mailet så kandidaten vet vilket företag som bjuder in.
+**Till:**
+```
+summary: `Intervju med ${companyName || bookerName}`,
+```
 
-Inga databasändringar behövs.
+Detta gör att kalenderhändelsen visas som "Intervju med Hedin Bil" istället för "Intervju med Stefan Liden". Om företagsnamn saknas faller det tillbaka på rekryterarens namn.
+
+En fil andras, inga databasandringar.
+

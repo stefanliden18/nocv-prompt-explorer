@@ -11,7 +11,7 @@ const steps = [
     number: 1,
     icon: MousePointerClick,
     title: "Välj roll och starta",
-    description: "Klicka på en tjänst som intresserar dig och starta intervjun direkt. Funkar på mobilen, inget att ladda ner.",
+    description: "Klicka på en tjänst och kör igång direkt från mobilen. Inget att ladda ner, inget konto att skapa.",
     time: "30 sek",
     color: "text-primary" as const,
   },
@@ -19,7 +19,7 @@ const steps = [
     number: 2,
     icon: MessageSquare,
     title: "Svara på yrkesfrågor",
-    description: "Vår AI ställer frågor kopplade till din roll. Inga kuggfrågor — bara vardagligt yrkessnack.",
+    description: "Vår AI ställer frågor om det du jobbar med varje dag — motor, plåt, lack, el. Inga kuggfrågor, bara vanligt yrkessnack.",
     time: "~10 min",
     color: "text-secondary" as const,
   },
@@ -27,7 +27,7 @@ const steps = [
     number: 3,
     icon: BarChart3,
     title: "Vi förstår din nivå",
-    description: "Baserat på dina svar ser vi om du är junior, erfaren eller senior. Inga rätt eller fel — bara din erfarenhet.",
+    description: "Inga rätt eller fel. Vi vill bara se om du är junior, erfaren eller senior — så vi kan matcha rätt.",
     time: "Automatiskt",
     color: "text-primary" as const,
   },
@@ -35,7 +35,7 @@ const steps = [
     number: 4,
     icon: Handshake,
     title: "Matchning med arbetsgivare",
-    description: "Finns ett jobb som passar dig kontaktar vi dig. Ingen spam — bara relevanta möjligheter.",
+    description: "Finns ett jobb som passar dig hör vi av oss. Ingen spam, bara relevanta möjligheter.",
     time: "Vi hör av oss",
     color: "text-secondary" as const,
   },
@@ -51,23 +51,23 @@ const trustItems = [
 const faqItems = [
   {
     question: "Behöver jag förbereda mig?",
-    answer: "Nej, det är frågor om saker du redan kan. Tänk på det som ett vanligt samtal om ditt yrke — inget du behöver plugga inför.",
+    answer: "Nej! Frågorna handlar om det du redan kan. Tänk på det som att snacka med en ny kollega.",
   },
   {
     question: "Kan jag misslyckas?",
-    answer: "Nej, det finns inga rätt eller fel. Vi vill förstå din erfarenhet och dina kunskaper, inte testa dig.",
+    answer: "Det finns inga rätt eller fel. Vi vill bara förstå din erfarenhetsnivå.",
   },
   {
     question: "Hur lång tid tar det?",
-    answer: "Cirka 10 minuter. Du kan göra det var som helst — på bussen, i soffan eller på lunchen.",
+    answer: "Ungefär 10 minuter. Du kan göra det på bussen, i soffan eller på lunchen.",
   },
   {
     question: "Funkar det på mobilen?",
-    answer: "Ja, helt och hållet. Intervjun fungerar lika bra på mobilen som på datorn. Ingen app behöver laddas ner.",
+    answer: "Ja! Chatta eller prata — du väljer. Mobil, surfplatta eller dator.",
   },
   {
     question: "Vad händer efter intervjun?",
-    answer: "Vi matchar dig med relevanta jobb baserat på dina svar. Passar något hör vi av oss — ingen spam, bara relevanta möjligheter.",
+    answer: "Vi kontaktar dig om det finns ett jobb som matchar. Ingen spam.",
   },
 ];
 
@@ -101,11 +101,15 @@ const HowItWorks = () => {
               Sök jobb som att snacka med en kollega
             </h1>
             <p className="text-xl md:text-2xl leading-relaxed opacity-90 mb-10 animate-fade-in">
-              Inget CV. Inget personligt brev. Svara på frågor om ditt yrke via chatt eller röst — klart på 10 minuter.
+              Inget CV. Inget personligt brev. Du svarar på frågor om ditt yrke 
+              via chatt eller röst — klart på 10 minuter. Så enkelt borde det alltid vara.
             </p>
             <Button variant="cta-primary" size="xl" asChild className="animate-fade-in">
-              <Link to="/jobs">Testa nu</Link>
+              <Link to="/jobs">Testa nu – det är gratis</Link>
             </Button>
+            <p className="text-white/60 mt-4 text-sm animate-fade-in">
+              Ingen registrering. Tar 10 minuter.
+            </p>
           </div>
         </div>
       </section>
@@ -128,7 +132,7 @@ const HowItWorks = () => {
               return (
                 <Card
                   key={index}
-                  className="bg-white border border-border hover:shadow-card transition-all duration-300 animate-fade-in"
+                  className="bg-white border border-border hover:shadow-card hover:-translate-y-1 transition-all duration-300 animate-fade-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <CardContent className="p-8">
@@ -186,10 +190,10 @@ const HowItWorks = () => {
               Redo att testa?
             </h3>
             <Button variant="cta-primary" size="xl" asChild>
-              <Link to="/jobs">Testa nu</Link>
+              <Link to="/jobs">Testa nu – det är gratis</Link>
             </Button>
             <p className="text-muted-foreground mt-6">
-              Ingen registrering. Starta direkt.
+              Ingen registrering. Tar 10 minuter.
             </p>
           </div>
         </div>
@@ -242,7 +246,7 @@ const HowItWorks = () => {
               Din kompetens förtjänar att synas
             </h3>
             <p className="text-lg text-muted-foreground mb-8">
-              Börja din resa mot ett jobb där din erfarenhet verkligen räknas.
+              Ditt nästa jobb väntar. Och det enda du behöver göra är att svara på några frågor.
             </p>
             <Button variant="cta-primary" size="xl" asChild>
               <Link to="/jobs">Se lediga jobb</Link>

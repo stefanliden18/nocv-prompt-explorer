@@ -185,13 +185,13 @@ export default function PortalCandidateProfile() {
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">E-post</p>
               {editingEmail ? (
-                <div className="flex items-center gap-1 mt-1">
+                <div className="flex items-center gap-1 mt-1 w-full">
                   <Input
                     type="email"
                     value={emailDraft}
                     onChange={(e) => setEmailDraft(e.target.value)}
                     placeholder="kandidat@exempel.se"
-                    className="h-8 text-sm"
+                    className="h-8 text-sm min-w-[250px] flex-1"
                     autoFocus
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleSaveEmail();

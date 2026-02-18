@@ -1,71 +1,50 @@
 
 
-# Informationsbubbla på "Lediga jobb"-sidan
+# Uppgraderad informationsbubbla -- storre, animerad och synlig pa jobbsidan
 
-## Vad
+## Oversikt
 
-En flytande informationsknapp (cirkulär ikon, t.ex. ett fragetecken eller en "HelpCircle"-ikon) som sitter i hero-sektionen pa Jobs-sidan, nara rubriken eller under filtren. Nar man hovrar over den visas en kort forklaring i en popover/tooltip, och nar man klickar oppnas en storre popover med de 4 stegen + en lank till `/sa-funkar-det`.
+Gora informationsbubblan (JobsInfoBubble) betydligt storre, ge den en pulserande animation sa den sticker ut, och aven lagga till den i hogerspalten pa jobbdetaljsidan (JobDetail).
 
-## Hur det ska kannas
+## Andringar
 
-Avslappnat, varmt och riktat till hantverkare. Texten ska vara i samma ton som landningssidan — "fikarums-snack", inte "foretags-info".
+### 1. Uppgradera JobsInfoBubble-komponenten (`src/components/JobsInfoBubble.tsx`)
 
-## Beteende
+**Storlek**: Oka fran `w-9 h-9` till `w-14 h-14` med storre ikon (`w-7 h-7`).
 
-- **Hover**: En kort text visas, t.ex. "Hur funkar det att soka jobb har? Klicka sa berattan vi!"
-- **Klick**: En popover oppnas med:
-  1. Rubrik: "Sa enkelt ar det"
-  2. De 4 stegen i kompakt lista (ikon + rubrik + en rad beskrivning)
-  3. Trust-rad: "10 min | Inget CV | Funkar pa mobilen"
-  4. Knapp: "Las mer" som lankar till `/sa-funkar-det`
+**Animation**: Lagg till en pulserande glod-effekt med en `animate-pulse` ring runt bubblan som drar ogat dit. Effekten ar subtil men tydlig -- en yttre ring som pulserar i `bg-primary/30`.
 
-## Design
+**Hover**: Skala upp till `hover:scale-115` med mjuk shadow.
 
-- Ikonen: `HelpCircle` fran Lucide, stilad i `text-white` med `bg-primary/80` (morkbla med lite transparens) — floatande i hero-sektionen
-- Hover-effekt: Skalning + skuggning (`hover:scale-110 hover:shadow-lg`)
-- Popover: `bg-white` med `border-border shadow-card` — samma kort-stil som resten av sajten
-- Stegen i popovern har sma numrerade cirklar i `bg-primary text-white`
-- Responsivt: Pa mobil ar popovern fullbredd
+### 2. Lagga till bubblan i JobDetail-sidans hogerkolumn (`src/pages/JobDetail.tsx`)
 
-## Placering
+Placera en ny sektion under det befintliga "Boka intervju"-kortet i hogerspalten (line ~672). Det blir ett eget kort med:
 
-Bredvid resultat-raknaren ("Visar X-Y av Z jobb"), eller som en flytande knapp i nedre hogra hornet av hero-sektionen. Den ska synas men inte vara i vagen.
+- Rubriken "Hur funkar det?"
+- De 4 stegen i kompakt lista
+- Trust-bar (10 min, Inget CV, Mobil, Tryggt)
+- "Las mer"-knapp till `/sa-funkar-det`
 
-## Tekniskt
+Alternativt: Ateranvand `JobsInfoBubble` som en standalone-komponent placerad under "Boka intervju"-kortet, fast i en utfallbar variant som ar oppnad som standard pa desktop.
 
-### Fil som andras
+**Vald losning**: Skapa en ny komponent `JobsHowItWorks` som visar informationen direkt synligt (inte bakom en klick) i ett eget kort. Detta ar mer effektivt for konvertering -- kandidaten ser processen utan att behova klicka.
+
+### 3. Ny komponent: `src/components/JobsHowItWorks.tsx`
+
+Ett kort som visar:
+- Rubrik: "Sa har enkelt soker du" (avslappnad ton)
+- 4 steg med numrerade cirklar och korta beskrivningar
+- Trust-badges: 10 min | Inget CV | Mobil | Tryggt
+- CTA-knapp: "Las mer om hur det funkar" som lankar till `/sa-funkar-det`
+
+Designad med `bg-white border-border`, samma kort-stil som ovriga sajten. Sticky tillsammans med "Boka intervju"-kortet.
+
+## Teknisk sammanfattning
 
 | Fil | Andring |
 |-----|---------|
-| `src/pages/Jobs.tsx` | Lagg till en `Popover`-komponent med `HelpCircle`-ikon och informationsinnehall |
+| `src/components/JobsInfoBubble.tsx` | Storre bubbla (w-14 h-14), pulserande animation med yttre ring |
+| `src/components/JobsHowItWorks.tsx` | **Ny fil** -- "Sa funkar det"-kort for jobbdetaljsidans hogerkolumn |
+| `src/pages/JobDetail.tsx` | Importera och lagga till `JobsHowItWorks` under "Boka intervju"-kortet i hogerspalten |
 
-### Komponenter som anvands
-- Befintlig `Popover` / `PopoverTrigger` / `PopoverContent` fran `@radix-ui/react-popover`
-- `HelpCircle` ikon fran `lucide-react`
-- `Button` med `variant="cta-primary"` for "Las mer"-lanken
-- `Link` fran `react-router-dom` for navigering till `/sa-funkar-det`
-
-### Exempelstruktur i koden
-
-```text
-+------------------------------------------+
-|  Hero-sektion (befintlig)                |
-|                                          |
-|  "Visar 1-12 av 24 jobb"  [?]           |
-|                                  |       |
-|                          Popover visas:  |
-|                          +-----------+   |
-|                          | Sa enkelt |   |
-|                          | ar det    |   |
-|                          |           |   |
-|                          | 1. Valj.. |   |
-|                          | 2. Svara. |   |
-|                          | 3. Vi...  |   |
-|                          | 4. Match. |   |
-|                          |           |   |
-|                          | [Las mer] |   |
-|                          +-----------+   |
-+------------------------------------------+
-```
-
-Ingen databasandring kravs. Helt statisk tillagg med befintliga UI-komponenter.
+Ingen databasandring kravs.

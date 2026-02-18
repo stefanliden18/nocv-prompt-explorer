@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User, Star, Calendar, Clock } from 'lucide-react';
+import { ArrowLeft, User, Star, Calendar, Clock, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PortalLayout from '@/components/portal/PortalLayout';
 import PortalStatusBadge from '@/components/portal/PortalStatusBadge';
@@ -89,7 +89,7 @@ export default function PortalCandidateProfile() {
             <PortalStatusBadge status={candidate.status} />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-border">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-border">
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Nivå</p>
               <p className="font-medium text-foreground mt-1">{skillLabels[candidate.skill_level] || '-'}</p>
@@ -104,6 +104,16 @@ export default function PortalCandidateProfile() {
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Presenterad</p>
               <p className="font-medium text-foreground mt-1">
                 {candidate.presented_at ? format(new Date(candidate.presented_at), 'd MMM yyyy', { locale: sv }) : '-'}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider">E-post</p>
+              <p className="font-medium text-foreground mt-1 flex items-center gap-1">
+                {candidate.email ? (
+                  <><Mail className="h-3.5 w-3.5 text-muted-foreground" />{candidate.email}</>
+                ) : (
+                  <span className="text-muted-foreground italic">Saknas</span>
+                )}
               </p>
             </div>
           </div>

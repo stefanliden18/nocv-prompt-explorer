@@ -42,5 +42,8 @@ verify_jwt = true
 [functions.generate-job-ad]
 verify_jwt = true
 
+[functions.send-portal-interview-invitation]
+verify_jwt = false
+
 [functions.delete-user]
 verify_jwt = false

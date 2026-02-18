@@ -35,12 +35,14 @@ export default function PortalBooking() {
       .then(({ data }) => setCandidateName(data?.name || ''));
   }, [candidateId]);
 
+  const [emailStatus, setEmailStatus] = useState<'sent' | 'no_email' | 'failed' | null>(null);
+
   const handleSubmit = async () => {
     if (!companyUserId || !candidateId) return;
     setSubmitting(true);
     try {
       const scheduledAt = new Date(`${form.date}T${form.time}`).toISOString();
-      const { error } = await supabase.from('portal_interviews').insert({
+      const { data: insertedInterview, error } = await supabase.from('portal_interviews').insert({
         candidate_id: candidateId,
         company_user_id: companyUserId,
         scheduled_at: scheduledAt,
@@ -48,12 +50,35 @@ export default function PortalBooking() {
         location_type: form.locationType,
         location_details: form.locationDetails || null,
         notes: form.notes || null,
-      });
+      }).select('id').single();
 
       if (error) throw error;
 
       // Update candidate status
       await supabase.from('portal_candidates').update({ status: 'interview_booked' }).eq('id', candidateId);
+
+      // Try to send email via edge function
+      if (insertedInterview?.id) {
+        try {
+          const { data: emailResult, error: emailErr } = await supabase.functions.invoke(
+            'send-portal-interview-invitation',
+            { body: { portalInterviewId: insertedInterview.id } }
+          );
+          if (emailErr) {
+            console.error('Email invocation error:', emailErr);
+            setEmailStatus('failed');
+          } else if (emailResult?.success === false && emailResult?.reason === 'no_email') {
+            setEmailStatus('no_email');
+          } else if (emailResult?.success) {
+            setEmailStatus('sent');
+          } else {
+            setEmailStatus('failed');
+          }
+        } catch (e) {
+          console.error('Email send error:', e);
+          setEmailStatus('failed');
+        }
+      }
 
       setStep(3);
       toast.success('Intervju bokad!');
@@ -180,6 +205,17 @@ export default function PortalBooking() {
               <Check className="h-7 w-7 text-emerald-600" />
             </div>
             <h2 className="text-xl font-heading font-bold text-foreground mb-2">Intervju bokad!</h2>
+
+            {emailStatus === 'sent' && (
+              <p className="text-emerald-600 font-medium mb-2">✉️ Bekräftelsemail med kalenderinbjudan har skickats till kandidaten.</p>
+            )}
+            {emailStatus === 'no_email' && (
+              <p className="text-amber-600 font-medium mb-2">⚠️ Kandidaten saknar e-postadress — inget mail skickades.</p>
+            )}
+            {emailStatus === 'failed' && (
+              <p className="text-red-600 font-medium mb-2">❌ Mailet kunde inte skickas. Intervjun är bokad men kandidaten har inte fått något mail.</p>
+            )}
+
             <p className="text-muted-foreground mb-6">Du hittar intervjun under "Intervjuer" i menyn.</p>
             <Button asChild className="bg-nocv-orange hover:bg-nocv-orange-hover text-white">
               <Link to="/portal/interviews">Visa intervjuer</Link>

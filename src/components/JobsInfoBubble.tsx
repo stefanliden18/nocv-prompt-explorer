@@ -19,10 +19,13 @@ const JobsInfoBubble = () => {
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <button
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/80 text-primary-foreground hover:scale-110 hover:shadow-lg transition-all duration-200 cursor-pointer"
+                className="relative inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground hover:scale-110 hover:shadow-lg transition-all duration-200 cursor-pointer shadow-md"
                 aria-label="Hur funkar det?"
               >
-                <HelpCircle className="w-5 h-5" />
+                {/* Pulsating outer ring */}
+                <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+                <span className="absolute -inset-1.5 rounded-full bg-primary/20 animate-pulse" />
+                <HelpCircle className="w-7 h-7 relative z-10" />
               </button>
             </PopoverTrigger>
           </TooltipTrigger>

@@ -648,6 +648,7 @@ export type Database = {
           id: string
           name: string
           position_id: string
+          presentation_id: string | null
           presented_at: string | null
           skill_level: string | null
           status: string
@@ -663,6 +664,7 @@ export type Database = {
           id?: string
           name: string
           position_id: string
+          presentation_id?: string | null
           presented_at?: string | null
           skill_level?: string | null
           status?: string
@@ -678,6 +680,7 @@ export type Database = {
           id?: string
           name?: string
           position_id?: string
+          presentation_id?: string | null
           presented_at?: string | null
           skill_level?: string | null
           status?: string
@@ -691,6 +694,13 @@ export type Database = {
             columns: ["position_id"]
             isOneToOne: false
             referencedRelation: "positions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_candidates_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "candidate_presentations"
             referencedColumns: ["id"]
           },
         ]

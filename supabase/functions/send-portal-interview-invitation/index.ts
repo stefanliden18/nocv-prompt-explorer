@@ -74,7 +74,7 @@ serve(async (req) => {
 
     // Build iCal content
     const icsContent = buildICalEvent({
-      summary: `Intervju med ${bookerName}`,
+      summary: `Intervju med ${companyName || bookerName}`,
       dtStart: scheduledDate,
       durationMinutes,
       location: interview.location_details || locationLabel,

@@ -38,7 +38,7 @@ serve(async (req) => {
     // Fetch interview with candidate info
     const { data: interview, error: intErr } = await supabaseAdmin
       .from("portal_interviews")
-      .select("*, portal_candidates(name, email), company_users(name)")
+      .select("*, portal_candidates(name, email), company_users(name, companies(name))")
       .eq("id", portalInterviewId)
       .single();
 
@@ -53,6 +53,7 @@ serve(async (req) => {
     const candidateName = (interview.portal_candidates as any)?.name || "Kandidat";
     const candidateEmail = (interview.portal_candidates as any)?.email;
     const bookerName = (interview.company_users as any)?.name || "Rekryterare";
+    const companyName = (interview.company_users as any)?.companies?.name || "";
 
     if (!candidateEmail) {
       // No email on file — mark not sent and return info
@@ -90,12 +91,13 @@ serve(async (req) => {
       locationDetails: interview.location_details,
       notes: interview.notes,
       bookerName,
+      companyName,
     });
 
     const { error: emailError } = await resend.emails.send({
       from: "NoCV <noreply@nocv.se>",
       to: [candidateEmail],
-      subject: `Inbjudan till intervju — ${interviewDate} kl ${interviewTime}`,
+      subject: `Inbjudan till intervju — ${companyName || interviewDate}`,
       html: emailHtml,
       attachments: [
         {
@@ -190,6 +192,7 @@ function getEmailTemplate(opts: {
   locationDetails: string | null;
   notes: string | null;
   bookerName: string;
+  companyName: string;
 }): string {
   const locationLine = opts.locationDetails
     ? `${opts.locationLabel} — ${opts.locationDetails}`
@@ -200,7 +203,7 @@ function getEmailTemplate(opts: {
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
   <div style="background: linear-gradient(135deg, #F97316 0%, #EA580C 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
-    <h1 style="color: white; margin: 0;">Inbjudan till intervju</h1>
+    <h1 style="color: white; margin: 0;">Inbjudan till intervju${opts.companyName ? ` — ${opts.companyName}` : ""}</h1>
   </div>
   <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
     <p style="font-size: 16px;">Hej ${opts.candidateName},</p>

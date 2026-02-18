@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, User, Star, Calendar, Clock, Mail } from 'lucide-react';
+import { ArrowLeft, User, Star, Calendar, Mail, Pencil, Check, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import PortalLayout from '@/components/portal/PortalLayout';
 import PortalStatusBadge from '@/components/portal/PortalStatusBadge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -18,6 +20,9 @@ export default function PortalCandidateProfile() {
   const [candidate, setCandidate] = useState<any>(null);
   const [positionTitle, setPositionTitle] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailDraft, setEmailDraft] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -64,6 +69,27 @@ export default function PortalCandidateProfile() {
 
   const posId = (candidate.positions as any)?.id;
 
+  const handleSaveEmail = async () => {
+    const trimmed = emailDraft.trim();
+    if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      toast({ title: 'Ogiltig e-postadress', variant: 'destructive' });
+      return;
+    }
+    setSavingEmail(true);
+    const { error } = await supabase
+      .from('portal_candidates')
+      .update({ email: trimmed || null })
+      .eq('id', candidate.id);
+    setSavingEmail(false);
+    if (error) {
+      toast({ title: 'Kunde inte spara', description: error.message, variant: 'destructive' });
+    } else {
+      setCandidate({ ...candidate, email: trimmed || null });
+      setEditingEmail(false);
+      toast({ title: 'E-post uppdaterad' });
+    }
+  };
+
   return (
     <PortalLayout>
       <div className="max-w-3xl mx-auto">
@@ -108,13 +134,40 @@ export default function PortalCandidateProfile() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">E-post</p>
-              <p className="font-medium text-foreground mt-1 flex items-center gap-1">
-                {candidate.email ? (
-                  <><Mail className="h-3.5 w-3.5 text-muted-foreground" />{candidate.email}</>
-                ) : (
-                  <span className="text-muted-foreground italic">Saknas</span>
-                )}
-              </p>
+              {editingEmail ? (
+                <div className="flex items-center gap-1 mt-1">
+                  <Input
+                    type="email"
+                    value={emailDraft}
+                    onChange={(e) => setEmailDraft(e.target.value)}
+                    placeholder="kandidat@exempel.se"
+                    className="h-8 text-sm"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveEmail();
+                      if (e.key === 'Escape') setEditingEmail(false);
+                    }}
+                  />
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveEmail} disabled={savingEmail}>
+                    <Check className="h-3.5 w-3.5 text-primary" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingEmail(false)}>
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </Button>
+                </div>
+              ) : (
+                <p
+                  className="font-medium text-foreground mt-1 flex items-center gap-1 cursor-pointer group"
+                  onClick={() => { setEmailDraft(candidate.email || ''); setEditingEmail(true); }}
+                >
+                  {candidate.email ? (
+                    <><Mail className="h-3.5 w-3.5 text-muted-foreground" />{candidate.email}</>
+                  ) : (
+                    <span className="text-muted-foreground italic">Saknas</span>
+                  )}
+                  <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </p>
+              )}
             </div>
           </div>
         </div>

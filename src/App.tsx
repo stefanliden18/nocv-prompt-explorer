@@ -39,6 +39,14 @@ import RequirementTemplates from "./pages/admin/RequirementTemplates";
 import CandidatePresentation from "./pages/CandidatePresentation";
 import HowItWorks from "./pages/HowItWorks";
 import MetaPixel from "./components/MetaPixel";
+import PortalProtectedRoute from "./components/portal/PortalProtectedRoute";
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalPositions from "./pages/portal/PortalPositions";
+import PortalCandidateList from "./pages/portal/PortalCandidateList";
+import PortalCandidateProfile from "./pages/portal/PortalCandidateProfile";
+import PortalBooking from "./pages/portal/PortalBooking";
+import PortalInterviews from "./pages/portal/PortalInterviews";
+import PortalSettings from "./pages/portal/PortalSettings";
 
 const queryClient = new QueryClient();
 
@@ -214,6 +222,14 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            {/* Portal routes */}
+            <Route path="/portal" element={<PortalProtectedRoute><PortalDashboard /></PortalProtectedRoute>} />
+            <Route path="/portal/positions" element={<PortalProtectedRoute><PortalPositions /></PortalProtectedRoute>} />
+            <Route path="/portal/positions/:id/candidates" element={<PortalProtectedRoute><PortalCandidateList /></PortalProtectedRoute>} />
+            <Route path="/portal/candidates/:id" element={<PortalProtectedRoute><PortalCandidateProfile /></PortalProtectedRoute>} />
+            <Route path="/portal/candidates/:id/book" element={<PortalProtectedRoute><PortalBooking /></PortalProtectedRoute>} />
+            <Route path="/portal/interviews" element={<PortalProtectedRoute><PortalInterviews /></PortalProtectedRoute>} />
+            <Route path="/portal/settings" element={<PortalProtectedRoute><PortalSettings /></PortalProtectedRoute>} />
             {/* Public candidate presentation route */}
             <Route path="/presentation/:token" element={<CandidatePresentation />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

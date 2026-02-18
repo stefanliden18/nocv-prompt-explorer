@@ -199,18 +199,36 @@ const HowItWorks = () => {
         </div>
       </section>
 
-      {/* Testimonial */}
+      {/* Testimonials */}
       <section className="py-16 bg-gradient-hero text-white">
         <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <Quote size={48} className="mx-auto mb-6 text-white/40" strokeWidth={1} />
-            <blockquote className="text-xl md:text-2xl leading-relaxed text-white/90 mb-8 italic">
-              "Jag trodde det skulle vara nåt krångligt test, men det var bara frågor om det jag gör varje dag. Tog 10 min på mobilen."
-            </blockquote>
-            <div>
-              <p className="font-semibold text-nocv-orange text-lg">Marcus</p>
-              <p className="text-white/60">Servicetekniker i Stockholm</p>
-            </div>
+          <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-10">
+            {[
+              {
+                quote: "Jag trodde det skulle vara nåt krångligt test, men det var bara frågor om det jag gör varje dag. Tog 10 min på mobilen.",
+                name: "Marcus",
+                role: "Servicetekniker i Stockholm",
+              },
+              {
+                quote: "Jag har jobbat med plåt och lack i några år men mitt CV ser inte så mycket ut. Här fick jag bara svara på frågor om det jag faktiskt kan – det kändes rättvist. Två dagar senare ringde de.",
+                name: "Mohammed",
+                role: "Skadetekniker i Stockholm",
+              },
+              {
+                quote: "Jag var nervös för att det var en AI, men det var som att chatta med någon som fattar branschen. Frågorna handlade om saker jag gör varje dag. Enklaste jobbansökan jag gjort.",
+                name: "Fatima",
+                role: "Servicetekniker i Södertälje",
+              },
+            ].map((t) => (
+              <div key={t.name} className="text-center">
+                <Quote size={36} className="mx-auto mb-4 text-white/40" strokeWidth={1} />
+                <blockquote className="text-base md:text-lg leading-relaxed text-white/90 mb-6 italic">
+                  "{t.quote}"
+                </blockquote>
+                <p className="font-semibold text-nocv-orange text-lg">{t.name}</p>
+                <p className="text-white/60">{t.role}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

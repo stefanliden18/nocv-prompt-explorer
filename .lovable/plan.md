@@ -1,80 +1,71 @@
 
-# Landningssida /sa-funkar-det — i NoCV:s grafiska profil
 
-## Designprinciper
+# Informationsbubbla på "Lediga jobb"-sidan
 
-Sidan anvander exakt samma designsystem som ovriga sajten:
+## Vad
 
-- **Farger**: `bg-nocv-dark-blue` (hero/morka sektioner), `bg-background` (ljusa sektioner), `bg-muted/30` (subtila sektioner)
-- **Typsnitt**: `font-heading` for rubriker, `font-body` for brodtext
-- **Knappar**: `variant="cta-primary"` (orange gradient) och `variant="cta-secondary"` — samma som pa startsidan
-- **Kort**: `bg-white border-border shadow-card` — samma stil som pa /candidates
-- **Gradient**: `bg-gradient-hero` for hero-sektionen (samma morkbla gradient som startsidan)
-- **Text pa mork bakgrund**: `text-white`, `text-white/80`, `text-white/60` — precis som Footer och Hero
-- **Ikoner**: Lucide-ikoner med `text-primary` / `text-secondary` — samma som pa /candidates
+En flytande informationsknapp (cirkulär ikon, t.ex. ett fragetecken eller en "HelpCircle"-ikon) som sitter i hero-sektionen pa Jobs-sidan, nara rubriken eller under filtren. Nar man hovrar over den visas en kort forklaring i en popover/tooltip, och nar man klickar oppnas en storre popover med de 4 stegen + en lank till `/sa-funkar-det`.
 
-## Sidans uppbyggnad
+## Hur det ska kannas
 
-### 1. Minimal header (landningssida — ingen fullstandig meny)
-- Vit bakgrund med `border-b border-border shadow-sm` (samma stil som Navigation)
-- NoCV-logotyp (vanster): `text-2xl font-bold font-heading text-primary` — exakt som i Navigation
-- CTA-knapp (hoger): `variant="cta-primary"` — "Testa nu"
-- Ingen ovrig navigation — fokuserad landningssida
+Avslappnat, varmt och riktat till hantverkare. Texten ska vara i samma ton som landningssidan — "fikarums-snack", inte "foretags-info".
 
-### 2. Hero-sektion
-- `bg-gradient-hero text-white` — samma gradient som pa startsidan
-- Rubrik: "Sok jobb som att snacka med en kollega" i `font-heading font-bold`
-- Undertext med `opacity-90` som pa Hero-komponenten
-- CTA-knapp: `variant="cta-primary" size="xl"` — "Testa nu"
+## Beteende
 
-### 3. Sa funkar det — 4 steg (2x2 grid)
-- Ljus bakgrund: `bg-background`
-- Kort med `bg-white border-border hover:shadow-card` — samma som pa /candidates
-- Numrerade steg med `bg-primary text-primary-foreground` (morkbla cirkel)
-- Ikoner i `text-primary` / `text-secondary` vaxelvis
-- Responsivt: 2 kolumner pa desktop, 1 pa mobil
+- **Hover**: En kort text visas, t.ex. "Hur funkar det att soka jobb har? Klicka sa berattan vi!"
+- **Klick**: En popover oppnas med:
+  1. Rubrik: "Sa enkelt ar det"
+  2. De 4 stegen i kompakt lista (ikon + rubrik + en rad beskrivning)
+  3. Trust-rad: "10 min | Inget CV | Funkar pa mobilen"
+  4. Knapp: "Las mer" som lankar till `/sa-funkar-det`
 
-### 4. Trust-bar
-- `bg-muted/30` bakgrund — samma subtila nyans som "Success Stories" pa /candidates
-- Fyra badges i rad med Lucide-ikoner
-- Text i `text-foreground`, ikoner i `text-primary`
+## Design
 
-### 5. CTA-sektion
-- `bg-background` med `cta-primary`-knapp
-- Undertext i `text-muted-foreground`
+- Ikonen: `HelpCircle` fran Lucide, stilad i `text-white` med `bg-primary/80` (morkbla med lite transparens) — floatande i hero-sektionen
+- Hover-effekt: Skalning + skuggning (`hover:scale-110 hover:shadow-lg`)
+- Popover: `bg-white` med `border-border shadow-card` — samma kort-stil som resten av sajten
+- Stegen i popovern har sma numrerade cirklar i `bg-primary text-white`
+- Responsivt: Pa mobil ar popovern fullbredd
 
-### 6. Testimonial/citat
-- `bg-gradient-hero text-white` — mork sektion for kontrast
-- Citat med `text-white/90`, namn/titel med `text-nocv-orange`
+## Placering
 
-### 7. FAQ — Accordion
-- `bg-background` med befintlig Accordion-komponent
-- Samma border-stil som ovriga sajten
+Bredvid resultat-raknaren ("Visar X-Y av Z jobb"), eller som en flytande knapp i nedre hogra hornet av hero-sektionen. Den ska synas men inte vara i vagen.
 
-### 8. Avslutande CTA
-- `bg-muted/30` bakgrund
-- `cta-primary`-knapp till /jobs
+## Tekniskt
 
-### 9. Footer
-- Befintlig Footer-komponent — identisk med ovriga sajten
-
----
-
-## Uppdatering av /candidates
-
-Lagg till en ny "Sa funkar det"-sektion mellan hero och benefits:
-- Samma 4 steg i kompakt 4-kolumnsformat
-- `cta-primary`-knapp: "Testa nu — se lediga jobb"
-- Anvaander samma kort-stil som ovriga sektionen
-
----
-
-## Filer som skapas/andras
+### Fil som andras
 
 | Fil | Andring |
 |-----|---------|
-| `src/pages/HowItWorks.tsx` | **Ny fil** — landningssida med alla sektioner ovan |
-| `src/App.tsx` | Lagg till route `/sa-funkar-det` |
-| `src/pages/Candidates.tsx` | Lagg till "Sa funkar det"-sektion |
+| `src/pages/Jobs.tsx` | Lagg till en `Popover`-komponent med `HelpCircle`-ikon och informationsinnehall |
 
-Ingen databasandring kravs. Helt statisk sida med befintliga UI-komponenter och designtokens.
+### Komponenter som anvands
+- Befintlig `Popover` / `PopoverTrigger` / `PopoverContent` fran `@radix-ui/react-popover`
+- `HelpCircle` ikon fran `lucide-react`
+- `Button` med `variant="cta-primary"` for "Las mer"-lanken
+- `Link` fran `react-router-dom` for navigering till `/sa-funkar-det`
+
+### Exempelstruktur i koden
+
+```text
++------------------------------------------+
+|  Hero-sektion (befintlig)                |
+|                                          |
+|  "Visar 1-12 av 24 jobb"  [?]           |
+|                                  |       |
+|                          Popover visas:  |
+|                          +-----------+   |
+|                          | Sa enkelt |   |
+|                          | ar det    |   |
+|                          |           |   |
+|                          | 1. Valj.. |   |
+|                          | 2. Svara. |   |
+|                          | 3. Vi...  |   |
+|                          | 4. Match. |   |
+|                          |           |   |
+|                          | [Las mer] |   |
+|                          +-----------+   |
++------------------------------------------+
+```
+
+Ingen databasandring kravs. Helt statisk tillagg med befintliga UI-komponenter.

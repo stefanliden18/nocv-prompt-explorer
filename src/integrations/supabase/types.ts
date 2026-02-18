@@ -643,6 +643,7 @@ export type Database = {
         Row: {
           audio_url: string | null
           created_at: string
+          email: string | null
           experience_years: number | null
           id: string
           name: string
@@ -657,6 +658,7 @@ export type Database = {
         Insert: {
           audio_url?: string | null
           created_at?: string
+          email?: string | null
           experience_years?: number | null
           id?: string
           name: string
@@ -671,6 +673,7 @@ export type Database = {
         Update: {
           audio_url?: string | null
           created_at?: string
+          email?: string | null
           experience_years?: number | null
           id?: string
           name?: string
@@ -698,6 +701,7 @@ export type Database = {
           company_user_id: string
           created_at: string
           duration_minutes: number
+          email_sent: boolean | null
           id: string
           location_details: string | null
           location_type: string
@@ -710,6 +714,7 @@ export type Database = {
           company_user_id: string
           created_at?: string
           duration_minutes?: number
+          email_sent?: boolean | null
           id?: string
           location_details?: string | null
           location_type?: string
@@ -722,6 +727,7 @@ export type Database = {
           company_user_id?: string
           created_at?: string
           duration_minutes?: number
+          email_sent?: boolean | null
           id?: string
           location_details?: string | null
           location_type?: string

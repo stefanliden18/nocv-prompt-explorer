@@ -33,6 +33,7 @@ import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 import { utcToStockholm } from '@/lib/timezone';
 import { TipJobDialog } from "@/components/TipJobDialog";
+import JobsHowItWorks from "@/components/JobsHowItWorks";
 import {
   Dialog,
   DialogContent,
@@ -841,6 +842,7 @@ const JobDetail = () => {
                   )}
                 </CardContent>
               </Card>
+              <JobsHowItWorks />
             </div>
           </div>
         </div>

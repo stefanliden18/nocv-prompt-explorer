@@ -82,7 +82,7 @@ export default function About() {
       )}
 
       {/* Hero */}
-      <section className="bg-gradient-hero pt-32 pb-20 px-6">
+      <section className="bg-gradient-hero pt-32 pb-14 px-6">
         <div className="container mx-auto max-w-[680px] text-center">
           {isLoading ? (
             <div className="animate-pulse h-12 bg-white/10 rounded w-3/4 mx-auto" />
@@ -96,7 +96,7 @@ export default function About() {
       </section>
 
       {/* Body 1 */}
-      <section className="py-16 px-6 bg-background">
+      <section className="pt-10 pb-4 px-6 bg-background">
         <div className="container mx-auto max-w-[680px]">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
@@ -113,7 +113,7 @@ export default function About() {
       </section>
 
       {/* Pull-quote */}
-      <section className="py-12 px-6 bg-background">
+      <section className="py-6 px-6 bg-background">
         <div className="container mx-auto max-w-3xl text-center">
           <blockquote className="text-2xl md:text-3xl font-bold font-heading text-nocv-orange italic leading-snug">
             "{stripHtml(getSection('pull_quote'))}"
@@ -122,7 +122,7 @@ export default function About() {
       </section>
 
       {/* Body 2 */}
-      <section className="py-16 px-6 bg-background">
+      <section className="pt-4 pb-6 px-6 bg-background">
         <div className="container mx-auto max-w-[680px]">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
@@ -139,7 +139,7 @@ export default function About() {
       </section>
 
       {/* Image */}
-      <section className="px-6 pb-16 bg-background">
+      <section className="px-6 py-6 bg-background">
         <div className="container mx-auto max-w-4xl">
           <img
             src={workshopImage}
@@ -151,7 +151,7 @@ export default function About() {
       </section>
 
       {/* Body 3 */}
-      <section className="py-16 px-6 bg-background">
+      <section className="pt-4 pb-10 px-6 bg-background">
         <div className="container mx-auto max-w-[680px]">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
@@ -168,9 +168,9 @@ export default function About() {
       </section>
 
       {/* Stats */}
-      <section className="py-20 bg-gradient-hero text-white">
+      <section className="py-14 bg-gradient-hero text-white">
         <div className="container mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold font-heading mb-12">Det här har vi levererat</h2>
+          <h2 className="text-3xl font-bold font-heading mb-8">Det här har vi levererat</h2>
           <div className="grid md:grid-cols-3 gap-10">
             {stats.map((stat) => (
               <div key={stat.value}>
@@ -183,9 +183,9 @@ export default function About() {
       </section>
 
       {/* Values */}
-      <section className="py-20 px-6 bg-background">
+      <section className="py-14 px-6 bg-background">
         <div className="container mx-auto max-w-4xl">
-          <h2 className="text-3xl font-bold font-heading text-center mb-12">Våra värderingar</h2>
+          <h2 className="text-3xl font-bold font-heading text-center mb-8">Våra värderingar</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {values.map((v) => (
               <div key={v.title} className="text-center p-6 rounded-2xl bg-muted/50">
@@ -201,7 +201,7 @@ export default function About() {
       </section>
 
       {/* CTA */}
-      <section className="py-20 px-6 bg-muted/30">
+      <section className="py-14 px-6 bg-muted/30">
         <div className="container mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold font-heading mb-4">Nyfiken?</h2>
           <p className="text-lg text-muted-foreground mb-8">

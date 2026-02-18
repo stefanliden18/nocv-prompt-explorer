@@ -139,7 +139,7 @@ serve(async (req) => {
       );
 
       const { error: emailError } = await resend.emails.send({
-        from: "NoCV <onboarding@resend.dev>",
+        from: "NoCV <noreply@nocv.se>",
         to: [application.email],
         subject: `${isUpdate ? 'Uppdaterad ' : ''}Inbjudan till intervju - ${jobTitle}`,
         html: emailHtml,

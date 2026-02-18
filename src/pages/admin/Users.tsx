@@ -12,12 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserInviteDialog } from '@/components/UserInviteDialog';
+import { PortalUserInviteDialog } from '@/components/PortalUserInviteDialog';
 import { UserDeleteDialog } from '@/components/UserDeleteDialog';
 import { UserRoleDialog } from '@/components/UserRoleDialog';
 import { UserStatusToggle } from '@/components/UserStatusToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
-import { UserPlus, Search, Loader2, MoreHorizontal, Trash2 } from 'lucide-react';
+import { UserPlus, Search, Loader2, MoreHorizontal, Trash2, Building2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -39,6 +40,7 @@ export default function AdminUsers() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [portalInviteDialogOpen, setPortalInviteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [activeAdminCount, setActiveAdminCount] = useState(0);
 
@@ -145,10 +147,16 @@ export default function AdminUsers() {
             <h1 className="text-3xl font-bold">Användare</h1>
             <p className="text-muted-foreground">Hantera användare och roller</p>
           </div>
-          <Button onClick={() => setInviteDialogOpen(true)}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Ny användare
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setPortalInviteDialogOpen(true)}>
+              <Building2 className="mr-2 h-4 w-4" />
+              Bjud in portalanvändare
+            </Button>
+            <Button onClick={() => setInviteDialogOpen(true)}>
+              <UserPlus className="mr-2 h-4 w-4" />
+              Ny användare
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -261,6 +269,12 @@ export default function AdminUsers() {
       <UserInviteDialog
         open={inviteDialogOpen}
         onOpenChange={setInviteDialogOpen}
+        onSuccess={fetchUsers}
+      />
+
+      <PortalUserInviteDialog
+        open={portalInviteDialogOpen}
+        onOpenChange={setPortalInviteDialogOpen}
         onSuccess={fetchUsers}
       />
 

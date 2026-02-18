@@ -83,7 +83,7 @@ export default function About() {
 
       {/* Hero */}
       <section className="bg-gradient-hero pt-32 pb-14 px-6">
-        <div className="container mx-auto max-w-[680px] text-center">
+      <div className="container mx-auto max-w-[800px] text-center">
           {isLoading ? (
             <div className="animate-pulse h-12 bg-white/10 rounded w-3/4 mx-auto" />
           ) : (
@@ -97,7 +97,7 @@ export default function About() {
 
       {/* Body 1 */}
       <section className="pt-10 pb-4 px-6 bg-background">
-        <div className="container mx-auto max-w-[680px]">
+        <div className="container mx-auto max-w-[800px]">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               <div className="h-4 bg-muted rounded w-full" />
@@ -105,7 +105,7 @@ export default function About() {
             </div>
           ) : (
             <div
-              className="prose prose-lg max-w-none dark:prose-invert"
+              className="prose prose-lg max-w-none dark:prose-invert text-left [&>p]:mb-6"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getSection('body_1')) }}
             />
           )}
@@ -114,7 +114,7 @@ export default function About() {
 
       {/* Pull-quote */}
       <section className="py-6 px-6 bg-background">
-        <div className="container mx-auto max-w-3xl text-center">
+        <div className="container mx-auto max-w-[800px] text-center">
           <blockquote className="text-2xl md:text-3xl font-bold font-heading text-nocv-orange italic leading-snug">
             "{stripHtml(getSection('pull_quote'))}"
           </blockquote>
@@ -123,7 +123,7 @@ export default function About() {
 
       {/* Body 2 */}
       <section className="pt-4 pb-6 px-6 bg-background">
-        <div className="container mx-auto max-w-[680px]">
+        <div className="container mx-auto max-w-[800px]">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               <div className="h-4 bg-muted rounded w-full" />
@@ -131,7 +131,7 @@ export default function About() {
             </div>
           ) : (
             <div
-              className="prose prose-lg max-w-none dark:prose-invert"
+              className="prose prose-lg max-w-none dark:prose-invert text-left [&>p]:mb-6"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getSection('body_2')) }}
             />
           )}
@@ -152,7 +152,7 @@ export default function About() {
 
       {/* Body 3 */}
       <section className="pt-4 pb-10 px-6 bg-background">
-        <div className="container mx-auto max-w-[680px]">
+        <div className="container mx-auto max-w-[800px]">
           {isLoading ? (
             <div className="animate-pulse space-y-3">
               <div className="h-4 bg-muted rounded w-full" />
@@ -160,7 +160,7 @@ export default function About() {
             </div>
           ) : (
             <div
-              className="prose prose-lg max-w-none dark:prose-invert"
+              className="prose prose-lg max-w-none dark:prose-invert text-left [&>p]:mb-6"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(getSection('body_3')) }}
             />
           )}

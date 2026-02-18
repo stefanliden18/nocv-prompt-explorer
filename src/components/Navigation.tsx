@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
+import { usePortalAuth } from "@/hooks/usePortalAuth";
 import { AdminStatusButton } from "./AdminStatusButton";
 import { TipNOCVDialog } from "./TipNOCVDialog";
 
@@ -11,6 +12,7 @@ const Navigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [tipNoCVDialogOpen, setTipNoCVDialogOpen] = useState(false);
   const { user, isAdmin, signOut } = useAuth();
+  const { isPortalUser } = usePortalAuth();
   const navigate = useNavigate();
 
   return (
@@ -50,6 +52,11 @@ const Navigation = () => {
             >
               💡 Tipsa om NoCV
             </button>
+            {isPortalUser && (
+              <Link to="/portal" className="text-foreground hover:text-primary transition-colors font-medium">
+                Kundportal
+              </Link>
+            )}
             {isAdmin && (
               <Link to="/admin" className="text-foreground hover:text-primary transition-colors font-medium">
                 Admin
@@ -122,6 +129,15 @@ const Navigation = () => {
                   >
                     💡 Tipsa om NoCV
                   </button>
+                  {isPortalUser && (
+                    <Link 
+                      to="/portal" 
+                      className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Kundportal
+                    </Link>
+                  )}
                   {isAdmin && (
                     <Link 
                       to="/admin" 

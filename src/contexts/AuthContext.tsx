@@ -9,11 +9,14 @@ interface AuthContextType {
   session: Session | null;
   isAdmin: boolean;
   role: string;
+  firstName: string | null;
+  lastName: string | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
+  updateProfileName: (firstName: string, lastName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +26,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [role, setRole] = useState<string>('user');
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [lastName, setLastName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -111,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🔍 Checking role for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, first_name, last_name')
         .eq('id', userId)
         .single();
       
@@ -119,6 +124,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('❌ Error checking profile role:', error);
         setIsAdmin(false);
         setRole('user');
+        setFirstName(null);
+        setLastName(null);
         return 'user';
       }
       
@@ -126,11 +133,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('✅ User role:', userRole);
       setRole(userRole);
       setIsAdmin(userRole === 'admin');
+      setFirstName(data?.first_name ?? null);
+      setLastName(data?.last_name ?? null);
       return userRole;
     } catch (error) {
       console.error('❌ Error in checkAdminStatus:', error);
       setIsAdmin(false);
       setRole('user');
+      setFirstName(null);
+      setLastName(null);
       return 'user';
     }
   };
@@ -226,6 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setIsAdmin(false);
       setRole('user');
+      setFirstName(null);
+      setLastName(null);
       
       toast.success('Utloggad!');
       navigate('/');
@@ -236,8 +249,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateProfileName = async (newFirstName: string, newLastName: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('profiles')
+      .update({ first_name: newFirstName, last_name: newLastName })
+      .eq('id', user.id);
+    if (error) {
+      toast.error('Kunde inte spara namn');
+      throw error;
+    }
+    setFirstName(newFirstName);
+    setLastName(newLastName);
+    toast.success('Namn sparat!');
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, isAdmin, role, loading, signUp, signIn, signOut, sendMagicLink }}>
+    <AuthContext.Provider value={{ user, session, isAdmin, role, firstName, lastName, loading, signUp, signIn, signOut, sendMagicLink, updateProfileName }}>
       {children}
     </AuthContext.Provider>
   );

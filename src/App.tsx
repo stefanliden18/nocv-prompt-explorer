@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import { ProfileNameDialog } from "./components/ProfileNameDialog";
 import Index from "./pages/Index";
 import Jobs from "./pages/Jobs";
 import JobDetail from "./pages/JobDetail";
@@ -58,6 +59,7 @@ const App = () => (
           <Toaster />
         <Sonner />
         <MetaPixel />
+        <ProfileNameDialog />
         <Routes>
             <Route path="/" element={<Index />} />
           <Route path="/jobs" element={<Jobs />} />

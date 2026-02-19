@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.send-portal-invitation]
 verify_jwt = false
+
+[functions.send-interview-proposal]
+verify_jwt = false
+
+[functions.confirm-interview-proposal]
+verify_jwt = false

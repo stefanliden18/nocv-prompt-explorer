@@ -705,6 +705,72 @@ export type Database = {
           },
         ]
       }
+      portal_interview_proposals: {
+        Row: {
+          candidate_id: string
+          chosen_option: number | null
+          company_user_id: string
+          created_at: string
+          duration_minutes: number
+          id: string
+          location_details: string | null
+          location_type: string
+          notes: string | null
+          option_1_at: string
+          option_2_at: string
+          respond_token: string
+          responded_at: string | null
+          status: string
+        }
+        Insert: {
+          candidate_id: string
+          chosen_option?: number | null
+          company_user_id: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          location_details?: string | null
+          location_type?: string
+          notes?: string | null
+          option_1_at: string
+          option_2_at: string
+          respond_token?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Update: {
+          candidate_id?: string
+          chosen_option?: number | null
+          company_user_id?: string
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          location_details?: string | null
+          location_type?: string
+          notes?: string | null
+          option_1_at?: string
+          option_2_at?: string
+          respond_token?: string
+          responded_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portal_interview_proposals_candidate_id_fkey"
+            columns: ["candidate_id"]
+            isOneToOne: false
+            referencedRelation: "portal_candidates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "portal_interview_proposals_company_user_id_fkey"
+            columns: ["company_user_id"]
+            isOneToOne: false
+            referencedRelation: "company_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       portal_interviews: {
         Row: {
           candidate_id: string

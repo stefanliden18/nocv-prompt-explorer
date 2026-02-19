@@ -1,0 +1,1 @@
+ALTER TABLE portal_interview_proposals ADD COLUMN option_3_at timestamptz;

@@ -35,7 +35,7 @@ export default function InterviewRespond() {
       });
   }, [token]);
 
-  const handleChoose = async (option: 1 | 2) => {
+  const handleChoose = async (option: 1 | 2 | 3) => {
     if (!proposal || !token) return;
     setConfirming(true);
     try {
@@ -90,7 +90,7 @@ export default function InterviewRespond() {
   const bookerName = proposal?.company_users?.name || '';
 
   if (confirmed) {
-    const chosenDate = proposal.chosen_option === 1 ? proposal.option_1_at : proposal.option_2_at;
+    const chosenDate = proposal.chosen_option === 1 ? proposal.option_1_at : proposal.chosen_option === 2 ? proposal.option_2_at : proposal.option_3_at;
     const chosen = formatOption(chosenDate);
 
     return (
@@ -113,6 +113,7 @@ export default function InterviewRespond() {
 
   const opt1 = formatOption(proposal.option_1_at);
   const opt2 = formatOption(proposal.option_2_at);
+  const opt3 = proposal.option_3_at ? formatOption(proposal.option_3_at) : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
@@ -140,6 +141,7 @@ export default function InterviewRespond() {
             {[
               { num: 1 as const, ...opt1 },
               { num: 2 as const, ...opt2 },
+              ...(opt3 ? [{ num: 3 as const, ...opt3 }] : []),
             ].map((opt) => (
               <button
                 key={opt.num}

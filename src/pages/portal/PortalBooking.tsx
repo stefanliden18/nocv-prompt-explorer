@@ -28,6 +28,8 @@ export default function PortalBooking() {
     time: '',
     date2: '',
     time2: '',
+    date3: '',
+    time3: '',
     duration: '30',
     locationType: 'onsite',
     locationDetails: '',
@@ -91,12 +93,14 @@ export default function PortalBooking() {
     try {
       const option1 = new Date(`${form.date}T${form.time}`).toISOString();
       const option2 = new Date(`${form.date2}T${form.time2}`).toISOString();
+      const option3 = form.date3 && form.time3 ? new Date(`${form.date3}T${form.time3}`).toISOString() : null;
 
       const { data: proposal, error } = await supabase.from('portal_interview_proposals' as any).insert({
         candidate_id: candidateId,
         company_user_id: companyUserId,
         option_1_at: option1,
         option_2_at: option2,
+        option_3_at: option3,
         duration_minutes: parseInt(form.duration),
         location_type: form.locationType,
         location_details: form.locationDetails || null,
@@ -134,7 +138,7 @@ export default function PortalBooking() {
 
   const canProceedStep1 = mode === 'direct'
     ? !!(form.date && form.time)
-    : !!(form.date && form.time && form.date2 && form.time2);
+    : !!(form.date && form.time && form.date2 && form.time2 && form.date3 && form.time3);
 
   const steps = [
     { num: 1, label: 'Välj tid' },
@@ -195,7 +199,7 @@ export default function PortalBooking() {
 
             {mode === 'proposal' && (
               <p className="text-sm text-muted-foreground">
-                Kandidaten får ett mejl med 2 alternativa tider och väljer den som passar bäst.
+                Kandidaten får ett mejl med 3 alternativa tider och väljer den som passar bäst.
               </p>
             )}
 
@@ -226,6 +230,23 @@ export default function PortalBooking() {
                   <div>
                     <Label className="text-xs text-muted-foreground">Tid</Label>
                     <Input type="time" value={form.time2} onChange={e => setForm({ ...form, time2: e.target.value })} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Option 3 (proposal only) */}
+            {mode === 'proposal' && (
+              <div>
+                <Label className="text-sm font-semibold">Alternativ 3</Label>
+                <div className="grid grid-cols-2 gap-4 mt-1">
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Datum</Label>
+                    <Input type="date" value={form.date3} onChange={e => setForm({ ...form, date3: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground">Tid</Label>
+                    <Input type="time" value={form.time3} onChange={e => setForm({ ...form, time3: e.target.value })} />
                   </div>
                 </div>
               </div>
@@ -285,6 +306,7 @@ export default function PortalBooking() {
                 <>
                   <div className="flex justify-between"><span className="text-muted-foreground">Alternativ 1</span><span className="font-medium">{form.date} kl {form.time}</span></div>
                   <div className="flex justify-between"><span className="text-muted-foreground">Alternativ 2</span><span className="font-medium">{form.date2} kl {form.time2}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Alternativ 3</span><span className="font-medium">{form.date3} kl {form.time3}</span></div>
                 </>
               ) : (
                 <>
@@ -319,7 +341,7 @@ export default function PortalBooking() {
             {emailStatus === 'sent' && (
               <p className="text-emerald-600 font-medium mb-2">
                 {mode === 'proposal'
-                  ? '✉️ Kandidaten har fått ett mejl med de två tidsalternativen.'
+                  ? '✉️ Kandidaten har fått ett mejl med tre tidsalternativ.'
                   : '✉️ Bekräftelsemail med kalenderinbjudan har skickats till kandidaten.'}
               </p>
             )}

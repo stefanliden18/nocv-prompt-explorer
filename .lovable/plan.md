@@ -1,54 +1,35 @@
 
-
-## Uppdatera standardmallen for intervjuinbjudan
+## Visa och redigera namn i admin-användartabellen
 
 ### Vad som andras
-Standardtexten som fylls i automatiskt nar man klickar "Boka tid for intervju" byts ut till den mer personliga tonen du beskrev. Dessutom visas ratt namn (Stefan eller Miche) langst ner baserat pa vem som ar inloggad.
 
-### Ny standardtext
+En ny kolumn "Namn" laggs till i användartabellen pa admin-sidan. Administratorer kan redigera for- och efternamn pa vilken anvandare som helst via en ny menyval i atgardsmenyn (tre-pricks-menyn).
 
-```
-Hej [Kandidatnamn]!
+### Hur det kommer se ut
 
-Vi har kollat igenom din ansokan till [Jobbtitel]-rollen och gillar vad vi ser. Nu vill vi garna ta ett snack med dig pa video sa vi kan lara kanna dig lite battre.
-
-Inget stelt – vi kommer snacka om:
-
-- Vad du har gjort och vad du kan
-- Vad du letar efter i nasta jobb
-- Hur det ser ut pa verkstaden och i teamet
-
-Rakna med ca 30 minuter.
-
-Later det bra? Svara sa bokar vi in en tid som funkar for dig.
-
-Hors!
-
-[Namn], NoCV
-```
-
-### Hur namnet bestams
-
-Inloggad anvandare har en e-postadress. Funktionen kollar:
-- Om e-posten ar `stefan@nocv.se` → "Stefan"
-- Om e-posten ar `michael@nocv.se` → "Miche"
-- Annars → fornamnet fran e-postadressen (som fallback)
+Tabellen far en ny kolumn "Namn" mellan E-post och Roll. Om namn saknas visas texten i gratt ("Ej angivet"). I atgardsmenyn (...) laggs ett nytt alternativ "Andra namn" till.
 
 ### Teknisk plan
 
-**Fil 1: `src/utils/interviewTemplates.ts`**
-- Uppdatera `getInterviewMessageTemplate` sa den tar emot ett extra parameter `signerName: string`
-- Byt ut mallens text till den nya, mer avslappnade tonen
-- Anvand `signerName` langst ner i meddelandet
+**Fil 1: `supabase/functions/get-users/index.ts`**
+- Uppdatera select-queryn att inkludera `first_name` och `last_name` fran profiles-tabellen
+- Dessa skickas med i svaret till frontend
 
-**Fil 2: `src/components/InterviewBookingDialog.tsx`**
-- Importera `useAuth` fran AuthContext
-- Hamta inloggad anvandares e-post via `user.email`
-- Bestam signerName: `stefan@nocv.se` → "Stefan", `michael@nocv.se` → "Miche", annars fornamnet
-- Skicka med `signerName` till `getInterviewMessageTemplate`
+**Fil 2: `src/pages/admin/Users.tsx`**
+- Utoka `UserData`-interfacet med `first_name` och `last_name`
+- Lagg till kolumnen "Namn" i tabellen
+- Lagg till state och hantering for en ny "AdminEditNameDialog"
+- Lagg till menyval "Andra namn" i dropdown-menyn
 
-### Vad som INTE andras
-- E-postmallarna (HTML) for det faktiska mejlet som skickas
-- Portalens bokningsflode (PortalBooking.tsx)
-- Edge functions
+**Fil 3: `src/components/AdminEditNameDialog.tsx` (ny fil)**
+- En dialog med tva inputfalt: Fornamn och Efternamn
+- Sparar via Supabase direkt till profiles-tabellen (med service role via edge function, eftersom admin behover uppdatera andra anvandares profiler)
 
+**Fil 4: `supabase/functions/admin-update-profile/index.ts` (ny edge function)**
+- Tar emot `userId`, `firstName`, `lastName`
+- Verifierar att anroparen ar admin
+- Uppdaterar profiles-tabellen med service role key
+
+### Sakerhet
+- Edge functionen kontrollerar att anroparen har admin-roll innan nagon uppdatering gors
+- Vanliga anvandare kan bara andra sitt eget namn via den befintliga ProfileNameDialog

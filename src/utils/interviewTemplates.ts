@@ -1,22 +1,31 @@
+export function getSignerName(email?: string): string {
+  if (email === 'stefan@nocv.se') return 'Stefan';
+  if (email === 'michael@nocv.se') return 'Miche';
+  return email?.split('@')[0] || 'Rekryteraren';
+}
+
 export function getInterviewMessageTemplate(
   candidateName: string,
-  jobTitle: string
+  jobTitle: string,
+  signerName: string
 ): string {
   return `Hej ${candidateName}!
 
-Vi har granskat din ansökan till tjänsten som ${jobTitle} och är imponerade av din profil. Vi skulle gärna vilja träffa dig för en videointervju.
+Vi har kollat igenom din ansökan till ${jobTitle}-rollen och gillar vad vi ser. Nu vill vi gärna ta ett snack med dig på video så vi kan lära känna dig lite bättre.
 
-Under intervjun kommer vi att diskutera:
-- Din bakgrund och erfarenhet
-- Dina förväntningar på rollen
-- Företaget och teamet
+Inget stelt – vi kommer snacka om:
 
-Intervjun beräknas ta cirka 45 minuter.
+- Vad du har gjort och vad du kan
+- Vad du letar efter i nästa jobb
+- Hur det ser ut på verkstaden och i teamet
 
-Ser fram emot att träffa dig!
+Räkna med ca 30 minuter.
 
-Med vänliga hälsningar,
-Rekryteringsavdelningen`;
+Låter det bra? Svara så bokar vi in en tid som funkar för dig.
+
+Hörs!
+
+${signerName}, NoCV`;
 }
 
 export function getReminderEmailTemplate(

@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
-import { getInterviewMessageTemplate } from "@/utils/interviewTemplates";
+import { getInterviewMessageTemplate, getSignerName } from "@/utils/interviewTemplates";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar, Edit } from "lucide-react";
@@ -48,7 +49,8 @@ export function InterviewBookingDialog({
   const [message, setMessage] = useState("");
   const [sendEmail, setSendEmail] = useState(true);
   const { toast } = useToast();
-
+  const { user } = useAuth();
+  const signerName = getSignerName(user?.email ?? undefined);
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && application.interview_scheduled_at) {
@@ -61,7 +63,8 @@ export function InterviewBookingDialog({
         setScheduledAt(undefined);
         setMessage(getInterviewMessageTemplate(
           application.candidate_name,
-          application.jobs?.title || "denna position"
+          application.jobs?.title || "denna position",
+          signerName
         ));
         setSendEmail(true);
       }

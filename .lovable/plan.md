@@ -1,48 +1,81 @@
 
 
-## Fix: Inbjudan av portalanvandare misslyckas
+## Utoka intervjuforslag till 3 alternativ + kopia till admin
 
-### Problem
+### Nuvarande status
 
-Tva buggar i `invite-portal-user`-funktionen:
+Ert system ar redan korrekt uppsatt vad galler:
+- Kayvan ser BARA kandidater kopplade till Europeiska Motors positioner (RLS skyddar detta)
+- Michael (admin) ar den enda som kan lagga till kandidater
+- Matchningsprofiler kopplas av admin och visas for kunden
 
-1. **Felaktig autentiseringsmetod**: Funktionen anropar `supabaseClient.auth.getClaims(token)` som inte finns i Supabase JS-klienten. Detta bor vara `supabaseClient.auth.getUser(token)` (samma monster som `invite-user` anvander).
+Tva saker behover andras:
 
-2. **Variabel utanfor scope**: `appUrl` deklareras inne i ett `else`-block (rad 97) men anvands utanfor det blocket (rad 145). Nar Michael redan finns som anvandare (han bjods in tidigare) hoppar koden over `else`-blocket, och `appUrl` ar odefinierad — vilket orsakar ett kraschfel.
+### 1. Utoka fran 2 till 3 tidsforslag
 
-### Losning
+Idag kan portalanvandaren (Kayvan) skicka 2 tidsalternativ till kandidaten. Ni vill ha 3.
 
-**Fil: `supabase/functions/invite-portal-user/index.ts`**
+**Databasandring:**
+- Lagg till kolumnen `option_3_at` (timestamp with time zone, nullable) i tabellen `portal_interview_proposals`
 
-- Byt `auth.getClaims(token)` till `auth.getUser(token)` och hamta `userId` fran `user.id` istallet for `claims.sub`
-- Flytta `appUrl`-deklarationen utanfor if/else-blocket sa att den ar tillganglig for bade redirect och mejllank
-- Uppdatera CORS-headers till den fullstandiga listan for att undvika framtida problem
+**Frontend (`src/pages/portal/PortalBooking.tsx`):**
+- Lagg till ett tredje datum/tid-falt (Alternativ 3)
+- Uppdatera bekraftelsevyn att visa alla tre alternativ
+- Uppdatera texten fran "2 alternativa tider" till "3 alternativa tider"
 
-### Tekniska detaljer
+**Edge function (`supabase/functions/send-interview-proposal/index.ts`):**
+- Lagg till formatering av option_3 i mejlmallen
+- Visa tredje alternativet i kandidatmejlet
 
-```text
-FORE (rad 35-45):
-  const token = authHeader.replace("Bearer ", "");
-  const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-  if (claimsError || !claimsData?.claims) { ... }
-  const userId = claimsData.claims.sub;
+**Svarsida (`src/pages/InterviewRespond.tsx`):**
+- Visa tre alternativ istallet for tva
 
-EFTER:
-  const token = authHeader.replace("Bearer ", "");
-  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
-  if (userError || !user) { ... }
-  const userId = user.id;
+### 2. Skicka kopia till admin vid tidsforslag
+
+**Edge function (`supabase/functions/send-interview-proposal/index.ts`):**
+- Slå upp alla admin-anvandare fran `user_roles` + `profiles` (for att hitta Michaels e-post)
+- Alternativt: hamta admin-mejl fran auth.users via service role
+- Skicka en kopia av forslaget till admin med rubriken "Kopia: Intervjuforslag — [Kandidatnamn]"
+- Mejlet visar samma tider och detaljer sa admin har full insyn
+
+### 3. Uppsattning av Europeiska Motor (datainmatning, EJ kodandring)
+
+For att Kayvan ska kunna anvanda portalen behover foljande laggas in:
+- Kayvans konto maste kopplas till Europeiska Motor i `company_users`
+- Positioner (servicetekniker, skadetekniker, diagnostekniker) maste skapas under Europeiska Motor i `positions`
+- Michael laggar sedan in kandidater mot dessa positioner via admin-panelen
+
+Detta gor ni via er befintliga admin-panel (bjud in Kayvan via kundportalens inbjudningsfunktion och skapa positionerna dar).
+
+### Teknisk plan
+
+**Migration: Ny kolumn**
+```sql
+ALTER TABLE portal_interview_proposals 
+ADD COLUMN option_3_at timestamptz;
 ```
 
-```text
-FORE (rad 97, inuti else-block):
-  const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
+**Fil 1: `src/pages/portal/PortalBooking.tsx`**
+- Lagg till `date3` och `time3` i form-state
+- Lagg till tredje tidsfalt i UI:t
+- Skicka `option_3_at` vid insert
+- Uppdatera valideringslogik och bekraftelsevy
 
-EFTER (flyttas till fore if/else, ca rad 89):
-  const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
-```
+**Fil 2: `supabase/functions/send-interview-proposal/index.ts`**
+- Formatera och visa tredje alternativet i mejlmallen
+- Hamta admin-mejladresser via `user_roles` + `auth.admin.getUserById`
+- Skicka kopia-mejl till alla admins
 
-### Efter fix
+**Fil 3: `src/pages/InterviewRespond.tsx`**
+- Visa tredje alternativet om det finns
 
-Nar funktionen ar uppdaterad och deployad kan du bjuda in Michael Matton Jernberg igen. Eftersom han redan finns som anvandare kommer funktionen att hoppa over kontoskapande och bara skapa foretagskopplingen + skicka mejl.
+**Fil 4: `supabase/functions/confirm-interview-proposal/index.ts`**
+- Hantera `chosen_option: 3` korrekt
+
+### Sakerhet
+
+Inga forandringar i RLS-policyer behovs. Befintliga policyer skyddar redan ratt:
+- Portalanvandare kan bara se/skapa proposals for sitt eget foretags kandidater
+- Bara admin kan lagga till kandidater
+- Kandidater isoleras per foretag via positions-tabellen
 

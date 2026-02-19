@@ -35,10 +35,10 @@ serve(async (req) => {
       );
     }
 
-    // Fetch interview with candidate info
+    // Fetch interview with candidate info — include user_id for booker email lookup
     const { data: interview, error: intErr } = await supabaseAdmin
       .from("portal_interviews")
-      .select("*, portal_candidates(name, email), company_users(name, companies(name))")
+      .select("*, portal_candidates(name, email), company_users(name, user_id, companies(name))")
       .eq("id", portalInterviewId)
       .single();
 
@@ -53,15 +53,8 @@ serve(async (req) => {
     const candidateName = (interview.portal_candidates as any)?.name || "Kandidat";
     const candidateEmail = (interview.portal_candidates as any)?.email;
     const bookerName = (interview.company_users as any)?.name || "Rekryterare";
+    const bookerUserId = (interview.company_users as any)?.user_id;
     const companyName = (interview.company_users as any)?.companies?.name || "";
-
-    if (!candidateEmail) {
-      // No email on file — mark not sent and return info
-      return new Response(
-        JSON.stringify({ success: false, reason: "no_email", message: "Kandidaten saknar e-postadress" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
     const scheduledDate = new Date(interview.scheduled_at);
     const interviewDate = formatInTimeZone(scheduledDate, STOCKHOLM_TZ, "d MMMM yyyy", { locale: sv });
@@ -72,55 +65,122 @@ serve(async (req) => {
       interview.location_type === "onsite" ? "På plats" :
       interview.location_type === "teams" ? "Teams / Videomöte" : "Telefon";
 
-    // Build iCal content
-    const icsContent = buildICalEvent({
-      summary: `Intervju med ${companyName || bookerName}`,
-      dtStart: scheduledDate,
-      durationMinutes,
-      location: interview.location_details || locationLabel,
-      description: interview.notes || "",
-    });
+    // ── Send candidate email ──
+    if (!candidateEmail) {
+      // No email on file — skip candidate email but still try booker email below
+      console.log("Candidate has no email, skipping candidate invitation.");
+    } else {
+      const candidateIcs = buildICalEvent({
+        summary: `Intervju med ${companyName || bookerName}`,
+        dtStart: scheduledDate,
+        durationMinutes,
+        location: interview.location_details || locationLabel,
+        description: interview.notes || "",
+      });
 
-    // Build email HTML
-    const emailHtml = getEmailTemplate({
-      candidateName,
-      interviewDate,
-      interviewTime,
-      durationMinutes,
-      locationLabel,
-      locationDetails: interview.location_details,
-      notes: interview.notes,
-      bookerName,
-      companyName,
-    });
+      const candidateHtml = getCandidateEmailTemplate({
+        candidateName,
+        interviewDate,
+        interviewTime,
+        durationMinutes,
+        locationLabel,
+        locationDetails: interview.location_details,
+        notes: interview.notes,
+        bookerName,
+        companyName,
+      });
 
-    const { error: emailError } = await resend.emails.send({
-      from: "NoCV <noreply@nocv.se>",
-      to: [candidateEmail],
-      subject: `Inbjudan till intervju — ${companyName || interviewDate}`,
-      html: emailHtml,
-      attachments: [
-        {
-          filename: "intervju.ics",
-          content: btoa(icsContent),
-          content_type: "text/calendar",
-        },
-      ],
-    });
+      const { error: emailError } = await resend.emails.send({
+        from: "NoCV <noreply@nocv.se>",
+        to: [candidateEmail],
+        subject: `Inbjudan till intervju — ${companyName || interviewDate}`,
+        html: candidateHtml,
+        attachments: [
+          {
+            filename: "intervju.ics",
+            content: btoa(candidateIcs),
+            content_type: "text/calendar",
+          },
+        ],
+      });
 
-    if (emailError) {
-      console.error("Email send error:", emailError);
-      return new Response(
-        JSON.stringify({ error: "Email failed", details: emailError }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (emailError) {
+        console.error("Candidate email send error:", emailError);
+        return new Response(
+          JSON.stringify({ error: "Email failed", details: emailError }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Mark email_sent on the interview
+      await supabaseAdmin
+        .from("portal_interviews")
+        .update({ email_sent: true })
+        .eq("id", portalInterviewId);
     }
 
-    // Mark email_sent on the interview
-    await supabaseAdmin
-      .from("portal_interviews")
-      .update({ email_sent: true })
-      .eq("id", portalInterviewId);
+    // ── Send booker confirmation email ──
+    if (bookerUserId) {
+      try {
+        const { data: authUser, error: authErr } = await supabaseAdmin.auth.admin.getUserById(bookerUserId);
+        const bookerEmail = authUser?.user?.email;
+
+        if (authErr || !bookerEmail) {
+          console.error("Could not fetch booker email:", authErr);
+        } else {
+          const bookerIcs = buildICalEvent({
+            summary: `Intervju med ${candidateName}`,
+            dtStart: scheduledDate,
+            durationMinutes,
+            location: interview.location_details || locationLabel,
+            description: interview.notes || "",
+          });
+
+          const bookerHtml = getBookerEmailTemplate({
+            bookerName,
+            candidateName,
+            interviewDate,
+            interviewTime,
+            durationMinutes,
+            locationLabel,
+            locationDetails: interview.location_details,
+            notes: interview.notes,
+            companyName,
+          });
+
+          const { error: bookerEmailError } = await resend.emails.send({
+            from: "NoCV <noreply@nocv.se>",
+            to: [bookerEmail],
+            subject: `Bekräftelse: Intervju med ${candidateName} — ${interviewDate}`,
+            html: bookerHtml,
+            attachments: [
+              {
+                filename: "intervju.ics",
+                content: btoa(bookerIcs),
+                content_type: "text/calendar",
+              },
+            ],
+          });
+
+          if (bookerEmailError) {
+            console.error("Booker email send error:", bookerEmailError);
+            // Don't fail the whole request — candidate email already sent
+          } else {
+            console.log("Booker confirmation email sent to", bookerEmail);
+          }
+        }
+      } catch (bookerErr) {
+        console.error("Error sending booker email:", bookerErr);
+      }
+    }
+
+    // Determine response based on candidate email status
+    if (!candidateEmail) {
+      return new Response(
+        JSON.stringify({ success: false, reason: "no_email", message: "Kandidaten saknar e-postadress" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: "Email skickat" }),
@@ -134,6 +194,8 @@ serve(async (req) => {
     );
   }
 });
+
+// ── Helpers ──
 
 function pad(n: number): string {
   return n.toString().padStart(2, "0");
@@ -183,7 +245,13 @@ function buildICalEvent(opts: {
   ].join("\r\n");
 }
 
-function getEmailTemplate(opts: {
+function formatLocationLine(locationLabel: string, locationDetails: string | null): string {
+  return locationDetails ? `${locationLabel} — ${locationDetails}` : locationLabel;
+}
+
+// ── Email templates ──
+
+function getCandidateEmailTemplate(opts: {
   candidateName: string;
   interviewDate: string;
   interviewTime: string;
@@ -194,9 +262,7 @@ function getEmailTemplate(opts: {
   bookerName: string;
   companyName: string;
 }): string {
-  const locationLine = opts.locationDetails
-    ? `${opts.locationLabel} — ${opts.locationDetails}`
-    : opts.locationLabel;
+  const locationLine = formatLocationLine(opts.locationLabel, opts.locationDetails);
 
   return `<!DOCTYPE html>
 <html>
@@ -222,6 +288,52 @@ function getEmailTemplate(opts: {
 
     <p style="color: #666; font-size: 14px; margin-top: 30px;">
       Med vänliga hälsningar,<br/>${opts.bookerName}<br/>via NoCV
+    </p>
+  </div>
+  <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
+    <p>Detta är ett automatiskt meddelande, vänligen svara inte på detta mail.</p>
+  </div>
+</body>
+</html>`;
+}
+
+function getBookerEmailTemplate(opts: {
+  bookerName: string;
+  candidateName: string;
+  interviewDate: string;
+  interviewTime: string;
+  durationMinutes: number;
+  locationLabel: string;
+  locationDetails: string | null;
+  notes: string | null;
+  companyName: string;
+}): string {
+  const locationLine = formatLocationLine(opts.locationLabel, opts.locationDetails);
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background: linear-gradient(135deg, #F97316 0%, #EA580C 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+    <h1 style="color: white; margin: 0;">Intervju bokad</h1>
+  </div>
+  <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+    <p style="font-size: 16px;">Hej ${opts.bookerName},</p>
+    <p>Din intervju med <strong>${opts.candidateName}</strong> är bekräftad.</p>
+
+    <div style="background: #f7f7f7; padding: 20px; border-radius: 8px; margin: 25px 0;">
+      <p style="margin: 8px 0;"><strong>📅 Datum:</strong> ${opts.interviewDate}</p>
+      <p style="margin: 8px 0;"><strong>🕒 Tid:</strong> ${opts.interviewTime}</p>
+      <p style="margin: 8px 0;"><strong>⏱️ Längd:</strong> ${opts.durationMinutes} min</p>
+      <p style="margin: 8px 0;"><strong>📍 Plats:</strong> ${locationLine}</p>
+    </div>
+
+    ${opts.notes ? `<p style="margin-top: 20px;"><strong>Anteckningar:</strong><br/>${opts.notes}</p>` : ""}
+
+    <p style="margin-top: 20px;">En kalenderinbjudan (.ics) bifogas — öppna den för att lägga in mötet i din kalender.</p>
+
+    <p style="color: #666; font-size: 14px; margin-top: 30px;">
+      Med vänliga hälsningar,<br/>NoCV
     </p>
   </div>
   <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">

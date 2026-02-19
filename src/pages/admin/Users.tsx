@@ -16,9 +16,10 @@ import { PortalUserInviteDialog } from '@/components/PortalUserInviteDialog';
 import { UserDeleteDialog } from '@/components/UserDeleteDialog';
 import { UserRoleDialog } from '@/components/UserRoleDialog';
 import { UserStatusToggle } from '@/components/UserStatusToggle';
+import { AdminEditNameDialog } from '@/components/AdminEditNameDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect, useState } from 'react';
-import { UserPlus, Search, Loader2, MoreHorizontal, Trash2, Building2 } from 'lucide-react';
+import { UserPlus, Search, Loader2, MoreHorizontal, Trash2, Building2, Pencil } from 'lucide-react';
 import { format } from 'date-fns';
 import { sv } from 'date-fns/locale';
 
@@ -29,6 +30,8 @@ interface UserData {
   created_at: string;
   last_sign_in_at: string | null;
   banned_until: string | null;
+  first_name: string | null;
+  last_name: string | null;
 }
 
 export default function AdminUsers() {
@@ -41,6 +44,7 @@ export default function AdminUsers() {
   const [roleDialogOpen, setRoleDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [portalInviteDialogOpen, setPortalInviteDialogOpen] = useState(false);
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [activeAdminCount, setActiveAdminCount] = useState(0);
 
@@ -139,6 +143,11 @@ export default function AdminUsers() {
     setDeleteDialogOpen(true);
   };
 
+  const handleEditName = (user: UserData) => {
+    setSelectedUser(user);
+    setNameDialogOpen(true);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -200,6 +209,7 @@ export default function AdminUsers() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>E-post</TableHead>
+                      <TableHead>Namn</TableHead>
                       <TableHead>Roll</TableHead>
                       <TableHead>Skapad</TableHead>
                       <TableHead>Status</TableHead>
@@ -218,6 +228,11 @@ export default function AdminUsers() {
                       filteredUsers.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.email}</TableCell>
+                          <TableCell>
+                            {user.first_name || user.last_name
+                              ? `${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()
+                              : <span className="text-muted-foreground">Ej angivet</span>}
+                          </TableCell>
                           <TableCell>{getRoleBadge(user.role)}</TableCell>
                           <TableCell>
                             {format(new Date(user.created_at), 'PPP', { locale: sv })}
@@ -240,6 +255,10 @@ export default function AdminUsers() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleEditName(user)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  Ändra namn
+                                </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleRoleChange(user)}>
                                   Byt roll
                                 </DropdownMenuItem>
@@ -296,6 +315,18 @@ export default function AdminUsers() {
           onOpenChange={setDeleteDialogOpen}
           userId={selectedUser.id}
           userEmail={selectedUser.email}
+          onSuccess={fetchUsers}
+        />
+      )}
+
+      {selectedUser && (
+        <AdminEditNameDialog
+          open={nameDialogOpen}
+          onOpenChange={setNameDialogOpen}
+          userId={selectedUser.id}
+          userEmail={selectedUser.email}
+          currentFirstName={selectedUser.first_name}
+          currentLastName={selectedUser.last_name}
           onSuccess={fetchUsers}
         />
       )}

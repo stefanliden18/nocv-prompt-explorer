@@ -22,7 +22,7 @@ serve(async (req) => {
     // Fetch all profiles
     const { data: profiles, error: profilesError } = await supabaseAdmin
       .from("profiles")
-      .select("id, email, role, created_at")
+      .select("id, email, role, created_at, first_name, last_name")
       .order("created_at", { ascending: false });
 
     if (profilesError) {

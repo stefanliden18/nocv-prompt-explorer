@@ -66,7 +66,26 @@ export function PortalUserInviteDialog({ open, onOpenChange, onSuccess }: Portal
         body: { email: email.trim(), name: name.trim(), companyId: selectedCompanyId },
       });
 
-      if (error) throw error;
+      // supabase.functions.invoke throws on non-2xx, so check both error and data.error
+      if (error) {
+        // Try to parse the error body for a user-friendly message
+        let message = 'Kunde inte skicka inbjudan.';
+        try {
+          const body = typeof error.context === 'object' && error.context?.body
+            ? await new Response(error.context.body).text()
+            : null;
+          if (body) {
+            const parsed = JSON.parse(body);
+            message = parsed.error || message;
+          }
+        } catch {}
+        toast({
+          title: 'Kunde inte bjuda in',
+          description: message,
+          variant: 'destructive',
+        });
+        return;
+      }
 
       if (data?.error) {
         toast({

@@ -1,49 +1,48 @@
 
-## Fixa inbjudningslänkar till kundportalen
 
-### Problemet
-Inbjudningsmejlet och Supabase Auth-redirecten pekar till `awtxvhstozhprjujlsne.lovableproject.com/auth`, en intern adress som visar "Project not found". Er riktiga publicerade app finns pa `nocv-prompt-explorer.lovable.app`.
+## Fix: Inbjudan av portalanvandare misslyckas
+
+### Problem
+
+Tva buggar i `invite-portal-user`-funktionen:
+
+1. **Felaktig autentiseringsmetod**: Funktionen anropar `supabaseClient.auth.getClaims(token)` som inte finns i Supabase JS-klienten. Detta bor vara `supabaseClient.auth.getUser(token)` (samma monster som `invite-user` anvander).
+
+2. **Variabel utanfor scope**: `appUrl` deklareras inne i ett `else`-block (rad 97) men anvands utanfor det blocket (rad 145). Nar Michael redan finns som anvandare (han bjods in tidigare) hoppar koden over `else`-blocket, och `appUrl` ar odefinierad — vilket orsakar ett kraschfel.
 
 ### Losning
-Uppdatera `invite-portal-user`-funktionen sa att den anvander den korrekta publicerade URL:en istallet for att bygga en URL fran Supabase-projektets ID.
-
-### Teknisk plan
 
 **Fil: `supabase/functions/invite-portal-user/index.ts`**
 
-Andra tva rader:
+- Byt `auth.getClaims(token)` till `auth.getUser(token)` och hamta `userId` fran `user.id` istallet for `claims.sub`
+- Flytta `appUrl`-deklarationen utanfor if/else-blocket sa att den ar tillganglig for bade redirect och mejllank
+- Uppdatera CORS-headers till den fullstandiga listan for att undvika framtida problem
 
-- **Rad 97** (auth redirect):
-  ```
-  // FORE:
-  const redirectUrl = `${supabaseUrl.replace(".supabase.co", ".lovableproject.com")}/auth`;
-  // EFTER:
-  const redirectUrl = "https://nocv-prompt-explorer.lovable.app/auth";
-  ```
+### Tekniska detaljer
 
-- **Rad 144** (mejllank):
-  ```
-  // FORE:
-  const inviteLink = `${supabaseUrl.replace(".supabase.co", ".lovableproject.com")}/auth`;
-  // EFTER:
-  const inviteLink = "https://nocv-prompt-explorer.lovable.app/auth";
-  ```
+```text
+FORE (rad 35-45):
+  const token = authHeader.replace("Bearer ", "");
+  const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims) { ... }
+  const userId = claimsData.claims.sub;
 
-### Alternativ: Anvanda en environment-variabel
-
-For att gora URL:en konfigurerbar utan kodandring kan vi istallet lagga till en secret `APP_URL` med vardet `https://nocv-prompt-explorer.lovable.app` och referera till den i koden:
-
-```typescript
-const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
-const redirectUrl = `${appUrl}/auth`;
-const inviteLink = `${appUrl}/auth`;
+EFTER:
+  const token = authHeader.replace("Bearer ", "");
+  const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+  if (userError || !user) { ... }
+  const userId = user.id;
 ```
 
-### Nar detta ar fixat
-Michael behover fa en ny inbjudan (eller logga in direkt pa `nocv-prompt-explorer.lovable.app/auth`) for att komma in i portalen.
+```text
+FORE (rad 97, inuti else-block):
+  const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
 
-### Andra funktioner med samma problem
-Foljande edge functions anvander samma felaktiga URL-konstruktion och bor atgardas samtidigt:
+EFTER (flyttas till fore if/else, ca rad 89):
+  const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
+```
 
-- `invite-user/index.ts` (om den har samma monster)
-- Eventuella andra funktioner som bygger redirect-URL:er fran `SUPABASE_URL`
+### Efter fix
+
+Nar funktionen ar uppdaterad och deployad kan du bjuda in Michael Matton Jernberg igen. Eftersom han redan finns som anvandare kommer funktionen att hoppa over kontoskapande och bara skapa foretagskopplingen + skicka mejl.
+

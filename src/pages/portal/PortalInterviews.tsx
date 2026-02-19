@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, MapPin, Clock, User, XCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, User, XCircle, Send } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePortalAuth } from '@/hooks/usePortalAuth';
 import PortalLayout from '@/components/portal/PortalLayout';
@@ -20,31 +20,40 @@ const locationLabels: Record<string, string> = {
 export default function PortalInterviews() {
   const { companyId } = usePortalAuth();
   const [interviews, setInterviews] = useState<any[]>([]);
+  const [proposals, setProposals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchInterviews = async () => {
-    const { data } = await supabase
-      .from('portal_interviews')
-      .select('*, portal_candidates(name, id), company_users(name)')
-      .order('scheduled_at', { ascending: true });
+  const fetchData = async () => {
+    const [intResult, propResult] = await Promise.all([
+      supabase
+        .from('portal_interviews')
+        .select('*, portal_candidates(name, id), company_users(name)')
+        .order('scheduled_at', { ascending: true }),
+      supabase
+        .from('portal_interview_proposals' as any)
+        .select('*, portal_candidates(name, id), company_users(name)')
+        .order('created_at', { ascending: false }),
+    ]);
 
-    setInterviews(data || []);
+    setInterviews(intResult.data || []);
+    setProposals((propResult.data as any[]) || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchInterviews(); }, [companyId]);
+  useEffect(() => { fetchData(); }, [companyId]);
 
   const cancelInterview = async (interviewId: string, candidateId: string) => {
     const { error } = await supabase.from('portal_interviews').update({ status: 'cancelled' }).eq('id', interviewId);
     if (error) { toast.error('Kunde inte avboka'); return; }
-    // Reset candidate status
     await supabase.from('portal_candidates').update({ status: 'reviewed' }).eq('id', candidateId);
     toast.success('Intervju avbokad');
-    fetchInterviews();
+    fetchData();
   };
 
   const scheduled = interviews.filter(i => i.status === 'scheduled');
   const past = interviews.filter(i => i.status !== 'scheduled');
+  const pendingProposals = proposals.filter((p: any) => p.status === 'pending');
+  const answeredProposals = proposals.filter((p: any) => p.status !== 'pending');
 
   return (
     <PortalLayout>
@@ -53,13 +62,52 @@ export default function PortalInterviews() {
 
         {loading ? (
           <div className="space-y-3">{[1, 2].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}</div>
-        ) : scheduled.length === 0 && past.length === 0 ? (
+        ) : scheduled.length === 0 && past.length === 0 && proposals.length === 0 ? (
           <div className="bg-card rounded-xl p-8 text-center shadow-card">
             <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <p className="text-muted-foreground">Inga intervjuer bokade ännu.</p>
           </div>
         ) : (
           <>
+            {/* Pending proposals */}
+            {pendingProposals.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-lg font-heading font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <Send className="h-5 w-5 text-amber-500" /> Väntande förslag
+                </h2>
+                <div className="space-y-3">
+                  {pendingProposals.map((p: any) => {
+                    const cand = p.portal_candidates;
+                    return (
+                      <div key={p.id} className="bg-card rounded-xl p-5 shadow-card border-l-4 border-amber-400">
+                        <div className="flex items-start justify-between flex-wrap gap-3">
+                          <div>
+                            <Link to={`/portal/candidates/${cand?.id}`} className="font-heading font-semibold text-foreground hover:text-nocv-orange transition-colors">
+                              {cand?.name}
+                            </Link>
+                            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mt-2">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Alt 1: {format(new Date(p.option_1_at), "d MMM 'kl' HH:mm", { locale: sv })}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Alt 2: {format(new Date(p.option_2_at), "d MMM 'kl' HH:mm", { locale: sv })}
+                              </span>
+                            </div>
+                            <span className="inline-flex items-center mt-2 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                              Väntar på svar
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Scheduled interviews */}
             {scheduled.length > 0 && (
               <div className="mb-8">
                 <h2 className="text-lg font-heading font-semibold text-foreground mb-4">Kommande</h2>
@@ -102,7 +150,8 @@ export default function PortalInterviews() {
               </div>
             )}
 
-            {past.length > 0 && (
+            {/* History (past interviews + answered proposals) */}
+            {(past.length > 0 || answeredProposals.length > 0) && (
               <div>
                 <h2 className="text-lg font-heading font-semibold text-muted-foreground mb-4">Historik</h2>
                 <div className="space-y-3">
@@ -118,6 +167,23 @@ export default function PortalInterviews() {
                             i.status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
                           )}>
                             {i.status === 'completed' ? 'Genomförd' : 'Avbokad'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {answeredProposals.map((p: any) => {
+                    const cand = p.portal_candidates;
+                    return (
+                      <div key={p.id} className="bg-card rounded-xl p-5 shadow-card opacity-60">
+                        <div className="flex items-center gap-3">
+                          <Send className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium text-foreground">{cand?.name}</span>
+                          <span className={cn(
+                            'text-xs px-2 py-0.5 rounded-full',
+                            p.status === 'accepted' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                          )}>
+                            {p.status === 'accepted' ? 'Accepterat' : 'Avböjt'}
                           </span>
                         </div>
                       </div>

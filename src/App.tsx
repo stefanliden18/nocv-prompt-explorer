@@ -38,6 +38,7 @@ import GDPRPolicyEdit from "./pages/admin/GDPRPolicyEdit";
 import RequirementTemplates from "./pages/admin/RequirementTemplates";
 import CandidatePresentation from "./pages/CandidatePresentation";
 import HowItWorks from "./pages/HowItWorks";
+import InterviewRespond from "./pages/InterviewRespond";
 import MetaPixel from "./components/MetaPixel";
 import PortalProtectedRoute from "./components/portal/PortalProtectedRoute";
 import PortalDashboard from "./pages/portal/PortalDashboard";
@@ -232,6 +233,8 @@ const App = () => (
             <Route path="/portal/settings" element={<PortalProtectedRoute><PortalSettings /></PortalProtectedRoute>} />
             {/* Public candidate presentation route */}
             <Route path="/presentation/:token" element={<CandidatePresentation />} />
+            {/* Public interview response page */}
+            <Route path="/interview-respond/:token" element={<InterviewRespond />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
         </Routes>

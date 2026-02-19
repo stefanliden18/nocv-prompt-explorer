@@ -33,16 +33,16 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
 
-    if (claimsError || !claimsData?.claims) {
+    if (userError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized - Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const userId = claimsData.claims.sub;
+    const userId = user.id;
 
     // Create admin client
     const supabaseAdmin = createClient(
@@ -86,6 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find((u) => u.email === email);
 
+    const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
     let targetUserId: string;
 
     if (existingUser) {
@@ -94,7 +95,6 @@ const handler = async (req: Request): Promise<Response> => {
     } else {
       // Invite new user
       console.log("Creating new user via invite");
-      const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
       const redirectUrl = `${appUrl}/auth`;
 
       const { data: inviteData, error: inviteError } =

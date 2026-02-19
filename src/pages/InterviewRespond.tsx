@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin, Check, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { sv } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -58,8 +59,8 @@ export default function InterviewRespond() {
   const formatOption = (dateStr: string) => {
     const d = new Date(dateStr);
     return {
-      date: format(d, "EEEE d MMMM yyyy", { locale: sv }),
-      time: format(d, "HH:mm", { locale: sv }),
+      date: formatInTimeZone(d, 'Europe/Stockholm', "EEEE d MMMM yyyy", { locale: sv }),
+      time: formatInTimeZone(d, 'Europe/Stockholm', "HH:mm", { locale: sv }),
     };
   };
 

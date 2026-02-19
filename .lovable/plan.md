@@ -1,35 +1,49 @@
 
-## Visa och redigera namn i admin-användartabellen
+## Fixa inbjudningslänkar till kundportalen
 
-### Vad som andras
+### Problemet
+Inbjudningsmejlet och Supabase Auth-redirecten pekar till `awtxvhstozhprjujlsne.lovableproject.com/auth`, en intern adress som visar "Project not found". Er riktiga publicerade app finns pa `nocv-prompt-explorer.lovable.app`.
 
-En ny kolumn "Namn" laggs till i användartabellen pa admin-sidan. Administratorer kan redigera for- och efternamn pa vilken anvandare som helst via en ny menyval i atgardsmenyn (tre-pricks-menyn).
-
-### Hur det kommer se ut
-
-Tabellen far en ny kolumn "Namn" mellan E-post och Roll. Om namn saknas visas texten i gratt ("Ej angivet"). I atgardsmenyn (...) laggs ett nytt alternativ "Andra namn" till.
+### Losning
+Uppdatera `invite-portal-user`-funktionen sa att den anvander den korrekta publicerade URL:en istallet for att bygga en URL fran Supabase-projektets ID.
 
 ### Teknisk plan
 
-**Fil 1: `supabase/functions/get-users/index.ts`**
-- Uppdatera select-queryn att inkludera `first_name` och `last_name` fran profiles-tabellen
-- Dessa skickas med i svaret till frontend
+**Fil: `supabase/functions/invite-portal-user/index.ts`**
 
-**Fil 2: `src/pages/admin/Users.tsx`**
-- Utoka `UserData`-interfacet med `first_name` och `last_name`
-- Lagg till kolumnen "Namn" i tabellen
-- Lagg till state och hantering for en ny "AdminEditNameDialog"
-- Lagg till menyval "Andra namn" i dropdown-menyn
+Andra tva rader:
 
-**Fil 3: `src/components/AdminEditNameDialog.tsx` (ny fil)**
-- En dialog med tva inputfalt: Fornamn och Efternamn
-- Sparar via Supabase direkt till profiles-tabellen (med service role via edge function, eftersom admin behover uppdatera andra anvandares profiler)
+- **Rad 97** (auth redirect):
+  ```
+  // FORE:
+  const redirectUrl = `${supabaseUrl.replace(".supabase.co", ".lovableproject.com")}/auth`;
+  // EFTER:
+  const redirectUrl = "https://nocv-prompt-explorer.lovable.app/auth";
+  ```
 
-**Fil 4: `supabase/functions/admin-update-profile/index.ts` (ny edge function)**
-- Tar emot `userId`, `firstName`, `lastName`
-- Verifierar att anroparen ar admin
-- Uppdaterar profiles-tabellen med service role key
+- **Rad 144** (mejllank):
+  ```
+  // FORE:
+  const inviteLink = `${supabaseUrl.replace(".supabase.co", ".lovableproject.com")}/auth`;
+  // EFTER:
+  const inviteLink = "https://nocv-prompt-explorer.lovable.app/auth";
+  ```
 
-### Sakerhet
-- Edge functionen kontrollerar att anroparen har admin-roll innan nagon uppdatering gors
-- Vanliga anvandare kan bara andra sitt eget namn via den befintliga ProfileNameDialog
+### Alternativ: Anvanda en environment-variabel
+
+For att gora URL:en konfigurerbar utan kodandring kan vi istallet lagga till en secret `APP_URL` med vardet `https://nocv-prompt-explorer.lovable.app` och referera till den i koden:
+
+```typescript
+const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
+const redirectUrl = `${appUrl}/auth`;
+const inviteLink = `${appUrl}/auth`;
+```
+
+### Nar detta ar fixat
+Michael behover fa en ny inbjudan (eller logga in direkt pa `nocv-prompt-explorer.lovable.app/auth`) for att komma in i portalen.
+
+### Andra funktioner med samma problem
+Foljande edge functions anvander samma felaktiga URL-konstruktion och bor atgardas samtidigt:
+
+- `invite-user/index.ts` (om den har samma monster)
+- Eventuella andra funktioner som bygger redirect-URL:er fran `SUPABASE_URL`

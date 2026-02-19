@@ -65,14 +65,21 @@ serve(async (req) => {
     const opt2Date = formatInTimeZone(new Date(proposal.option_2_at), STOCKHOLM_TZ, "EEEE d MMMM yyyy", { locale: sv });
     const opt2Time = formatInTimeZone(new Date(proposal.option_2_at), STOCKHOLM_TZ, "HH:mm", { locale: sv });
 
+    let opt3Html = "";
+    if (proposal.option_3_at) {
+      const opt3Date = formatInTimeZone(new Date(proposal.option_3_at), STOCKHOLM_TZ, "EEEE d MMMM yyyy", { locale: sv });
+      const opt3Time = formatInTimeZone(new Date(proposal.option_3_at), STOCKHOLM_TZ, "HH:mm", { locale: sv });
+      opt3Html = `
+      <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 12px 0;" />
+      <p style="margin: 8px 0; font-weight: bold;">Alternativ 3</p>
+      <p style="margin: 4px 0;">📅 ${opt3Date} kl ${opt3Time}</p>`;
+    }
+
     const locationLabel =
       proposal.location_type === "onsite" ? "På plats" :
       proposal.location_type === "teams" ? "Teams / Videomöte" : "Telefon";
     const locationLine = proposal.location_details ? `${locationLabel} — ${proposal.location_details}` : locationLabel;
 
-    const respondUrl = `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://nocv-prompt-explorer.lovable.app'}/interview-respond/${proposal.respond_token}`;
-
-    // Use the public site URL from env or fallback
     const siteUrl = Deno.env.get("SITE_URL") || "https://nocv-prompt-explorer.lovable.app";
     const respondLink = `${siteUrl}/interview-respond/${proposal.respond_token}`;
 
@@ -93,6 +100,7 @@ serve(async (req) => {
       <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 12px 0;" />
       <p style="margin: 8px 0; font-weight: bold;">Alternativ 2</p>
       <p style="margin: 4px 0;">📅 ${opt2Date} kl ${opt2Time}</p>
+      ${opt3Html}
       <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 12px 0;" />
       <p style="margin: 8px 0;">⏱️ Längd: ${proposal.duration_minutes} min</p>
       <p style="margin: 8px 0;">📍 Plats: ${locationLine}</p>
@@ -114,6 +122,7 @@ serve(async (req) => {
 </body>
 </html>`;
 
+    // Send email to candidate
     const { error: emailError } = await resend.emails.send({
       from: "NoCV <noreply@nocv.se>",
       to: [candidateEmail],
@@ -127,6 +136,37 @@ serve(async (req) => {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Send CC to all admins
+    try {
+      const { data: adminRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "admin");
+
+      if (adminRoles && adminRoles.length > 0) {
+        const adminEmails: string[] = [];
+        for (const ar of adminRoles) {
+          const { data: userData } = await supabaseAdmin.auth.admin.getUserById(ar.user_id);
+          if (userData?.user?.email) {
+            adminEmails.push(userData.user.email);
+          }
+        }
+
+        if (adminEmails.length > 0) {
+          await resend.emails.send({
+            from: "NoCV <noreply@nocv.se>",
+            to: adminEmails,
+            subject: `Kopia: Intervjuförslag — ${candidateName}`,
+            html,
+          });
+          console.log("Admin CC sent to:", adminEmails);
+        }
+      }
+    } catch (ccErr) {
+      console.error("Admin CC email error:", ccErr);
+      // Don't fail the main flow
     }
 
     return new Response(JSON.stringify({ success: true }), {

@@ -21,7 +21,7 @@ serve(async (req) => {
 
     const { token, chosenOption } = await req.json();
 
-    if (!token || ![1, 2].includes(chosenOption)) {
+    if (!token || ![1, 2, 3].includes(chosenOption)) {
       return new Response(JSON.stringify({ error: "Missing token or invalid chosenOption" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -43,7 +43,7 @@ serve(async (req) => {
       );
     }
 
-    const chosenTime = chosenOption === 1 ? proposal.option_1_at : proposal.option_2_at;
+    const chosenTime = chosenOption === 1 ? proposal.option_1_at : chosenOption === 2 ? proposal.option_2_at : proposal.option_3_at;
 
     // Update proposal status
     const { error: updateErr } = await supabaseAdmin

@@ -718,6 +718,7 @@ export type Database = {
           notes: string | null
           option_1_at: string
           option_2_at: string
+          option_3_at: string | null
           respond_token: string
           responded_at: string | null
           status: string
@@ -734,6 +735,7 @@ export type Database = {
           notes?: string | null
           option_1_at: string
           option_2_at: string
+          option_3_at?: string | null
           respond_token?: string
           responded_at?: string | null
           status?: string
@@ -750,6 +752,7 @@ export type Database = {
           notes?: string | null
           option_1_at?: string
           option_2_at?: string
+          option_3_at?: string | null
           respond_token?: string
           responded_at?: string | null
           status?: string

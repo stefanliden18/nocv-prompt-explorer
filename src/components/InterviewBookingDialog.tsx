@@ -49,8 +49,8 @@ export function InterviewBookingDialog({
   const [message, setMessage] = useState("");
   const [sendEmail, setSendEmail] = useState(true);
   const { toast } = useToast();
-  const { user } = useAuth();
-  const signerName = getSignerName(user?.email ?? undefined);
+  const { user, firstName } = useAuth();
+  const signerName = firstName || getSignerName(user?.email ?? undefined);
   useEffect(() => {
     if (open) {
       if (mode === 'edit' && application.interview_scheduled_at) {

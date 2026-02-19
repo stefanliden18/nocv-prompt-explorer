@@ -94,7 +94,8 @@ const handler = async (req: Request): Promise<Response> => {
     } else {
       // Invite new user
       console.log("Creating new user via invite");
-      const redirectUrl = `${supabaseUrl.replace(".supabase.co", ".lovableproject.com")}/auth`;
+      const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
+      const redirectUrl = `${appUrl}/auth`;
 
       const { data: inviteData, error: inviteError } =
         await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
@@ -141,7 +142,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Company user link created for:", targetUserId);
 
     // Send portal invitation email
-    const inviteLink = `${supabaseUrl.replace(".supabase.co", ".lovableproject.com")}/auth`;
+    const inviteLink = `${appUrl}/auth`;
 
     const { error: emailError } = await supabaseAdmin.functions.invoke(
       "send-portal-invitation",

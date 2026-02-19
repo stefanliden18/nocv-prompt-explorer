@@ -114,10 +114,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Invite new user via admin API
     console.log("User does not exist, sending invitation");
-    const redirectUrl = `${Deno.env.get("SUPABASE_URL")?.replace(
-      ".supabase.co",
-      ".lovableproject.com"
-    )}/auth`;
+    const appUrl = Deno.env.get("APP_URL") || "https://nocv-prompt-explorer.lovable.app";
+    const redirectUrl = `${appUrl}/auth`;
 
     const { data: inviteData, error: inviteError } =
       await supabaseAdmin.auth.admin.inviteUserByEmail(email, {

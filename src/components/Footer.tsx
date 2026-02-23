@@ -71,7 +71,7 @@ const Footer = () => {
           {/* Bottom Section */}
           <div className="border-t border-white/20 mt-8 pt-8 text-center">
             <p className="text-white/60 text-sm">
-              © 2024 NoCV. Alla rättigheter förbehållna.
+              © {new Date().getFullYear()} NoCV. Alla rättigheter förbehållna.
             </p>
           </div>
         </div>

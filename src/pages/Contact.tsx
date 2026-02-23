@@ -15,6 +15,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import { trackMetaEvent } from "@/lib/metaPixel";
+import { Helmet } from "react-helmet-async";
 
 const formSchema = z.object({
   name: z.string().min(1, "Ange ditt namn"),
@@ -101,6 +102,17 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Kontakta NoCV – Boka demo eller ställ en fråga</title>
+        <meta name="description" content="Kontakta NoCV för frågor om rekrytering utan CV. Boka en demo eller ställ en fråga – vi svarar inom 24 timmar." />
+        <link rel="canonical" href="https://nocv.se/contact" />
+        <meta property="og:title" content="Kontakta NoCV – Boka demo eller ställ en fråga" />
+        <meta property="og:description" content="Har du frågor om rekrytering utan CV? Kontakta oss så svarar vi inom 24 timmar." />
+        <meta property="og:url" content="https://nocv.se/contact" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
+        <meta property="og:locale" content="sv_SE" />
+      </Helmet>
       <Navigation />
       
       {/* Hero Section */}

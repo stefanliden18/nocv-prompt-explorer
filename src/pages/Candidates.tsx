@@ -5,7 +5,7 @@ import { Clock, CheckCircle, Smartphone, Shield, MousePointerClick, MessageSquar
 import { Link } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
-
+import { Helmet } from "react-helmet-async";
 const steps = [
   {
     number: 1,
@@ -101,6 +101,26 @@ const faqItems = [
 const Candidates = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>För jobbsökare – Sök jobb utan CV på 10 minuter | NoCV</title>
+        <meta name="description" content="Sök jobb som att snacka med en kollega. Inget CV, inga personliga brev – svara på frågor om ditt yrke och bli matchad på 10 minuter." />
+        <link rel="canonical" href="https://nocv.se/candidates" />
+        <meta property="og:title" content="För jobbsökare – Sök jobb utan CV på 10 minuter | NoCV" />
+        <meta property="og:description" content="Inget CV behövs. Svara på frågor om ditt yrke via chatt eller röst och bli matchad med rätt jobb." />
+        <meta property="og:url" content="https://nocv.se/candidates" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
+        <meta property="og:locale" content="sv_SE" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqItems.map(item => ({
+            "@type": "Question",
+            "name": item.question,
+            "acceptedAnswer": { "@type": "Answer", "text": item.answer }
+          }))
+        })}</script>
+      </Helmet>
       <Navigation />
       
       {/* Hero Section */}

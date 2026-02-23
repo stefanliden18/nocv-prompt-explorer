@@ -54,6 +54,12 @@ const Footer = () => {
                   För företag
                 </Link>
                 <Link 
+                  to="/blogg" 
+                  className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
+                >
+                  Blogg
+                </Link>
+                <Link 
                   to="/contact" 
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
                 >

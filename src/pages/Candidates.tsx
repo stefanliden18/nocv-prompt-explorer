@@ -120,6 +120,14 @@ const Candidates = () => {
             "acceptedAnswer": { "@type": "Answer", "text": item.answer }
           }))
         })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Hem", "item": "https://nocv.se/" },
+            { "@type": "ListItem", "position": 2, "name": "För jobbsökare", "item": "https://nocv.se/candidates" }
+          ]
+        })}</script>
       </Helmet>
       <Navigation />
       

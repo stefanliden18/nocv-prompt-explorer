@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Clock, CheckCircle, Smartphone, Shield, MousePointerClick, MessageSquare, BarChart3, Handshake, Quote } from "lucide-react";
 import { Link } from "react-router-dom";
+import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Helmet } from "react-helmet-async";
 
@@ -93,21 +94,17 @@ const HowItWorks = () => {
             "acceptedAnswer": { "@type": "Answer", "text": item.answer }
           }))
         })}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Hem", "item": "https://nocv.se/" },
+            { "@type": "ListItem", "position": 2, "name": "Så funkar det", "item": "https://nocv.se/sa-funkar-det" }
+          ]
+        })}</script>
       </Helmet>
 
-      {/* Minimal Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-              <h2 className="text-2xl font-bold font-heading text-primary">NoCV</h2>
-            </Link>
-            <Button variant="cta-primary" asChild>
-              <Link to="/jobs">Testa nu</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Navigation />
 
       {/* Hero */}
       <section className="pt-24 pb-16 bg-gradient-hero text-white">

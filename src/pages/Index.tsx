@@ -48,6 +48,13 @@ const Index = () => {
         <meta name="twitter:card" content="summary_large_image" />
         <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
         <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Hem", "item": "https://nocv.se/" }
+          ]
+        })}</script>
       </Helmet>
       <Navigation />
       <Hero />

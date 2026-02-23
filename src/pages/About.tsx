@@ -67,6 +67,14 @@ export default function About() {
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
         <meta property="og:locale" content="sv_SE" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Hem", "item": "https://nocv.se/" },
+            { "@type": "ListItem", "position": 2, "name": "Om oss", "item": "https://nocv.se/om-oss" }
+          ]
+        })}</script>
       </Helmet>
 
       <Navigation />

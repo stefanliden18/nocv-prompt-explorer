@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { TipNOCVDialog } from "./TipNOCVDialog";
 
 const Footer = () => {
@@ -28,36 +29,36 @@ const Footer = () => {
                 Navigation
               </h4>
               <nav className="grid grid-cols-2 gap-3">
-                <a 
-                  href="/" 
+                <Link 
+                  to="/" 
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
                 >
                   Hem
-                </a>
-                <a 
-                  href="/jobs" 
+                </Link>
+                <Link 
+                  to="/jobs" 
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
                 >
                   Lediga jobb
-                </a>
-                <a 
-                  href="/candidates" 
+                </Link>
+                <Link 
+                  to="/candidates" 
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
                 >
                   För kandidater
-                </a>
-                <a 
-                  href="/companies" 
+                </Link>
+                <Link 
+                  to="/companies" 
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
                 >
                   För företag
-                </a>
-                <a 
-                  href="/contact" 
+                </Link>
+                <Link 
+                  to="/contact" 
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium"
                 >
                   Kontakt
-                </a>
+                </Link>
                 <button
                   onClick={() => setTipNoCVDialogOpen(true)}
                   className="text-white/80 hover:text-nocv-orange transition-colors duration-200 font-medium text-left"

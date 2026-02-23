@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Helmet } from "react-helmet-async";
 
 const NotFound = () => {
   const location = useLocation();
@@ -13,6 +14,10 @@ const NotFound = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Sidan hittades inte | NoCV</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <Navigation />
       <div className="flex min-h-screen items-center justify-center px-4 pt-20">
         <div className="text-center">

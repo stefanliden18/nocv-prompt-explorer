@@ -438,6 +438,8 @@ const JobDetail = () => {
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:url" content={`https://nocv.se/jobb/${job.slug}`} />
+        <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
+        <meta property="og:locale" content="sv_SE" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -447,9 +449,21 @@ const JobDetail = () => {
         {/* Canonical URL */}
         <link rel="canonical" href={`https://nocv.se/jobb/${job.slug}`} />
         
-        {/* Structured Data */}
+        {/* Structured Data - JobPosting */}
         <script type="application/ld+json">
           {JSON.stringify(jobPostingSchema)}
+        </script>
+        {/* Structured Data - Breadcrumb */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "name": "Hem", "item": "https://nocv.se/" },
+              { "@type": "ListItem", "position": 2, "name": "Lediga jobb", "item": "https://nocv.se/jobs" },
+              { "@type": "ListItem", "position": 3, "name": job.title, "item": `https://nocv.se/jobb/${job.slug}` }
+            ]
+          })}
         </script>
       </Helmet>
 

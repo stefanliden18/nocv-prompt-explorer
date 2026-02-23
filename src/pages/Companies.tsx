@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import DOMPurify from "dompurify";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 
 const Companies = () => {
   const navigate = useNavigate();
@@ -66,6 +67,17 @@ const Companies = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>För företag – Hitta rätt kandidat utan CV-genomgång | NoCV</title>
+        <meta name="description" content="Sluta leta i CV-högar. Vår AI intervjuar kandidater åt er dygnet runt och levererar färdigbedömda kandidater inom dagar." />
+        <link rel="canonical" href="https://nocv.se/companies" />
+        <meta property="og:title" content="För företag – Hitta rätt kandidat utan CV-genomgång | NoCV" />
+        <meta property="og:description" content="Vår AI intervjuar mekaniker och tekniker åt er dygnet runt. Ni får färdigbedömda kandidater inom dagar." />
+        <meta property="og:url" content="https://nocv.se/companies" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
+        <meta property="og:locale" content="sv_SE" />
+      </Helmet>
       <Navigation />
       
       {/* Hero Section */}

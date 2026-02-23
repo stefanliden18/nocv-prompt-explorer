@@ -15,4 +15,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /auth/
 
-Sitemap: https://nocv.se/sitemap.xml
+Sitemap: https://awtxvhstozhprjujlsne.supabase.co/functions/v1/generate-sitemap

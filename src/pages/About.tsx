@@ -58,11 +58,15 @@ export default function About() {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Om NoCV - Vår historia, vision och värderingar</title>
-        <meta
-          name="description"
-          content="Lär känna NoCV - vi revolutionerar rekrytering genom att fokusera på vad kandidater kan och vill, inte vad de har studerat."
-        />
+        <title>Om NoCV – Vår historia och värderingar</title>
+        <meta name="description" content="Lär känna NoCV – vi revolutionerar rekrytering genom att fokusera på vad kandidater kan, inte vad de har studerat." />
+        <link rel="canonical" href="https://nocv.se/om-oss" />
+        <meta property="og:title" content="Om NoCV – Vår historia och värderingar" />
+        <meta property="og:description" content="Vi tror inte på CV:n. Vi tror på människor. Läs om hur NoCV förändrar rekrytering." />
+        <meta property="og:url" content="https://nocv.se/om-oss" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
+        <meta property="og:locale" content="sv_SE" />
       </Helmet>
 
       <Navigation />

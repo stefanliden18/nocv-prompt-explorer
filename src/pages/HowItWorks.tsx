@@ -75,8 +75,24 @@ const HowItWorks = () => {
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
-        <title>Så funkar det — Sök jobb utan CV | NoCV</title>
-        <meta name="description" content="Sök jobb som att snacka med en kollega. Inget CV, inga personliga brev — svara på frågor om ditt yrke och bli matchad med rätt arbetsgivare på 10 minuter." />
+        <title>Så funkar det – AI-intervju på 10 minuter | NoCV</title>
+        <meta name="description" content="Sök jobb som att snacka med en kollega. Inget CV, inga personliga brev – svara på frågor om ditt yrke och bli matchad på 10 minuter." />
+        <link rel="canonical" href="https://nocv.se/sa-funkar-det" />
+        <meta property="og:title" content="Så funkar det – AI-intervju på 10 minuter | NoCV" />
+        <meta property="og:description" content="Inget CV behövs. Svara på frågor om ditt yrke och bli matchad med rätt jobb på 10 minuter." />
+        <meta property="og:url" content="https://nocv.se/sa-funkar-det" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://nocv.se/images/og-default.jpg" />
+        <meta property="og:locale" content="sv_SE" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": faqItems.map(item => ({
+            "@type": "Question",
+            "name": item.question,
+            "acceptedAnswer": { "@type": "Answer", "text": item.answer }
+          }))
+        })}</script>
       </Helmet>
 
       {/* Minimal Header */}

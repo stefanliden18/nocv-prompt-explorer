@@ -10,7 +10,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -18,7 +17,6 @@ serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Fetch all published jobs
     const { data: jobs, error } = await supabase
       .from('jobs')
       .select('slug, updated_at, publish_at')
@@ -31,29 +29,26 @@ serve(async (req) => {
       throw error;
     }
 
-    // Static pages
+    const today = new Date().toISOString().split('T')[0];
+
     const staticPages = [
       { loc: 'https://nocv.se/', priority: '1.0', changefreq: 'daily' },
       { loc: 'https://nocv.se/jobs', priority: '0.9', changefreq: 'daily' },
-      { loc: 'https://nocv.se/candidates', priority: '0.7', changefreq: 'weekly' },
-      { loc: 'https://nocv.se/companies', priority: '0.7', changefreq: 'weekly' },
+      { loc: 'https://nocv.se/candidates', priority: '0.8', changefreq: 'weekly' },
+      { loc: 'https://nocv.se/companies', priority: '0.8', changefreq: 'weekly' },
       { loc: 'https://nocv.se/contact', priority: '0.6', changefreq: 'monthly' },
+      { loc: 'https://nocv.se/om-oss', priority: '0.7', changefreq: 'monthly' },
+      { loc: 'https://nocv.se/sa-funkar-det', priority: '0.8', changefreq: 'monthly' },
     ];
 
-    // Generate XML sitemap
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
-        xmlns:xhtml="http://www.w3.org/1999/xhtml"
-        xmlns:mobile="http://www.google.com/schemas/sitemap-mobile/1.0"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
-        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
 ${staticPages.map(page => `  <url>
     <loc>${page.loc}</loc>
     <changefreq>${page.changefreq}</changefreq>
     <priority>${page.priority}</priority>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <lastmod>${today}</lastmod>
   </url>`).join('\n')}
 
 ${jobs?.map(job => `  <url>
@@ -70,7 +65,7 @@ ${jobs?.map(job => `  <url>
       headers: {
         ...corsHeaders,
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+        'Cache-Control': 'public, max-age=3600',
       },
     });
 

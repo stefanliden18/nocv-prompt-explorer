@@ -1,81 +1,114 @@
 
 
-## Utoka intervjuforslag till 3 alternativ + kopia till admin
+# SEO-plan for nocv.se
 
-### Nuvarande status
+## Nuvarande problem (varfor ni knappt syns pa Google)
 
-Ert system ar redan korrekt uppsatt vad galler:
-- Kayvan ser BARA kandidater kopplade till Europeiska Motors positioner (RLS skyddar detta)
-- Michael (admin) ar den enda som kan lagga till kandidater
-- Matchningsprofiler kopplas av admin och visas for kunden
+### 1. Statisk sitemap saknar de flesta sidor och alla jobb
+Den statiska filen `public/sitemap.xml` listar bara 5 sidor. Det finns en backend-funktion (`generate-sitemap`) som dynamiskt genererar en sitemap med alla publicerade jobb, men den anvands inte. Google har alltsa ingen aning om era enskilda jobbsidor (`/jobb/servicetekniker-goteborg` etc).
 
-Tva saker behover andras:
+**Saknade sidor i sitemap:**
+- `/om-oss`
+- `/sa-funkar-det`
+- `/candidates` (borde vara `/for-jobbsokare` for svenska URL:er)
+- Alla individuella jobbsidor (`/jobb/[slug]`)
 
-### 1. Utoka fran 2 till 3 tidsforslag
+### 2. Flera sidor saknar meta-taggar helt
+Foljande sidor har **ingen** Helmet-komponent och saknar darmed title, description och Open Graph-taggar:
+- **Kandidatsidan** (`/candidates`) -- ingen Helmet
+- **Foretagssidan** (`/companies`) -- ingen Helmet
+- **Kontaktsidan** (`/contact`) -- ingen Helmet
 
-Idag kan portalanvandaren (Kayvan) skicka 2 tidsalternativ till kandidaten. Ni vill ha 3.
+### 3. Ingen OG-bild pa nagon sida
+Ingen enda sida har `og:image`. Nar nagon delar en lank pa LinkedIn, Facebook eller Slack visas ingen bild, vilket ger lagre klickfrekvens.
 
-**Databasandring:**
-- Lagg till kolumnen `option_3_at` (timestamp with time zone, nullable) i tabellen `portal_interview_proposals`
+### 4. Strukturerad data (Schema.org) saknas pa de flesta sidor
+- Bara `JobDetail` har `JobPosting`-schema (bra!)
+- Startsidan saknar `Organization`-schema
+- FAQ-sektionerna pa `/candidates` och `/sa-funkar-det` saknar `FAQPage`-schema (ger mojlighet till "rich snippets" i Google)
 
-**Frontend (`src/pages/portal/PortalBooking.tsx`):**
-- Lagg till ett tredje datum/tid-falt (Alternativ 3)
-- Uppdatera bekraftelsevyn att visa alla tre alternativ
-- Uppdatera texten fran "2 alternativa tider" till "3 alternativa tider"
+### 5. URL-struktur ar blandad engelska/svenska
+- `/jobs` och `/candidates` ar engelska
+- `/jobb/[slug]` och `/om-oss` ar svenska
+- `/contact` ar engelska, `/sa-funkar-det` ar svenska
 
-**Edge function (`supabase/functions/send-interview-proposal/index.ts`):**
-- Lagg till formatering av option_3 i mejlmallen
-- Visa tredje alternativet i kandidatmejlet
+### 6. Footern visar fel artal
+`(c) 2024 NoCV` borde vara dynamiskt.
 
-**Svarsida (`src/pages/InterviewRespond.tsx`):**
-- Visa tre alternativ istallet for tva
+---
 
-### 2. Skicka kopia till admin vid tidsforslag
+## Atgardsplan
 
-**Edge function (`supabase/functions/send-interview-proposal/index.ts`):**
-- Slå upp alla admin-anvandare fran `user_roles` + `profiles` (for att hitta Michaels e-post)
-- Alternativt: hamta admin-mejl fran auth.users via service role
-- Skicka en kopia av forslaget till admin med rubriken "Kopia: Intervjuforslag — [Kandidatnamn]"
-- Mejlet visar samma tider och detaljer sa admin har full insyn
+### Fas 1: Kritiska fixar (storst effekt)
 
-### 3. Uppsattning av Europeiska Motor (datainmatning, EJ kodandring)
+**A. Aktivera dynamisk sitemap**
+- Uppdatera `robots.txt` sa att Sitemap pekar pa backend-funktionens URL istallet for den statiska filen
+- Uppdatera backend-funktionen `generate-sitemap` att inkludera ALLA publika sidor: `/`, `/jobs`, `/candidates`, `/companies`, `/contact`, `/om-oss`, `/sa-funkar-det`
+- Alla publicerade jobbsidor (`/jobb/[slug]`) inkluderas redan
 
-For att Kayvan ska kunna anvanda portalen behover foljande laggas in:
-- Kayvans konto maste kopplas till Europeiska Motor i `company_users`
-- Positioner (servicetekniker, skadetekniker, diagnostekniker) maste skapas under Europeiska Motor i `positions`
-- Michael laggar sedan in kandidater mot dessa positioner via admin-panelen
+**B. Lagg till Helmet pa alla publika sidor**
+For varje sida som saknar det, lagg till:
+- `<title>` med unik, beskrivande titel
+- `<meta name="description">` med unik beskrivning (max 155 tecken)
+- `<meta property="og:title">`, `og:description`, `og:url`, `og:type`
+- `<link rel="canonical">` med korrekt URL
 
-Detta gor ni via er befintliga admin-panel (bjud in Kayvan via kundportalens inbjudningsfunktion och skapa positionerna dar).
+Foreslagna titlar:
+| Sida | Title |
+|------|-------|
+| `/` | NoCV -- Sok jobb utan CV, Hitta personal baserat pa kompetens |
+| `/candidates` | For jobbsokare -- Sok jobb utan CV pa 10 minuter, NoCV |
+| `/companies` | For foretag -- Hitta ratt kandidat utan CV-genomgang, NoCV |
+| `/contact` | Kontakta NoCV -- Boka demo eller stall en fraga |
+| `/om-oss` | Om NoCV -- Var historia och varderingar |
+| `/sa-funkar-det` | Sa funkar det -- AI-intervju pa 10 minuter, NoCV |
 
-### Teknisk plan
+**C. Lagg till OG-bild**
+- Skapa en standard OG-bild (1200x630px) som anvands pa alla sidor som inte har en egen
+- Lagg till `<meta property="og:image">` pa varje sida
 
-**Migration: Ny kolumn**
-```sql
-ALTER TABLE portal_interview_proposals 
-ADD COLUMN option_3_at timestamptz;
+### Fas 2: Strukturerad data for rich snippets
+
+**D. Organization-schema pa startsidan**
+```text
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "NoCV",
+  "url": "https://nocv.se",
+  "description": "Rekrytering utan CV...",
+  "contactPoint": { ... }
+}
 ```
 
-**Fil 1: `src/pages/portal/PortalBooking.tsx`**
-- Lagg till `date3` och `time3` i form-state
-- Lagg till tredje tidsfalt i UI:t
-- Skicka `option_3_at` vid insert
-- Uppdatera valideringslogik och bekraftelsevy
+**E. FAQPage-schema pa Kandidatsidan och Sa funkar det**
+Google kan visa FAQ-svar direkt i sokresultaten. Bada sidorna har redan FAQ-innehall -- det behover bara wrappas i korrekt JSON-LD.
 
-**Fil 2: `supabase/functions/send-interview-proposal/index.ts`**
-- Formatera och visa tredje alternativet i mejlmallen
-- Hamta admin-mejladresser via `user_roles` + `auth.admin.getUserById`
-- Skicka kopia-mejl till alla admins
+**F. WebSite-schema med SearchAction**
+Gor det mojligt for Google att visa en sokruta direkt i sokresultaten for nocv.se.
 
-**Fil 3: `src/pages/InterviewRespond.tsx`**
-- Visa tredje alternativet om det finns
+### Fas 3: Smafix
 
-**Fil 4: `supabase/functions/confirm-interview-proposal/index.ts`**
-- Hantera `chosen_option: 3` korrekt
+**G. Uppdatera footer-aret dynamiskt**
+Byt `(c) 2024` till `(c) {new Date().getFullYear()}`.
 
-### Sakerhet
+**H. Lagg till `lang="sv"` i HTML**
+Finns redan i `index.html` -- bra!
 
-Inga forandringar i RLS-policyer behovs. Befintliga policyer skyddar redan ratt:
-- Portalanvandare kan bara se/skapa proposals for sitt eget foretags kandidater
-- Bara admin kan lagga till kandidater
-- Kandidater isoleras per foretag via positions-tabellen
+---
+
+## Teknisk sammanfattning
+
+| Fil | Andringar |
+|-----|-----------|
+| `robots.txt` | Uppdatera Sitemap-URL till edge function |
+| `supabase/functions/generate-sitemap/index.ts` | Lagg till saknade statiska sidor |
+| `src/pages/Index.tsx` | Lagg till Helmet med meta + Organization JSON-LD |
+| `src/pages/Candidates.tsx` | Lagg till Helmet + FAQPage JSON-LD |
+| `src/pages/Companies.tsx` | Lagg till Helmet |
+| `src/pages/Contact.tsx` | Lagg till Helmet |
+| `src/pages/HowItWorks.tsx` | Lagg till FAQPage JSON-LD (Helmet finns redan) |
+| `src/components/Footer.tsx` | Dynamiskt artal |
+
+Totalt ca 8 filer att uppdatera. Inga nya databastabeller behövs.
 

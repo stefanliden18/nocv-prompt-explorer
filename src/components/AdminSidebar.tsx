@@ -13,7 +13,8 @@ import {
   Shield,
   Film,
   ClipboardList,
-  FolderOpen
+  FolderOpen,
+  PenLine
 } from "lucide-react";
 import {
   Sidebar,
@@ -44,6 +45,7 @@ const menuItems = [
   { title: "Redigera Kontakt", url: "/admin/contact/edit", icon: FileEdit },
   { title: "Redigera Företag", url: "/admin/companies/edit", icon: FileEdit },
   { title: "GDPR-policy", url: "/admin/gdpr-policy", icon: Shield },
+  { title: "Blogg", url: "/admin/blog", icon: PenLine },
 ];
 
 export function AdminSidebar() {

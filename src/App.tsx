@@ -40,6 +40,9 @@ import RequirementTemplates from "./pages/admin/RequirementTemplates";
 import CandidatePresentation from "./pages/CandidatePresentation";
 import HowItWorks from "./pages/HowItWorks";
 import InterviewRespond from "./pages/InterviewRespond";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import AdminBlogPosts from "./pages/admin/BlogPosts";
 import MetaPixel from "./components/MetaPixel";
 import PortalProtectedRoute from "./components/portal/PortalProtectedRoute";
 import PortalDashboard from "./pages/portal/PortalDashboard";
@@ -72,6 +75,8 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/om-oss" element={<About />} />
             <Route path="/sa-funkar-det" element={<HowItWorks />} />
+            <Route path="/blogg" element={<Blog />} />
+            <Route path="/blogg/:slug" element={<BlogPost />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/admin" 
@@ -224,6 +229,14 @@ const App = () => (
                   <RequirementTemplates />
                 </ProtectedRoute>
               } 
+            />
+            <Route 
+              path="/admin/blog" 
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminBlogPosts />
+                </ProtectedRoute>
+              }
             />
             {/* Portal routes */}
             <Route path="/portal" element={<PortalProtectedRoute><PortalDashboard /></PortalProtectedRoute>} />

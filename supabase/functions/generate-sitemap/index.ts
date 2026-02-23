@@ -29,6 +29,17 @@ serve(async (req) => {
       throw error;
     }
 
+    const { data: blogPosts, error: blogError } = await supabase
+      .from('blog_posts')
+      .select('slug, updated_at, published_at')
+      .eq('status', 'published')
+      .not('published_at', 'is', null)
+      .order('published_at', { ascending: false });
+
+    if (blogError) {
+      console.error('Error fetching blog posts:', blogError);
+    }
+
     const today = new Date().toISOString().split('T')[0];
 
     const staticPages = [
@@ -39,6 +50,7 @@ serve(async (req) => {
       { loc: 'https://nocv.se/contact', priority: '0.6', changefreq: 'monthly' },
       { loc: 'https://nocv.se/om-oss', priority: '0.7', changefreq: 'monthly' },
       { loc: 'https://nocv.se/sa-funkar-det', priority: '0.8', changefreq: 'monthly' },
+      { loc: 'https://nocv.se/blogg', priority: '0.8', changefreq: 'weekly' },
     ];
 
     const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
@@ -56,6 +68,13 @@ ${jobs?.map(job => `  <url>
     <lastmod>${new Date(job.updated_at).toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>`).join('\n') || ''}
+
+${blogPosts?.map(post => `  <url>
+    <loc>https://nocv.se/blogg/${post.slug}</loc>
+    <lastmod>${new Date(post.updated_at).toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>`).join('\n') || ''}
 
 </urlset>`;

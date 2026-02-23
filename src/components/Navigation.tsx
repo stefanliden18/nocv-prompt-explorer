@@ -46,6 +46,9 @@ const Navigation = () => {
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors font-medium">
               Kontakt
             </Link>
+            <Link to="/blogg" className="text-foreground hover:text-primary transition-colors font-medium">
+              Blogg
+            </Link>
             <button 
               onClick={() => setTipNoCVDialogOpen(true)}
               className="text-foreground hover:text-primary transition-colors font-medium"
@@ -119,6 +122,13 @@ const Navigation = () => {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Kontakt
+                  </Link>
+                  <Link 
+                    to="/blogg" 
+                    className="text-lg font-medium text-foreground hover:text-primary transition-colors"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Blogg
                   </Link>
                   <button
                     onClick={() => {

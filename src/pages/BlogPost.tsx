@@ -117,6 +117,7 @@ const BlogPost = () => {
                       src={post.cover_image_url}
                       alt={post.title}
                       className="w-full rounded-xl object-cover max-h-[400px]"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
                   )}
                 </header>

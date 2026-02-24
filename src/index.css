@@ -125,6 +125,11 @@ All colors MUST be HSL.
   }
 }
 
+/* Tighter line-height for prose paragraphs */
+.prose p {
+  line-height: 1.6;
+}
+
 /* Ensure bullet lists and ordered lists display correctly */
 .prose ul {
   list-style-type: disc;

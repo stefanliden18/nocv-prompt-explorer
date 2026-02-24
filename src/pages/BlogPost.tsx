@@ -89,7 +89,7 @@ const BlogPost = () => {
 
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-6">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-[800px] mx-auto">
             {isLoading ? (
               <div className="space-y-4">
                 <Skeleton className="h-10 w-3/4" />
@@ -122,7 +122,7 @@ const BlogPost = () => {
                 </header>
 
                 <div
-                  className="prose prose-lg max-w-none dark:prose-invert"
+                  className="prose prose-lg max-w-none dark:prose-invert text-left [&>p]:mb-6 [&>h2]:mt-10 [&>h2]:mb-4 [&>h3]:mt-8 [&>h3]:mb-3"
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(post.content_html),
                   }}

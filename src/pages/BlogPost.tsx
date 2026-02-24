@@ -122,7 +122,7 @@ const BlogPost = () => {
                 </header>
 
                 <div
-                  className="prose prose-lg max-w-none dark:prose-invert text-left [&>p]:mb-6 [&>h2]:mt-10 [&>h2]:mb-4 [&>h3]:mt-8 [&>h3]:mb-3"
+                  className="blog-content prose prose-lg max-w-none dark:prose-invert text-left"
                   dangerouslySetInnerHTML={{
                     __html: DOMPurify.sanitize(post.content_html),
                   }}

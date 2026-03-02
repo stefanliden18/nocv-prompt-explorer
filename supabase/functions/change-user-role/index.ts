@@ -12,6 +12,10 @@ serve(async (req) => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
     // Validate that the caller is an admin
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
@@ -21,14 +25,9 @@ serve(async (req) => {
       );
     }
 
-    // Create Supabase client with anon key to validate the user
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-
-    // Get user from token
+    // Get user from token using service-role client
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
       console.error('Error validating user:', userError);
@@ -38,24 +37,20 @@ serve(async (req) => {
       );
     }
 
-    // Check that the user is an admin
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
+    // Check that the user is an admin via user_roles (service-role bypasses RLS)
+    const { data: callerRoles, error: rolesError } = await supabase
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .eq('role', 'admin');
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    if (rolesError || !callerRoles || callerRoles.length === 0) {
       console.error('User is not admin:', user.id);
       return new Response(
         JSON.stringify({ error: 'Forbidden - Admin access required' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-
-    // Now we know the caller is a verified admin - create service role client
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { userId, newRole } = await req.json();
 
@@ -76,14 +71,14 @@ serve(async (req) => {
     }
 
     // Get current user role
-    const { data: currentProfile, error: profileError } = await supabase
+    const { data: currentProfile, error: currentProfileError } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', userId)
       .single();
 
-    if (profileError || !currentProfile) {
-      console.error('Error fetching profile:', profileError);
+    if (currentProfileError || !currentProfile) {
+      console.error('Error fetching profile:', currentProfileError);
       return new Response(
         JSON.stringify({ error: 'User not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -111,7 +106,7 @@ serve(async (req) => {
       }
     }
 
-    // Update profile role
+    // Update profile role (sync_profile_role trigger will update user_roles automatically)
     const { error: updateProfileError } = await supabase
       .from('profiles')
       .update({ role: newRole })
@@ -123,24 +118,6 @@ serve(async (req) => {
         JSON.stringify({ error: 'Failed to update user role' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
-    }
-
-    // Update user_roles table
-    const { error: deleteRoleError } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId);
-
-    if (deleteRoleError) {
-      console.error('Error deleting old role:', deleteRoleError);
-    }
-
-    const { error: insertRoleError } = await supabase
-      .from('user_roles')
-      .insert({ user_id: userId, role: newRole });
-
-    if (insertRoleError) {
-      console.error('Error inserting new role:', insertRoleError);
     }
 
     return new Response(

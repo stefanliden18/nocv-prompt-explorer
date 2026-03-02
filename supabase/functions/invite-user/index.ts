@@ -131,14 +131,14 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("User invited successfully:", inviteData.user.id);
 
     // Update profile role (trigger will sync user_roles automatically)
-    const { error: profileError } = await supabaseAdmin
+    const { error: profileUpdateError } = await supabaseAdmin
       .from("profiles")
       .update({ role })
       .eq("id", inviteData.user.id);
 
-    if (profileError) {
-      console.error("Error updating profile:", profileError);
-      throw profileError;
+    if (profileUpdateError) {
+      console.error("Error updating profile:", profileUpdateError);
+      throw profileUpdateError;
     }
 
     // Send invitation email

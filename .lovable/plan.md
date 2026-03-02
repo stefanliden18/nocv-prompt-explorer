@@ -2,43 +2,15 @@
 
 ## Problem
 
-Bloggsidans (`BlogPost.tsx`) prose-innehall har for stora mellanrum mellan stycken och rubriker jamfort med Om oss-sidan. Skillnaderna:
+Edge-funktionen `invite-user` kraschar vid uppstart med felet:
 
-| | Blogg (nu) | Om oss (mal) |
-|---|---|---|
-| Max-bredd | `max-w-3xl` (768px) | `max-w-[800px]` |
-| Prose-klasser | `prose prose-lg` | `prose prose-lg` + `[&>p]:mb-6 text-left` |
-| Bakgrund | `bg-background` | `bg-background` (samma) |
+> `Uncaught SyntaxError: Identifier 'profileError' has already been declared`
 
-Tailwind `prose-lg` har standard `line-height: 1.78` och stora marginaler pa `<h2>`, `<h3>` och `<p>`. Om oss-sidan overrider paragrafmarginaler med `[&>p]:mb-6`.
+Variabeln `profileError` deklareras med `const` tva ganger i samma scope (rad 85 och 134), vilket ar ogiltigt i JavaScript/TypeScript.
 
 ## Plan
 
-**Fil: `src/pages/BlogPost.tsx`**
+**Fil: `supabase/functions/invite-user/index.ts`**
 
-1. Andra `max-w-3xl` till `max-w-[800px]` for att matcha Om oss
-2. Uppdatera prose-klassen pa innehalls-div:en fran:
-   ```
-   prose prose-lg max-w-none dark:prose-invert
-   ```
-   till:
-   ```
-   prose prose-lg max-w-none dark:prose-invert text-left [&>p]:mb-6 [&>h2]:mt-10 [&>h2]:mb-4 [&>h3]:mt-8 [&>h3]:mb-3
-   ```
-   Detta ger:
-   - `[&>p]:mb-6` -- samma styckemellanrum som Om oss
-   - `[&>h2]:mt-10 [&>h2]:mb-4` -- tightare rubrikmarginaler
-   - `[&>h3]:mt-8 [&>h3]:mb-3` -- tightare underrubrikmarginaler
-   - `text-left` -- vansterstallning som Om oss
-
-**Fil: `src/index.css`**
-
-3. Lagg till tightare line-height for blogg-prose sa att radavstandet matchar Om oss:
-   ```css
-   .prose p {
-     line-height: 1.6;
-   }
-   ```
-
-Inga databasandringar kravs. Tva filer andras.
+Byt namn pa den andra `profileError`-deklarationen (rad 134) till `profileUpdateError` och uppdatera referenserna pa rad 139-141 till samma namn. En enkel rename som fixar boot-felet.
 

@@ -18,6 +18,20 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+
+    // Create admin client with service role FIRST — needed for admin verification
+    const supabaseAdmin = createClient(
+      supabaseUrl,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
     // Validate that the caller is an admin
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
@@ -27,14 +41,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create Supabase client with anon key to validate the user
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
-
-    // Get user from token
+    // Get user from token using service-role client (bypasses RLS)
     const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
       console.error('Error validating user:', userError);
@@ -44,14 +53,14 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check that the user is an admin
-    const { data: profile, error: profileError } = await supabaseClient
-      .from('profiles')
+    // Check that the user is an admin using service-role client (bypasses RLS on profiles)
+    const { data: callerRoles, error: rolesError } = await supabaseAdmin
+      .from('user_roles')
       .select('role')
-      .eq('id', user.id)
-      .single();
+      .eq('user_id', user.id)
+      .eq('role', 'admin');
 
-    if (profileError || !profile || profile.role !== 'admin') {
+    if (rolesError || !callerRoles || callerRoles.length === 0) {
       console.error('User is not admin:', user.id);
       return new Response(
         JSON.stringify({ error: 'Forbidden - Admin access required' }),
@@ -64,18 +73,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Processing user invitation/update:", email, "with role:", role);
 
-    // Create admin client with service role
-    const supabaseAdmin = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
     // Check if user already exists
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(u => u.email === email);
@@ -84,14 +81,14 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("User already exists, updating role:", existingUser.id);
       
       // Update profile role (trigger will sync user_roles automatically)
-      const { error: profileError } = await supabaseAdmin
+      const { error: profileUpdateError } = await supabaseAdmin
         .from("profiles")
         .update({ role })
         .eq("id", existingUser.id);
 
-      if (profileError) {
-        console.error("Error updating profile:", profileError);
-        throw profileError;
+      if (profileUpdateError) {
+        console.error("Error updating profile:", profileUpdateError);
+        throw profileUpdateError;
       }
 
       console.log("Role updated successfully for:", existingUser.id);
